@@ -1,0 +1,64 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files
+.env*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# === GitHub Upload Patch (R40) ===
+
+# logs
+*.log
+start-*.log
+
+# dev captures / screenshots
+shot-*.png
+shots/
+*.shot.png
+*.snapshot.png
+verify-*.png
+
+# tool caches
+.playwright-cli/
+.codebuddy/
+.workbuddy/
+.cache/
+.parcel-cache/
+.turbo/
+coverage/
+
+# local backup / editor swp
+*.bak
+*.orig
+*.tmp
+*.swp
+*.backup
+
+# dead font assets (R40-Perf P1)
+# misans 字体集 0 代码引用（现用 JetBrains Mono + Smiley Sans），
+# 文件保留在磁盘但不进 git 仓库；确认不用后可物理删除释放 ~4.3MB
+/public/fonts/misans/
+
+# 开发过程文档（本地保留，不进仓库）
+PERFORMANCE_REVIEW.md
+PHASE_01_VISUAL_POLISH_REPORT.md
+CLEANUP_REPORT.md
