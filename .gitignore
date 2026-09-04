@@ -60,5 +60,6 @@ coverage/
 
 # 开发过程文档（本地保留，不进仓库）
 PERFORMANCE_REVIEW.md
+DEPLOY_CHECK.md
 PHASE_01_VISUAL_POLISH_REPORT.md
 CLEANUP_REPORT.md
