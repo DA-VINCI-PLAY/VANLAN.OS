@@ -106,7 +106,6 @@ export default function SceneCanvas() {
   // R31 home 重构：HOME = 单主体极简白空间（雕塑 + 陈列台 + 微尘 + 地面），
   // Room / 窗 / 灯光控制 / 气泡 / 轮播 / EMBER 一律不挂载
   const isHome = mode === 'HOME';
-  const setLoaded = useOS((s) => s.setLoaded);
   // 首次挂载同步探测质量档（Canvas 构造参数只能定一次，探测先行）
   const [quality] = useState<Quality>(() => detectQuality());
   const cfg = QUALITY_CFG[quality];
@@ -152,7 +151,8 @@ export default function SceneCanvas() {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.0;
             gl.shadowMap.type = THREE.PCFSoftShadowMap;
-            window.setTimeout(() => setLoaded(true), 600);
+            // setLoaded 不在这里触发 —— 改由 Character 的 GLBCharacter 挂载时触发，
+            // 保证 LoadingScreen 盖到「真实兽头模型就绪」为止（R44 用户指令）
           }}
           style={{ position: 'absolute', inset: 0 }}
         >

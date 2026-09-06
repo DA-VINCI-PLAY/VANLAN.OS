@@ -33,7 +33,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
-import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { QUALITY_CFG } from '@/lib/perf';
 import { useOS, type Quality } from '@/lib/store';
@@ -44,12 +44,20 @@ import { ALBUMS } from '@/content/albums';
 import type { ReactNode } from 'react';
 
 const MODEL_URL = '/models/vanlan.glb';
+/** Draco 解码器本地自托管（public/draco/）。不能用 drei 默认的 gstatic.com CDN
+ *  —— 国内访问不通，模型会卡住直到超时。 */
+const DRACO_DECODER_PATH = '/draco/';
 const HEAD_Y = 2.0;
 /** GLB forward = +X（Tripo 默认导出），相机在 +Z 看向原点。
  *  绕 Y 旋转 -π/2 使 +X 转到 +Z（朝相机）。 */
 const HEAD_YAW = -Math.PI / 2;
 /** 兽头目标视觉高度（米）。约房间可视高度 4.6m 的 45% → 主体明显但不遮挡两侧窗。 */
 const TARGET_H = 2.1;
+
+/* ---------- 模型预加载：本模块被 import（SceneCanvas chunk 解析完成）时立即
+ * 开始下载 + 解码 GLB，与 React 挂载/相机初始化并行，不占首屏关键路径。
+ * 注意必须与 useGLTF 使用同一组参数才会命中同一份 loader 缓存。 */
+useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
 
 /* ---------- 共享石膏材质（单例，多 mesh 引用同一份）
  * R11：roughness 0.88（落入用户要求的 0.85-0.95 区间），metalness 0（纯石膏）。
@@ -77,22 +85,8 @@ function applyPlasterQuality(q: Quality) {
   PLASTER.needsUpdate = true;
 }
 
-/* ---------- 探测 GLB（HEAD 请求），缺失即占位头 ---------- */
-function useModelExists(): boolean | null {
-  const [exists, setExists] = useState<boolean | null>(null);
-  useEffect(() => {
-    let alive = true;
-    fetch(MODEL_URL, { method: 'HEAD' })
-      .then((r) => alive && setExists(r.ok))
-      .catch(() => alive && setExists(false));
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return exists;
-}
-
-/* ---------- GLB 加载/解析失败降级：仅替换为占位头，Scene 不崩 ---------- */
+/* ---------- GLB 加载/解析失败降级：仅兽头缺位（渲染 null），Scene 不崩。
+ * 不再有占位模型 —— 失败就是空位，不显示假模型。 */
 class GlbSafe extends Component<
   { fallback: ReactNode; children: ReactNode },
   { failed: boolean }
@@ -134,9 +128,17 @@ function useFloat(group: React.RefObject<THREE.Group | null>) {
 }
 
 function GLBCharacter() {
-  const { scene } = useGLTF(MODEL_URL, true);
+  // 第二参数传本地解码器路径（string = useDraco 自定义路径）
+  const { scene } = useGLTF(MODEL_URL, DRACO_DECODER_PATH);
   const yawRef = useRef<THREE.Group>(null);
   const floatRef = useRef<THREE.Group>(null);
+  const setLoaded = useOS((s) => s.setLoaded);
+
+  // 模型解析完成并挂载 → 通知 LoadingScreen 撤除。
+  // 首屏在模型就绪前一直是加载屏，不会露出占位/半成品。
+  useEffect(() => {
+    setLoaded(true);
+  }, [setLoaded]);
 
   const { model, scale, centerOffsetY } = useMemo(() => {
     const cloned = scene.clone(true);
@@ -163,70 +165,6 @@ function GLBCharacter() {
       <group ref={floatRef}>
         <group scale={scale} position={[0, centerOffsetY, 0]}>
           <primitive object={model} />
-        </group>
-      </group>
-    </group>
-  );
-}
-
-/* ---------- 程序化白色兽头（GLB 不可用时） ---------- */
-function PlaceholderHead() {
-  const yawRef = useRef<THREE.Group>(null);
-  const floatRef = useRef<THREE.Group>(null);
-  const phScale = TARGET_H / 1.1;
-
-  useFloat(floatRef);
-
-  return (
-    <group ref={yawRef} position={[0, HEAD_Y, 0]} rotation={[0, HEAD_YAW, 0]}>
-      <group ref={floatRef}>
-        <group scale={phScale} position={[0, -0.5 * phScale, 0]}>
-          {/* 主头骨 */}
-          <mesh castShadow receiveShadow scale={[1, 0.94, 0.96]}>
-            <sphereGeometry args={[0.48, 32, 28]} />
-            <primitive object={PLASTER} attach="material" />
-          </mesh>
-          {/* 口鼻 */}
-          <mesh castShadow position={[0, -0.15, 0.37]} scale={[1, 0.8, 0.95]}>
-            <sphereGeometry args={[0.24, 22, 18]} />
-            <primitive object={PLASTER} attach="material" />
-          </mesh>
-          {/* 鼻头（深色） */}
-          <mesh position={[0, -0.06, 0.59]}>
-            <sphereGeometry args={[0.058, 14, 12]} />
-            <meshStandardMaterial color="#3b3a36" roughness={0.55} metalness={0} />
-          </mesh>
-          {/* 双眼（深色） */}
-          {([-1, 1] as const).map((s) => (
-            <mesh key={s} position={[s * 0.19, 0.06, 0.42]}>
-              <sphereGeometry args={[0.05, 14, 12]} />
-              <meshStandardMaterial color="#2a2a26" roughness={0.45} metalness={0} />
-            </mesh>
-          ))}
-          {/* 脸颊绒毛 */}
-          {([-1, 1] as const).map((s) => (
-            <mesh
-              key={s}
-              castShadow
-              position={[s * 0.37, -0.11, 0.2]}
-              scale={[1, 0.82, 0.9]}
-            >
-              <sphereGeometry args={[0.18, 18, 16]} />
-              <primitive object={PLASTER} attach="material" />
-            </mesh>
-          ))}
-          {/* 双耳 */}
-          {([-1, 1] as const).map((s) => (
-            <mesh
-              key={s}
-              castShadow
-              position={[s * 0.3, 0.56, -0.02]}
-              rotation={[-0.08, 0, s * -0.3]}
-            >
-              <coneGeometry args={[0.18, 0.5, 12]} />
-              <primitive object={PLASTER} attach="material" />
-            </mesh>
-          ))}
         </group>
       </group>
     </group>
@@ -322,36 +260,20 @@ function PlasterTint() {
 }
 
 export default function Character() {
-  const exists = useModelExists();
-
-  // GLB 预加载：与 HEAD 探测并行，命中缓存后 GLBCharacter 的 useGLTF
-  // 不再 suspend（缩短占位头展示时间；空白屏由下方局部 Suspense 兜住）
-  useEffect(() => {
-    useGLTF.preload(MODEL_URL, true);
-  }, []);
-
   // R11：删除 Halo 组件（4.6x4.6 白圆 plane + 点光）—— 这是「窗边白色圆圈」
   // 的源头（plane 大到覆盖窗户位置），用户指令 §一·删除。HEAD 中心不再
   // 任何发光面层，光影完全交给 SculptLighting + 矩形陈列台接地阴影。
 
-  if (exists !== true) {
-    return (
-      <group>
-        <PlasterSurface />
-        <SculptLighting />
-        <PlaceholderHead />
-        <PlasterTint />
-      </group>
-    );
-  }
+  // 占位兽头已按用户指令整体移除：模型就绪前由 LoadingScreen（简单加载效果）
+  // 覆盖首屏，加载失败则兽头缺位（GlbSafe → null），绝无假模型。
   return (
     <group>
       <PlasterSurface />
       <SculptLighting />
-      {/* 局部 Suspense：GLB 解析期间只降级为占位头，房间/陈列台/灯光保持挂载，
-          不再出现整场景空白（P1 修复） */}
-      <Suspense fallback={<PlaceholderHead />}>
-        <GlbSafe fallback={<PlaceholderHead />}>
+      {/* 局部 Suspense：GLB 下载/解码期间渲染 null，房间/陈列台/灯光保持挂载，
+          LoadingScreen 盖在 DOM 层等模型就绪 */}
+      <Suspense fallback={null}>
+        <GlbSafe fallback={null}>
           <GLBCharacter />
         </GlbSafe>
       </Suspense>
