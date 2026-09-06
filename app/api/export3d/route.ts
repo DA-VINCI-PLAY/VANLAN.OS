@@ -12,7 +12,8 @@ import path from 'path';
  *         Dev 本地 (`next dev`) 仍可用，export-out/ 持久化于工作目录。
  */
 export const runtime = 'nodejs';
-const DISABLED_IN_PROD = process.env.NODE_ENV === 'production';
+const DISABLED_IN_PROD =
+  process.env.NODE_ENV === 'production' && process.env.VANLAN_EXPORT !== '1';
 
 export async function POST(req: Request) {
   if (DISABLED_IN_PROD) {

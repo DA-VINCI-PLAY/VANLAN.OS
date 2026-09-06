@@ -61,5 +61,9 @@ coverage/
 # 开发过程文档（本地保留，不进仓库）
 PERFORMANCE_REVIEW.md
 DEPLOY_CHECK.md
+
+# 3D 导出产物与导出脚本（本地工具）
+export-out/
+run-export.cjs
 PHASE_01_VISUAL_POLISH_REPORT.md
 CLEANUP_REPORT.md

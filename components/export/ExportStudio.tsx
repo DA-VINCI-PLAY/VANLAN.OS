@@ -189,10 +189,14 @@ function Exporter() {
       const one = async (file: string, target: THREE.Object3D | null) => {
         try {
           if (!target) throw new Error('scene node not found');
+          console.log('[export] start', file);
+          const t0 = performance.now();
           const buf = await exportGlb(target);
           const bytes = await upload(file, buf);
+          console.log('[export] done', file, bytes, Math.round(performance.now() - t0) + 'ms');
           results.push({ file, status: 'ok', bytes });
         } catch (e) {
+          console.log('[export] error', file, e instanceof Error ? e.message : String(e));
           results.push({
             file,
             status: 'error',
@@ -314,22 +318,33 @@ export default function ExportStudio() {
     setReady(true);
   }, []);
 
-  // 自动化入口：/export3d?auto=1 → 场景就绪后自动跑全部导出
+  // 自动化入口：/export3d?auto=1 → 等 GLB 兽头就绪（store.loaded 由 GLBCharacter
+  // 挂载时置位）后再跑全部导出，避免 FULL_SCENE 在模型挂载前导出而缺头
   useEffect(() => {
     if (!ready) return;
     if (!window.location.search.includes('auto=1')) return;
-    const t = window.setTimeout(async () => {
-      setLog((l) => [...l, 'auto export started…']);
-      try {
-        const results = (await exportBus.run?.()) ?? [];
-        setLog(results.map((r) => `${r.status === 'ok' ? 'OK ' : 'ERR'} ${r.file}${r.error ? ' — ' + r.error : ''}`));
-      } catch (e) {
-        setLog((l) => [...l, `FATAL ${e instanceof Error ? e.message : String(e)}`]);
-      } finally {
-        document.title = 'EXPORT_DONE';
-      }
-    }, 4500); // 等待 GLB 兽头 + 全部组件挂载完成
-    return () => window.clearTimeout(t);
+    let cancelled = false;
+    const poll = window.setInterval(() => {
+      if (cancelled) return;
+      if (!useOS.getState().loaded) return;
+      window.clearInterval(poll);
+      (async () => {
+        if (cancelled) return;
+        setLog((l) => [...l, 'auto export started…']);
+        try {
+          const results = (await exportBus.run?.()) ?? [];
+          setLog(results.map((r) => `${r.status === 'ok' ? 'OK ' : 'ERR'} ${r.file}${r.error ? ' — ' + r.error : ''}`));
+        } catch (e) {
+          setLog((l) => [...l, `FATAL ${e instanceof Error ? e.message : String(e)}`]);
+        } finally {
+          document.title = 'EXPORT_DONE';
+        }
+      })();
+    }, 500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+    };
   }, [ready]);
 
   const manualRun = async () => {
