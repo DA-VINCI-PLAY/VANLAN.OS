@@ -67,6 +67,9 @@ export default function QrModal() {
 
   const entry = SOCIALS.find((s) => s.id === qrPlatform);
   const label = entry?.platform ?? 'QR';
+  // R46：仅 action==='qr' 的条目有二维码图（value=图片路径）；
+  // copy/link 型条目没有图，直接显示"待补二维码"占位而不是坏图
+  const qrSrc = entry?.action === 'qr' ? entry.value : '';
 
   return (
     <div
@@ -97,7 +100,18 @@ export default function QrModal() {
         </div>
 
         <div className="flex h-56 w-56 items-center justify-center border border-ink/10 bg-paper">
-          <QrImage src={entry?.value ?? ''} />
+          {qrSrc ? (
+            <QrImage src={qrSrc} />
+          ) : (
+            <div
+              data-qr-pending="1"
+              className="px-6 text-center text-[10px] leading-5 tracking-[0.2em] text-ink/45"
+            >
+              {entry?.handle ? `${label} — ${entry.handle}` : label}
+              <br />
+              QR PENDING — ADD /public/social/{qrPlatform}-qr.png
+            </div>
+          )}
         </div>
         <div className="mt-3 text-[10px] tracking-[0.2em] text-ink/50">
           SCAN TO CONNECT — {label}

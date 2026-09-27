@@ -44,7 +44,9 @@ export interface QualityCfg {
 
 export const QUALITY_CFG: Record<Quality, QualityCfg> = {
   high: {
-    dprCap: 2,
+    // R46：全端 DPR 封顶 1.5（SceneCanvas 另做 Math.min 兜底）——
+    // 2x/3x 超采样是移动端发热与掉帧的第一大户，视觉差异肉眼不可辨
+    dprCap: 1.5,
     dprCapMobile: 1.5,
     shadows: true,
     antialias: true,

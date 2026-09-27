@@ -93,6 +93,13 @@ interface OSState {
   homeFocus: boolean;
   setHomeFocus: (v: boolean) => void;
   toggleHomeFocus: () => void;
+
+  /* ---------- R46 帧率管控 ---------- */
+
+  /** 渲染循环暂停（R46）：切后台 or HOME 无交互 2s → true；
+   *  SceneCanvas 据此把 Canvas frameloop 切到 'never'，rAF 归零不发热。 */
+  renderPaused: boolean;
+  setRenderPaused: (v: boolean) => void;
 }
 
 export const useOS = create<OSState>((set, get) => ({
@@ -148,4 +155,8 @@ export const useOS = create<OSState>((set, get) => ({
   homeFocus: false,
   setHomeFocus: (v) => set({ homeFocus: v }),
   toggleHomeFocus: () => set((s) => ({ homeFocus: !s.homeFocus })),
+
+  /* R46 帧率管控（SceneCanvas 的 idle/visibility effect 驱动） */
+  renderPaused: false,
+  setRenderPaused: (v) => set({ renderPaused: v }),
 }));

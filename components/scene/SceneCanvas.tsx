@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import {
   Component,
   Suspense,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -103,6 +104,8 @@ export default function SceneCanvas() {
   const isMobile = vp.isMobile;
   const isPortrait = vp.isPortrait;
   const mode = useOS((s) => s.mode);
+  // R46 帧率管控：切后台 or HOME 无交互 2s → renderPaused=true
+  const renderPaused = useOS((s) => s.renderPaused);
   // R31 home 重构：HOME = 单主体极简白空间（雕塑 + 陈列台 + 微尘 + 地面），
   // Room / 窗 / 灯光控制 / 气泡 / 轮播 / EMBER 一律不挂载
   const isHome = mode === 'HOME';
@@ -127,14 +130,72 @@ export default function SceneCanvas() {
       : homeCfg.fovMobileLandscape
     : homeCfg.fovDesktop;
 
+  /* R46 帧率管控 effect：
+   *  - 切后台（visibilitychange hidden）→ 立即暂停渲染循环；
+   *  - HOME 模式下 2s 无任何交互 → 暂停（名片模式下兽头是静态背景，
+   *    orbit 环绕 2s 仅转过 4~6°，视觉几乎无感，rAF 归零手机不发热）；
+   *  - 任何 pointer/key 交互、切模式、回到前台 → 立即恢复。
+   *  每次模式变化重置计时器（切到非 HOME 永不暂停，保证运镜/轮播流畅）。 */
+  useEffect(() => {
+    const wake = () => {
+      if (useOS.getState().renderPaused) useOS.getState().setRenderPaused(false);
+      arm();
+    };
+    let idle = 0;
+    const arm = () => {
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => {
+        if (useOS.getState().mode === 'HOME') {
+          useOS.getState().setRenderPaused(true);
+        }
+      }, 2000);
+    };
+    // 模式切换 / 首次挂载：先恢复渲染，再重新计时
+    useOS.getState().setRenderPaused(false);
+    arm();
+    const evs = [
+      'pointerdown',
+      'pointermove',
+      'wheel',
+      'keydown',
+      'touchstart',
+    ] as const;
+    evs.forEach((e) => window.addEventListener(e, wake, { passive: true }));
+    const onVis = () => {
+      if (document.hidden) useOS.getState().setRenderPaused(true);
+      else wake();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearTimeout(idle);
+      evs.forEach((e) => window.removeEventListener(e, wake));
+      document.removeEventListener('visibilitychange', onVis);
+    };
+    // 模式变化时重置（deps 含 mode）
+  }, [mode]);
+
   return (
     // 3D 场景整体为装饰/视觉层（aria-hidden）：
     // 导航、内容、状态等语义信息全部在 DOM UI 层（Experience），读屏不会混淆
-    <div aria-hidden className="absolute inset-0">
+    // R46 名片化：HOME 时 pointer-events:none —— 兽头纯背景，点击全部穿透给
+    // 名片卡/导航，严防透明 canvas 挡住 UI；touch-action:none 防浏览器手势劫持。
+    <div
+      aria-hidden
+      className="absolute inset-0"
+      style={{
+        pointerEvents: isHome ? 'none' : 'auto',
+        touchAction: 'none',
+      }}
+    >
       <SceneErrorBoundary>
         <Canvas
-          shadows={cfg.shadows}
-          dpr={[1, isMobile ? cfg.dprCapMobile : cfg.dprCap]}
+          // R46 帧率管控：renderPaused 时完全停掉 rAF 循环
+          frameloop={renderPaused ? 'never' : 'always'}
+          // R46 移动端彻底禁用实时软阴影（shadow map 是手机发热大户；
+          // 接地感由 Plinth 的接触阴影纹理平面负责，不受此开关影响）
+          shadows={isMobile ? false : cfg.shadows}
+          // R46 DPR 全端封顶 1.5：禁止移动端 3x / 桌面 2x 超采样
+          dpr={[1, Math.min(isMobile ? cfg.dprCapMobile : cfg.dprCap, 1.5)]}
           camera={{
             fov: homeFov,
             near: 0.1,

@@ -74,9 +74,8 @@ export default function BottomNavigation() {
     });
   }, [mode]);
 
-  // R31：HOME 由 ModeEntryCard 入口卡接管导航 —— 本组件让位
-  if (mode === 'HOME') return null;
-
+  // R46 名片化：HOME 也显示全局导航（旧 R31 让位给 4 入口卡，
+  // 现在入口卡已由 BusinessCard 接管，导航恢复常驻保证可达性）
   return (
     <nav
       className="fixed left-1/2 z-30 -translate-x-1/2 bottom-[calc(14px+env(safe-area-inset-bottom))] sm:bottom-6"

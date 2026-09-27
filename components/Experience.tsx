@@ -10,11 +10,13 @@ import QrModal from './ui/QrModal';
 import BottomNavigation from './ui/BottomNavigation';
 import HomeButton from './ui/HomeButton';
 import HomeContent from './ui/HomeContent';
-import HomeSlab from './ui/HomeSlab';
+import BusinessCard from './ui/BusinessCard';
+import PanelSwap from './ui/PanelSwap';
 import SettingsToggle from './ui/SettingsToggle';
 
 /** DOM UI 总装（Canvas / Fallback 之外的 overlay 层，两者共用） */
 export default function Experience() {
+  const mode = useOS((s) => s.mode);
   const setMode = useOS((s) => s.setMode);
 
   // ESC 返回 HOME；QR Modal 打开时由 Modal 自己接管 Esc（此处让行）
@@ -34,7 +36,12 @@ export default function Experience() {
     <>
       <LoadingScreen />
       <HomeContent />
-      <HomeSlab />
+      {/* R46 名片化：HomeSlab（展台告示牌）停止挂载 —— 身份/座右铭信息
+          由 BusinessCard 承担，组件文件保留可复用。
+          名片走 PanelSwap：进入上浮、离开缩小退出（与模式面板同一节奏）。 */}
+      <PanelSwap show={mode === 'HOME'} z={20}>
+        <BusinessCard />
+      </PanelSwap>
       <SystemHUD />
       <SettingsToggle />
       <HomeButton />
