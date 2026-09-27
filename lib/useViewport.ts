@@ -43,6 +43,7 @@ export function useViewport(): ViewportProfile {
   const [vp, setVp] = useState<ViewportProfile>(DEFAULT);
 
   useEffect(() => {
+    let raf = 0;
     const compute = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -61,17 +62,26 @@ export function useViewport(): ViewportProfile {
         compactLandscape,
       });
     };
+    // R47b 修复③：resize/orientation 高频触发 → rAF 合并到帧，
+    // 防连续 setVp 令订阅组件（SceneCanvas/名片/导航）高频 re-render 掉帧
+    const schedule = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        compute();
+      });
+    };
     compute();
-    window.addEventListener('resize', compute);
+    window.addEventListener('resize', schedule);
     const mqP = window.matchMedia('(orientation: portrait)');
     const mqL = window.matchMedia('(orientation: landscape)');
-    const onMq = () => compute();
-    mqP.addEventListener?.('change', onMq);
-    mqL.addEventListener?.('change', onMq);
+    mqP.addEventListener?.('change', schedule);
+    mqL.addEventListener?.('change', schedule);
     return () => {
-      window.removeEventListener('resize', compute);
-      mqP.removeEventListener?.('change', onMq);
-      mqL.removeEventListener?.('change', onMq);
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', schedule);
+      mqP.removeEventListener?.('change', schedule);
+      mqL.removeEventListener?.('change', schedule);
     };
   }, []);
 

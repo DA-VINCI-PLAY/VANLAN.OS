@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import {
   Component,
   Suspense,
@@ -61,6 +61,20 @@ function AdaptiveQuality({ initial }: { initial: Quality }) {
   const upStreak = useRef(0);
   const baseRank = useRef(rankOf(initial));
 
+  /* R47b 修复①：renderPaused 恢复沿重置采样 + 丢弃超长 dt。
+   * R46 frameloop='never' 期间 useFrame 停摆，恢复后首个采样
+   * dt≈idle 时长(≥2s) → fps 被算成 <35 假样本 → 连续 3 次误降档
+   * → 粒子/材质按 quality 重建 = 白屏闪动与卡顿放大。 */
+  const renderPaused = useOS((s) => s.renderPaused);
+  useEffect(() => {
+    if (!renderPaused) {
+      frames.current = 0;
+      last.current = 0;
+      lowStreak.current = 0;
+      upStreak.current = 0;
+    }
+  }, [renderPaused]);
+
   useFrame(() => {
     frames.current += 1;
     const now = performance.now();
@@ -70,6 +84,12 @@ function AdaptiveQuality({ initial }: { initial: Quality }) {
     }
     const dt = now - last.current;
     if (dt < 1500) return;
+    if (dt > 2500) {
+      // 停摆/切后台后的无效样本：丢弃并重新起算
+      frames.current = 0;
+      last.current = now;
+      return;
+    }
     const fps = (frames.current * 1000) / dt;
     frames.current = 0;
     last.current = now;
@@ -96,6 +116,22 @@ function AdaptiveQuality({ initial }: { initial: Quality }) {
     }
   });
 
+  return null;
+}
+
+/**
+ * R47b 修复②：恢复渲染沿吞掉 Clock 累积 delta。
+ * frameloop='never' 期间 THREE.Clock 不推进，恢复首帧 delta≈停摆时长(≥2s)，
+ * 所有 `delta*speed` 系统（orbit/微尘/余烬）一次性瞬移 = 画面抖动。
+ */
+function ClockReset() {
+  const paused = useOS((s) => s.renderPaused);
+  const clock = useThree((s) => s.clock);
+  const prev = useRef(paused);
+  useEffect(() => {
+    if (prev.current && !paused) clock.getDelta();
+    prev.current = paused;
+  }, [paused, clock]);
   return null;
 }
 
@@ -221,6 +257,7 @@ export default function SceneCanvas() {
           <fogExp2 attach="fog" args={['#ecebe5', 0.01]} />
 
           <AdaptiveQuality initial={quality} />
+          <ClockReset />
 
           <Suspense fallback={null}>
             {!isHome && <LightingController isMobile={isMobile} />}
