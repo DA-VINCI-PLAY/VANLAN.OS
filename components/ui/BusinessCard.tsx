@@ -13,7 +13,7 @@
  *    布局随之收紧，名字 / Tag / 联系行 / 社交 / 作品集自然衔接。
  *
  * 数据全部来自 content/*（改内容不动组件）：
- *  - 头像 /icon.png · 昵称 SITE.name · Tag = IDENTITY.role 按 · 拆分
+ *  - 头像 IDENTITY.avatar · 昵称 SITE.name · Tag = IDENTITY.role 按 · 拆分
  *  - 联系行 SOCIALS 的 wechat / email（copy 型）· chips = 其余平台
  *  - QQ chips 走 lib/qq qqAdd()，微信内置浏览器降级复制 QQ 号
  *
