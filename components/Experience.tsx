@@ -13,6 +13,7 @@ import HomeContent from './ui/HomeContent';
 import BusinessCard from './ui/BusinessCard';
 import PanelSwap from './ui/PanelSwap';
 import SettingsToggle from './ui/SettingsToggle';
+import PreloadAssets from './ui/PreloadAssets';
 
 /** DOM UI 总装（Canvas / Fallback 之外的 overlay 层，两者共用） */
 export default function Experience() {
@@ -35,6 +36,7 @@ export default function Experience() {
   return (
     <>
       <LoadingScreen />
+      <PreloadAssets />
       <HomeContent />
       {/* R46 名片化：HomeSlab（展台告示牌）停止挂载 —— 身份/座右铭信息
           由 BusinessCard 承担，组件文件保留可复用。

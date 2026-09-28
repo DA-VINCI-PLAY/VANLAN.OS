@@ -250,8 +250,11 @@ input[type='range'].os-range::-moz-range-thumb {
   --bottom-nav-height: 54px;
 }
 
-/* 统一内容层基础变量（普通 mode 面板 / ALBUM 大卡共用） */
-@media (max-width: 639px) {
+/* 统一内容层基础变量（普通 mode 面板 / ALBUM 大卡共用）
+   R50：底部抽屉（Bottom Sheet）—— <768px 所有模式面板统一收敛为
+   半屏浮层：max-height 58dvh + 内部自滚 + overscroll 隔离，
+   杜绝卡片把 3D 头部全屏遮死；ALBUM 不再享有近全屏豁免。 */
+@media (max-width: 767px) {
   .os-mode-panel {
     position: fixed !important;
     left: 50% !important;
@@ -264,18 +267,13 @@ input[type='range'].os-range::-moz-range-thumb {
     max-width: calc(100vw - 32px) !important;
     transform: translateX(-50%) !important;
     transform-origin: center bottom !important;
-    /* 上限 ≈ 下半屏：顶部保留兽头主体可视区 */
-    max-height: calc(
-      (100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom)) * 0.6
-    ) !important;
-  }
-
-  /* ALBUM 移动端卡片（第七轮）：给到更宽上限 + 内容自滚动，
-     cover/metadata/tracklist 一列自上而下，绝不进入 Nav Zone */
-  .os-mode-panel.os-panel-album {
-    max-height: calc(
-      100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 64px
-    ) !important;
+    /* R50：统一抽屉上限 58dvh（dvh 不可用时回退 vh） */
+    max-height: 58vh !important;
+    max-height: 58dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    /* 抽屉内滚到顶/底不穿透页面（防 iOS 橡皮筋把整层拖着走） */
+    overscroll-behavior: contain;
   }
 
   /* 移动端 ALBUM 使用卡片式布局；桌面式档案隐藏 */
@@ -295,9 +293,10 @@ input[type='range'].os-range::-moz-range-thumb {
     max-width: calc(100vw - 48px) !important;
     transform: translateX(-50%) !important;
     transform-origin: center center !important;
-    max-height: calc(
-      100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 44px
-    ) !important;
+    /* R50：矮横屏同样收敛到 58dvh 抽屉，兽头保留上半屏 */
+    max-height: 58vh !important;
+    max-height: 58dvh !important;
+    overscroll-behavior: contain;
   }
 
   /* 矮横屏同样卡片化 ALBUM */

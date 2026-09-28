@@ -32,10 +32,10 @@ import { MODE_CONFIG } from '@/lib/modeConfig';
 import { useOS } from '@/lib/store';
 import { useViewport } from '@/lib/useViewport';
 import { resolveDesk, resolveHomeDesk } from '@/lib/viewportCam';
-
-/** 模式切换运镜总时长（秒）—— 全 linear；R29 移动端分节略长以显「机械臂」 */
-const MOVE_DUR_DESK = 0.95;
-const MOVE_DUR_MOBILE = 1.15;
+import {
+  CAMERA_MOVE_MS_DESK,
+  CAMERA_MOVE_MS_MOBILE,
+} from '@/lib/timing';
 
 /** R31 HOME 轨道环绕角速度（rad/s）：桌面 60s/圈 ≈ 0.105，移动 90s/圈 ≈ 0.07 */
 const ORBIT_SPEED_DESK = (Math.PI * 2) / 60;
@@ -82,11 +82,16 @@ export default function CameraController() {
     if (mode !== 'HOME' && homeFocus) setHomeFocus(false);
   }, [mode, homeFocus, setHomeFocus]);
 
-  // 目标解析键：桌面随窗口 px 变化；移动端只随「竖屏 / 横屏」变化。
+  // 目标解析键：桌面随窗口 px 变化；移动端随「竖屏 / 横屏」+ 纵横比分桶变化。
+  // R50：纵横比按 0.1 步长分桶入 key（抽屉取景补偿量随之收敛），
+  // 步长足够粗 → 移动端地址栏伸缩（高度 ±30px）不会误触发重运镜。
+  const aspectBucket = mobile
+    ? Math.round((vp.width / Math.max(vp.height, 1)) * 10) / 10
+    : 0;
   const resolveKey = mobile
-    ? portrait
-      ? 'mobile-portrait'
-      : 'mobile-landscape'
+    ? `${portrait ? 'mobile-portrait' : 'mobile-landscape'}@${
+        portrait ? aspectBucket : Math.round(vp.height / 100) * 100
+      }`
     : `desk-${vp.width}x${vp.height}`;
 
   useEffect(() => {
@@ -127,6 +132,34 @@ export default function CameraController() {
       camPose.look[2],
     );
 
+    /* ---- R50：底部抽屉取景补偿（与 globals.css 抽屉媒体查询对齐） ----
+     * 窄竖屏(<768px) / 矮横屏(≤520px) 下，模式面板变为最高 58dvh 的底部
+     * 抽屉，原机位会把兽头压在画面中下部（被抽屉盖住）。补偿策略：
+     *  ① 视线目标点下压到 headY - 0.2·visH —— 兽头中心重新取景到
+     *     画面上部 ~30% 处（每模式的 yaw/侧移保留，仅改俯仰）；
+     *  ② 纵横比越窄（手机越细长）相机越拉远，防止侧墙/头部裁切。
+     * HOME 不补偿（名片不遮头，R32 构图保持）；focus 凑近位不补偿。 */
+    const sheetMode =
+      (portrait && vp.width < 768) || (!portrait && vp.height <= 520);
+    if (sheetMode && mode !== 'HOME' && !isHomeFocus) {
+      const headY = 1.72;
+      const dist = Math.hypot(
+        dstPos.x - dstLook.x,
+        dstPos.y - headY,
+        dstPos.z - dstLook.z,
+      );
+      const visH =
+        2 * Math.tan(THREE.MathUtils.degToRad(fovTarget) / 2) * dist;
+      // 0.27·visH → 兽头中心落在画面 ~24% 高度处，脸部完整露在抽屉上方
+      dstLook.y = headY - 0.27 * visH;
+      if (portrait) {
+        const aspect = vp.width / Math.max(vp.height, 1);
+        const t = THREE.MathUtils.clamp((0.72 - aspect) / 0.32, 0, 1);
+        dstPos.z += t * 0.45;
+        dstPos.y -= t * 0.15;
+      }
+    }
+
     // 清理旧 tween
     if (tween.current) {
       tween.current.kill();
@@ -160,7 +193,8 @@ export default function CameraController() {
 
     // R29 机械臂分节：pos.x/y/z 与 look.x/y/z 依次错开 0.1~0.22s 起步，
     // 各段终点对齐（每段时长 = 总时长 - 起步偏移），整条 linear。
-    const dur = mobile ? MOVE_DUR_MOBILE : MOVE_DUR_DESK;
+    // R50：时长常量收敛到 lib/timing.ts（与 PanelSwap 面板升起共用时间源）。
+    const dur = (mobile ? CAMERA_MOVE_MS_MOBILE : CAMERA_MOVE_MS_DESK) / 1000;
     const tl = gsap.timeline({
       defaults: { ease: 'none' },
       onUpdate: () => {

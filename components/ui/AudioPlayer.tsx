@@ -92,7 +92,9 @@ export default function AudioPlayer() {
     <div
       className="pointer-events-auto fixed left-1/2 z-30 hidden -translate-x-1/2 rounded-xl border border-ink/12 bg-white/80 shadow-[0_14px_44px_rgba(17,17,17,0.08)] backdrop-blur-md xl:block"
       style={{
-        bottom: 'calc(96px + env(safe-area-inset-bottom))',
+        // R50：底栏安全间距 —— 用全局导航高度变量计算，导航栏任何尺寸下都可点
+        bottom:
+          'calc(var(--bottom-nav-height) + 20px + env(safe-area-inset-bottom))',
         width: 'min(520px, calc(100vw - 480px))',
       }}
     >

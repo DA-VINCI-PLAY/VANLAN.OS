@@ -71,7 +71,7 @@ export default function ModePanels() {
   return (
     <>
       {PANEL_MODES.map((m) => (
-        <PanelSwap key={m} show={mode === m} z={30}>
+        <PanelSwap key={m} show={mode === m} z={30} sync>
           {mode === m && (
             <MobileContentSafeArea mode={m}>
               {m === 'GALLERY' && <GalleryPanel />}

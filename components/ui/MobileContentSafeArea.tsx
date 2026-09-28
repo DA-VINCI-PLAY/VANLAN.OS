@@ -46,7 +46,7 @@ export default function MobileContentSafeArea({
   return (
     <section
       aria-labelledby="os-panel-title"
-      className={`os-mode-panel pointer-events-auto absolute overflow-y-auto rounded-xl
+      className={`os-mode-panel pointer-events-auto absolute overflow-y-auto overscroll-contain rounded-xl
         border border-ink/12 bg-white/75 backdrop-blur-md
         shadow-[0_16px_48px_rgba(17,17,17,0.07)]
         top-24 bottom-24 w-80 p-5
