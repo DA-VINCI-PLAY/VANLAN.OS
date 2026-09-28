@@ -24,9 +24,9 @@ export interface SocialEntry {
 }
 
 /** QQ 号（全局唯一事实源：SOCIALS 的 qq 项 + lib/qq.ts 的加好友协议都从这里取）
- *  R49：更换为常用 QQ 378747209（名片中层高亮行 / 复制内容 / CONTACT 面板同源）
+ *  R49c：改回 1787613907（名片中层高亮行 / 复制内容 / CONTACT 面板同源）
  */
-export const QQ_UIN = '378747209';
+export const QQ_UIN = '1787613907';
 
 export const SOCIALS: SocialEntry[] = [
   {
