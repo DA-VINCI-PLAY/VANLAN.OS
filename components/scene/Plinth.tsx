@@ -97,13 +97,21 @@ export default function Plinth() {
     [],
   );
 
-  /* ---- 顶部凹槽用更深一档的暖灰 → 浅浅分隔线 ---- */
+  /* ---- 顶部凹槽用更深一档的暖灰 → 浅浅分隔线 ----
+   * R49：四条凹槽装饰条的前/侧面与主体侧面完全共面（z = ±0.75）、
+   * 顶面与台面共面（y = 0.62）→ 深度值相等产生 Z-Fighting 闪烁。
+   * 给凹槽材质加 polygonOffset，把共面片元在深度缓冲里向前偏 1 个单位，
+   * 稳定压过主体面（这是与 logarithmicDepthBuffer 互补的第二道保险）。
+   */
   const grooveMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
         color: '#c9c2b3',
         roughness: 0.7,
         metalness: 0,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
       }),
     [],
   );

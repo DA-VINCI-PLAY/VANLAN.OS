@@ -19,12 +19,15 @@ export interface AboutIdentity {
   role: string;
   /** 身份 / 地域标签 chips（纯装饰文本） */
   tags: string[];
+  /** 名片头像（R49：真实头像，public 下路径） */
+  avatar: string;
 }
 
 export const IDENTITY: AboutIdentity = {
   name: SITE.name,
   role: 'COMPOSER · MUSICIAN · CREATOR',
   tags: ['DEVELOPER', 'INDIE MUSIC', 'GUANGDONG', 'CN'],
+  avatar: '/avatar.png',
 };
 
 /** 座右铭（主句 / 副句），中英两版 */

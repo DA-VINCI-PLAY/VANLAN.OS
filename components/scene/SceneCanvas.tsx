@@ -179,12 +179,16 @@ export default function SceneCanvas() {
           dpr={[1, Math.min(isMobile ? cfg.dprCapMobile : cfg.dprCap, 1.5)]}
           camera={{
             fov: homeFov,
-            near: 0.1,
+            // R49：near 0.1→0.5 —— 近裁切面过小会耗尽深度精度（z-fighting 主因之一）
+            near: 0.5,
             far: 60,
             position: home,
           }}
           gl={{
-            antialias: cfg.antialias,
+            // R49：对数深度缓冲根治底座共面闪烁（Z-Fighting）；
+            // MSAA 恒开（用户指令），锯齿由后端质量档位控制的是阴影/粒子而非 AA
+            antialias: true,
+            logarithmicDepthBuffer: true,
             powerPreference: 'high-performance',
           }}
           onCreated={({ gl }) => {

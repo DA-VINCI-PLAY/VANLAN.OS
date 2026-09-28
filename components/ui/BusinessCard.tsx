@@ -41,15 +41,18 @@ export default function BusinessCard() {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  /* 中层联系行：微信 / 邮箱（copy 型，SOCIALS 单一事实源） */
-  const contactIds = ['wechat', 'email'];
+  /* 中层联系行：QQ / 邮箱（copy 型，SOCIALS 单一事实源）
+   * R49：微信上移改为 QQ —— 与下层 chips 去重（chipIds 已移除 'qq'）；
+   * QQ 行用「一键复制 QQ 号」而非协议唤起（协议唤起在下层 chips 场景更合适，
+   * 但微信内置浏览器会拦截，这里统一走复制最稳）。
+   */
+  const contactIds = ['qq', 'email'];
   const contacts = contactIds
     .map((id) => SOCIALS.find((s) => s.id === id))
     .filter((s): s is SocialEntry => Boolean(s));
 
   /* 下层社交 chips：保持 R47 用户指定顺序（微信已上移至联系行） */
   const chipIds = [
-    'qq',
     'douyin',
     'bilibili',
     'xiaohongshu',
@@ -154,11 +157,11 @@ export default function BusinessCard() {
         <div className="flex items-center gap-3 px-4 pt-4 sm:gap-3.5 sm:px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icon.png"
-            alt=""
+            src={IDENTITY.avatar}
+            alt="VANLAN"
             width={48}
             height={48}
-            className="h-12 w-12 shrink-0 rounded-full border border-white/70 object-cover shadow-[0_4px_14px_rgba(17,17,17,0.10)]"
+            className="h-12 w-12 shrink-0 rounded-full border border-black/5 object-cover shadow-[0_4px_14px_rgba(17,17,17,0.10)]"
           />
           <h1 className="truncate font-mono text-[17px] font-semibold leading-tight tracking-[0.18em] text-ink sm:text-[19px]">
             {SITE.name}
@@ -193,10 +196,10 @@ export default function BusinessCard() {
               className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-white/60 bg-white/70 px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-300 hover:bg-white active:bg-white/90"
             >
               <span className="flex min-w-0 items-center gap-1.5">
-                {s.id === 'wechat' && (
+                {s.id !== 'email' && (
                   <span
                     aria-hidden
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1faf66]"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#17c3d6]"
                   />
                 )}
                 <span className="font-mono text-[8px] font-bold tracking-[0.18em] text-ink/50">
