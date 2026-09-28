@@ -70,6 +70,17 @@ export default function BusinessCard() {
     window.setTimeout(() => setCopiedId(null), 1600);
   };
 
+  /* R49b：中层 QQ 行改为「点击唤起加好友」而非复制（用户指令）
+   * 协议可用 → 唤起 QQ；微信内置浏览器禁协议 → 降级复制 QQ 号（保留兜底）
+   */
+  const handleContact = (s: SocialEntry) => {
+    if (s.action === 'qq') {
+      const r = qqAdd();
+      if (r.ok) return;
+    }
+    copyContact(s);
+  };
+
   const copyContact = (s: SocialEntry) => {
     navigator.clipboard?.writeText(s.value).catch(() => {});
     flashCopied(s.id);
@@ -180,18 +191,22 @@ export default function BusinessCard() {
           ))}
         </div>
 
-        {/* ===== 中层：联系方式单行高亮（微信 / 邮箱，一键复制微交互） ===== */}
+        {/* ===== 中层：联系方式单行高亮（QQ 点击加好友 / 邮箱一键复制） ===== */}
         <div className="mt-2.5 space-y-1.5 px-4 sm:px-5">
           {contacts.map((s) => (
             <button
               key={s.id}
               type="button"
-              onClick={() => copyContact(s)}
+              onClick={() => handleContact(s)}
               aria-live="polite"
               aria-label={
-                lang === 'zh'
-                  ? `复制${s.platform}：${s.value}`
-                  : `Copy ${s.platform}: ${s.value}`
+                s.action === 'qq'
+                  ? lang === 'zh'
+                    ? `添加${s.platform}好友：${s.value}`
+                    : `Add ${s.platform} friend: ${s.value}`
+                  : lang === 'zh'
+                    ? `复制${s.platform}：${s.value}`
+                    : `Copy ${s.platform}: ${s.value}`
               }
               className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-white/60 bg-white/70 px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-300 hover:bg-white active:bg-white/90"
             >
@@ -214,7 +229,15 @@ export default function BusinessCard() {
                   copiedId === s.id ? 'text-[#1faf66]' : 'text-ink/40'
                 }`}
               >
-                {copiedId === s.id ? (lang === 'zh' ? '已复制' : 'COPIED') : 'COPY'}
+                {s.action === 'qq'
+                  ? lang === 'zh'
+                    ? '添加'
+                    : 'ADD'
+                  : copiedId === s.id
+                    ? lang === 'zh'
+                      ? '已复制'
+                      : 'COPIED'
+                    : 'COPY'}
               </span>
             </button>
           ))}
