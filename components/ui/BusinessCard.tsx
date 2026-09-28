@@ -1,80 +1,89 @@
 'use client';
 
 /**
- * BusinessCard —— HOME 模式「电子名片卡」（R46 名片化重构）
+ * BusinessCard —— HOME 模式「社交名片卡」（R48 重设计）
  *
- * 用户指令：首屏名片化、扩列优先 —— 手机扫码进来第一眼就是可操作的
- * 名片（头像 / 昵称定位 / 微信一键复制 + 二维码 / 社交外链 / 作品集入口），
- * 3D 兽头退居背景（canvas pointer-events:none，见 SceneCanvas）。
+ * 用户指令（R48）：
+ *  - 弃用底部文字拥挤排版：上层 [VANLAN] + 身份 Tag 胶囊（COMPOSER 等）；
+ *  - 中层主要联系方式（微信 / 邮箱）单行高亮 + 一键复制微交互；
+ *  - 下层社交平台统一尺寸极简胶囊（保持 R47 顺序：QQ → 抖音 → BILIBILI →
+ *    小红书 → 其余同 CONTACT）；作品集入口保留。
+ *  - 彻底移除「微信扩列」模块：COPY WECHAT 大按钮、QR 按钮及名片侧
+ *    二维码入口全部删除（QrModal 全局组件保留给 CONTACT 面板使用），
+ *    布局随之收紧，名字 / Tag / 联系行 / 社交 / 作品集自然衔接。
  *
  * 数据全部来自 content/*（改内容不动组件）：
- *  - 头像        /icon.png（站点图标，即兽头标识）
- *  - 昵称        SITE.name（content/site）
- *  - 身份/定位   IDENTITY.role + BIO（content/about）
- *  - 社交区      SOCIALS 按 R47 排序：QQ → 抖音 → BILIBILI → 微信 → 小红书 → 其余同 CONTACT
- *                （数据仍全部来自 content/social 单一事实源，此处只定展示顺序）
- *  - 作品集入口  setMode('GALLERY')
+ *  - 头像 /icon.png · 昵称 SITE.name · Tag = IDENTITY.role 按 · 拆分
+ *  - 联系行 SOCIALS 的 wechat / email（copy 型）· chips = 其余平台
+ *  - QQ chips 走 lib/qq qqAdd()，微信内置浏览器降级复制 QQ 号
  *
- * 交互：
- *  - 微信复制：navigator.clipboard，成功后按钮 1.6s 显示 COPIED
- *  - QQ 加好友：lib/qq qqAdd() 协议唤起；微信内置浏览器禁协议 → 复制 QQ 号 1.6s 降级
- *  - 二维码：setQrPlatform('wechat') → 复用全局 QrModal（含焦点管理）
- *  - 布局：贴底居中（导航胶囊上方），白博物馆玻璃语言，动画全 linear
+ * 出场动画：由 PanelSwap（R48 常驻 DOM + GPU 通道）统一驱动
+ * translate3d(0,16px,0)→0 + opacity，0.35s cubic-bezier(0.16,1,0.3,1)。
  */
 
 import { useState } from 'react';
 import { useOS, type Lang } from '@/lib/store';
 import { useViewport } from '@/lib/useViewport';
 import { SITE } from '@/content/site';
-import { IDENTITY, BIO } from '@/content/about';
+import { IDENTITY } from '@/content/about';
 import { SOCIALS, type SocialEntry } from '@/content/social';
 import { qqAdd } from '@/lib/qq';
 
-/** 由 Experience 的 PanelSwap(show=mode==='HOME') 控制挂载与进出动画 */
+/** 由 Experience 的 PanelSwap(show=mode==='HOME') 控制显隐（R48 起常驻 DOM） */
 export default function BusinessCard() {
   const lang = useOS((s) => s.lang) as Lang;
   const setMode = useOS((s) => s.setMode);
-  const setQrPlatform = useOS((s) => s.setQrPlatform);
   const compact = useViewport().compactLandscape;
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const wechat = SOCIALS.find((s) => s.id === 'wechat');
-  const qq = SOCIALS.find((s) => s.id === 'qq');
+  /* 身份 Tag 胶囊：'COMPOSER · MUSICIAN · CREATOR' → [COMPOSER, MUSICIAN, CREATOR] */
+  const tags = IDENTITY.role.split('·')
+    .map((t) => t.trim())
+    .filter(Boolean);
 
-  /* R47 社交排序（用户指令）：QQ → 抖音 → BILIBILI →（微信专属行）→ 小红书 → 其余保持 CONTACT 原序。
-     数据仍全部取自 content/social（单一事实源），此处只定展示顺序。 */
-  const beforeWechat = ['qq', 'douyin', 'bilibili'];
-  const afterWechat = ['xiaohongshu', 'x', 'instagram', 'threads', 'youtube'];
-  const pick = (ids: string[]) =>
-    ids
-      .map((id) => SOCIALS.find((s) => s.id === id))
-      .filter((s): s is SocialEntry => Boolean(s));
+  /* 中层联系行：微信 / 邮箱（copy 型，SOCIALS 单一事实源） */
+  const contactIds = ['wechat', 'email'];
+  const contacts = contactIds
+    .map((id) => SOCIALS.find((s) => s.id === id))
+    .filter((s): s is SocialEntry => Boolean(s));
+
+  /* 下层社交 chips：保持 R47 用户指定顺序（微信已上移至联系行） */
+  const chipIds = [
+    'qq',
+    'douyin',
+    'bilibili',
+    'xiaohongshu',
+    'x',
+    'instagram',
+    'threads',
+    'youtube',
+  ];
+  const chips = chipIds
+    .map((id) => SOCIALS.find((s) => s.id === id))
+    .filter((s): s is SocialEntry => Boolean(s));
 
   const flashCopied = (id: string) => {
     setCopiedId(id);
     window.setTimeout(() => setCopiedId(null), 1600);
   };
 
-  const copyWechat = () => {
-    if (!wechat) return;
-    navigator.clipboard?.writeText(wechat.value).catch(() => {});
-    flashCopied('wechat');
+  const copyContact = (s: SocialEntry) => {
+    navigator.clipboard?.writeText(s.value).catch(() => {});
+    flashCopied(s.id);
   };
 
-  /* QQ：lib/qq 协议唤起加好友；微信内置浏览器禁 mqqapi/tencent 协议 → 复制 QQ 号降级（与 CONTACT 同源逻辑） */
-  const addQQ = () => {
+  /* QQ：lib/qq 协议唤起加好友；微信内置浏览器禁协议 → 复制 QQ 号降级（与 CONTACT 同源） */
+  const addQQ = (s: SocialEntry) => {
     const r = qqAdd();
     if (!r.ok) {
-      if (qq) navigator.clipboard?.writeText(qq.value).catch(() => {});
-      flashCopied('qq');
+      navigator.clipboard?.writeText(s.value).catch(() => {});
+      flashCopied(s.id);
     }
   };
 
   const chipBase =
-    'rounded-full border border-ink/10 bg-white/45 px-2 py-[3px] font-mono text-[8px] tracking-[0.14em] text-ink/70 transition-colors duration-300 hover:border-ink/30 hover:text-ink';
+    'rounded-full border border-ink/10 bg-white/45 px-2.5 py-[4px] font-mono text-[8px] tracking-[0.14em] text-ink/70 transition-colors duration-300 hover:border-ink/30 hover:text-ink';
 
-  /* chips 按 action 分流：link 开外链 / qq 唤起加好友（微信内降级复制）/ copy 复制账号。
-     copy·qr 型平台（如 wechat）一般走微信专属行，不进 chips 列表。 */
   const renderChip = (s: SocialEntry) => {
     if (s.action === 'link') {
       return (
@@ -94,12 +103,12 @@ export default function BusinessCard() {
         <button
           key={s.id}
           type="button"
-          onClick={addQQ}
+          onClick={() => addQQ(s)}
           aria-live="polite"
           aria-label={lang === 'zh' ? '添加QQ好友' : 'Add QQ friend'}
           className={chipBase}
         >
-          {copiedId === 'qq'
+          {copiedId === s.id
             ? lang === 'zh'
               ? '已复制QQ号'
               : 'QQ COPIED'
@@ -111,10 +120,7 @@ export default function BusinessCard() {
       <button
         key={s.id}
         type="button"
-        onClick={() => {
-          navigator.clipboard?.writeText(s.value).catch(() => {});
-          flashCopied(s.id);
-        }}
+        onClick={() => copyContact(s)}
         aria-live="polite"
         aria-label={
           lang === 'zh' ? `复制${s.platform}账号` : `Copy ${s.platform} handle`
@@ -144,7 +150,7 @@ export default function BusinessCard() {
       <div
         className="fade-in pointer-events-auto w-full max-w-[340px] rounded-2xl border border-white/60 bg-white/55 ring-1 ring-ink/[0.05] shadow-[0_16px_48px_rgba(17,17,17,0.10),inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-2xl"
       >
-        {/* ===== 头部：头像 + 昵称 + 身份/定位 ===== */}
+        {/* ===== 上层：头像 + [VANLAN] ===== */}
         <div className="flex items-center gap-3 px-4 pt-4 sm:gap-3.5 sm:px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -154,63 +160,69 @@ export default function BusinessCard() {
             height={48}
             className="h-12 w-12 shrink-0 rounded-full border border-white/70 object-cover shadow-[0_4px_14px_rgba(17,17,17,0.10)]"
           />
-          <div className="min-w-0">
-            <h1 className="truncate font-mono text-[17px] font-semibold leading-tight tracking-[0.18em] text-ink sm:text-[19px]">
-              {SITE.name}
-            </h1>
-            <p className="mt-0.5 truncate font-mono text-[8px] tracking-[0.2em] text-ink/60 sm:text-[9px]">
-              {IDENTITY.role}
-            </p>
-          </div>
+          <h1 className="truncate font-mono text-[17px] font-semibold leading-tight tracking-[0.18em] text-ink sm:text-[19px]">
+            {SITE.name}
+          </h1>
         </div>
-        <p className="mt-1.5 px-4 font-mono text-[8px] tracking-[0.18em] text-ink/50 sm:px-5 sm:text-[9px]">
-          {BIO[lang]}
-        </p>
 
-        {/* ===== 社交区（R47 排序）：QQ → 抖音 → BILIBILI → 微信 → 小红书 → 其余同 CONTACT ===== */}
+        {/* 身份 Tag 胶囊（IDENTITY.role 拆分，单一事实源） */}
+        <div className="mt-2 flex flex-wrap gap-1 px-4 sm:px-5">
+          {tags.map((t) => (
+            <span
+              key={t}
+              className="rounded-full border border-ink/10 bg-white/50 px-2 py-[3px] font-mono text-[8px] font-semibold tracking-[0.2em] text-ink/60"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        {/* ===== 中层：联系方式单行高亮（微信 / 邮箱，一键复制微交互） ===== */}
+        <div className="mt-2.5 space-y-1.5 px-4 sm:px-5">
+          {contacts.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => copyContact(s)}
+              aria-live="polite"
+              aria-label={
+                lang === 'zh'
+                  ? `复制${s.platform}：${s.value}`
+                  : `Copy ${s.platform}: ${s.value}`
+              }
+              className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-white/60 bg-white/70 px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-300 hover:bg-white active:bg-white/90"
+            >
+              <span className="flex min-w-0 items-center gap-1.5">
+                {s.id === 'wechat' && (
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1faf66]"
+                  />
+                )}
+                <span className="font-mono text-[8px] font-bold tracking-[0.18em] text-ink/50">
+                  {s.platform}
+                </span>
+              </span>
+              <span className="min-w-0 flex-1 truncate text-right font-mono text-[10px] font-semibold tracking-[0.08em] text-ink">
+                {s.value}
+              </span>
+              <span
+                className={`w-9 shrink-0 text-right font-mono text-[8px] tracking-[0.14em] transition-colors duration-300 ${
+                  copiedId === s.id ? 'text-[#1faf66]' : 'text-ink/40'
+                }`}
+              >
+                {copiedId === s.id ? (lang === 'zh' ? '已复制' : 'COPIED') : 'COPY'}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* ===== 下层：社交平台统一胶囊（R47 顺序，QQ 唤起加好友） ===== */}
         <nav
           aria-label={lang === 'zh' ? '社交平台链接' : 'Social links'}
-          className="px-4 sm:px-5"
+          className="mt-2.5 flex flex-wrap gap-1 px-4 sm:px-5"
         >
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {pick(beforeWechat).map(renderChip)}
-          </div>
-
-          {/* 微信专属行：一键复制 + 二维码（名片主 CTA，保持 R46 形态） */}
-          <div className="mt-1.5 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={copyWechat}
-              aria-label={
-                lang === 'zh' ? '复制微信号' : 'Copy WeChat ID to clipboard'
-              }
-              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/60 bg-white/70 font-mono text-[9px] font-bold tracking-[0.16em] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-300 hover:bg-white active:bg-white/90"
-            >
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 rounded-full bg-[#1faf66]"
-              />
-              {copiedId === 'wechat'
-                ? lang === 'zh'
-                  ? '已复制'
-                  : 'COPIED'
-                : lang === 'zh'
-                  ? '复制微信号'
-                  : `COPY ${wechat?.platform ?? 'WECHAT'}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => setQrPlatform('wechat')}
-              aria-label={lang === 'zh' ? '打开微信二维码' : 'Open WeChat QR code'}
-              className="flex h-8 items-center justify-center rounded-lg border border-white/60 bg-white/70 px-3 font-mono text-[9px] font-bold tracking-[0.16em] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors duration-300 hover:bg-white active:bg-white/90"
-            >
-              {lang === 'zh' ? '二维码' : 'QR'}
-            </button>
-          </div>
-
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {pick(afterWechat).map(renderChip)}
-          </div>
+          {chips.map(renderChip)}
         </nav>
 
         {/* ===== 作品集入口（扩列优先：一眼可达） ===== */}

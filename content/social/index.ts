@@ -28,6 +28,13 @@ export const QQ_UIN = '1787613907';
 
 export const SOCIALS: SocialEntry[] = [
   {
+    id: 'email',
+    platform: 'EMAIL',
+    handle: 'jason901888@163.com',
+    action: 'copy',
+    value: 'jason901888@163.com',
+  },
+  {
     id: 'wechat',
     platform: 'WECHAT',
     handle: 'ID: VANLAN_PLAY',

@@ -533,7 +533,6 @@ function AboutPanel() {
 /* ---------------- CONTACT（联系 + 社交渠道；原 CONTACT ∪ SOCIAL） ---------------- */
 function ContactPanel() {
   const setQrPlatform = useOS((s) => s.setQrPlatform);
-  const [copied, setCopied] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [wxBlocked, setWxBlocked] = useState(false);
 
@@ -581,29 +580,7 @@ function ContactPanel() {
 
   return (
     <div className="space-y-3">
-      {/* EMAIL */}
-      <div className="rounded-lg border border-ink/8 bg-white/50 px-3 py-2.5">
-        <div className={LABEL}>EMAIL</div>
-        <button
-          type="button"
-          onClick={() => {
-            navigator.clipboard
-              ?.writeText('jason901888@163.com')
-              .catch(() => {});
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1200);
-          }}
-          aria-label="Copy email address"
-          className="touch-target mt-1 text-[11px] tracking-[0.08em] text-ink underline-offset-2 hover:underline"
-        >
-          jason901888@163.com {copied ? '[COPIED]' : '[COPY]'}
-        </button>
-        <span role="status" className="sr-only">
-          {copied ? 'Email address copied to clipboard' : ''}
-        </span>
-      </div>
-
-      {/* 社交渠道全列表（WECHAT QR / QQ UA 自适配加好友 / 外链 / 复制） */}
+      {/* 社交渠道全列表（R48：email 并入 SOCIALS 单一事实源，CHANNELS 首位自动带出） */}
       <div>
         <div className={`${LABEL} mb-1.5`}>CHANNELS</div>
         <ul className="space-y-1.5">

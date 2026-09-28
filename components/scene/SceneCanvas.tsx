@@ -61,19 +61,8 @@ function AdaptiveQuality({ initial }: { initial: Quality }) {
   const upStreak = useRef(0);
   const baseRank = useRef(rankOf(initial));
 
-  /* R47b 修复①：renderPaused 恢复沿重置采样 + 丢弃超长 dt。
-   * R46 frameloop='never' 期间 useFrame 停摆，恢复后首个采样
-   * dt≈idle 时长(≥2s) → fps 被算成 <35 假样本 → 连续 3 次误降档
-   * → 粒子/材质按 quality 重建 = 白屏闪动与卡顿放大。 */
-  const renderPaused = useOS((s) => s.renderPaused);
-  useEffect(() => {
-    if (!renderPaused) {
-      frames.current = 0;
-      last.current = 0;
-      lowStreak.current = 0;
-      upStreak.current = 0;
-    }
-  }, [renderPaused]);
+  /* R47b 修复①：丢弃超长 dt 样本（切后台/系统卡顿后 dt 巨大，
+   * 若参与采样会被算成 <35FPS → 连续误降档 → 粒子/材质重建闪屏）。 */
 
   useFrame(() => {
     frames.current += 1;
@@ -120,18 +109,21 @@ function AdaptiveQuality({ initial }: { initial: Quality }) {
 }
 
 /**
- * R47b 修复②：恢复渲染沿吞掉 Clock 累积 delta。
- * frameloop='never' 期间 THREE.Clock 不推进，恢复首帧 delta≈停摆时长(≥2s)，
- * 所有 `delta*speed` 系统（orbit/微尘/余烬）一次性瞬移 = 画面抖动。
+ * R48：visibilitychange 沿吞掉 Clock 累积 delta。
+ * 浏览器对后台标签页天然停掉 rAF（非本站逻辑），回前台首帧
+ * delta≈后台时长，所有 `delta*speed` 系统（orbit/微尘/余烬）
+ * 会一次性瞬移 = 画面抖动。回前台时手动 getDelta() 清零即可。
+ * （伪休眠 renderPaused 已按 R48 用户指令彻底移除，不再暂停时钟。）
  */
 function ClockReset() {
-  const paused = useOS((s) => s.renderPaused);
   const clock = useThree((s) => s.clock);
-  const prev = useRef(paused);
   useEffect(() => {
-    if (prev.current && !paused) clock.getDelta();
-    prev.current = paused;
-  }, [paused, clock]);
+    const onVis = () => {
+      if (!document.hidden) clock.getDelta();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [clock]);
   return null;
 }
 
@@ -140,8 +132,6 @@ export default function SceneCanvas() {
   const isMobile = vp.isMobile;
   const isPortrait = vp.isPortrait;
   const mode = useOS((s) => s.mode);
-  // R46 帧率管控：切后台 or HOME 无交互 2s → renderPaused=true
-  const renderPaused = useOS((s) => s.renderPaused);
   // R31 home 重构：HOME = 单主体极简白空间（雕塑 + 陈列台 + 微尘 + 地面），
   // Room / 窗 / 灯光控制 / 气泡 / 轮播 / EMBER 一律不挂载
   const isHome = mode === 'HOME';
@@ -166,50 +156,6 @@ export default function SceneCanvas() {
       : homeCfg.fovMobileLandscape
     : homeCfg.fovDesktop;
 
-  /* R46 帧率管控 effect：
-   *  - 切后台（visibilitychange hidden）→ 立即暂停渲染循环；
-   *  - HOME 模式下 2s 无任何交互 → 暂停（名片模式下兽头是静态背景，
-   *    orbit 环绕 2s 仅转过 4~6°，视觉几乎无感，rAF 归零手机不发热）；
-   *  - 任何 pointer/key 交互、切模式、回到前台 → 立即恢复。
-   *  每次模式变化重置计时器（切到非 HOME 永不暂停，保证运镜/轮播流畅）。 */
-  useEffect(() => {
-    const wake = () => {
-      if (useOS.getState().renderPaused) useOS.getState().setRenderPaused(false);
-      arm();
-    };
-    let idle = 0;
-    const arm = () => {
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => {
-        if (useOS.getState().mode === 'HOME') {
-          useOS.getState().setRenderPaused(true);
-        }
-      }, 2000);
-    };
-    // 模式切换 / 首次挂载：先恢复渲染，再重新计时
-    useOS.getState().setRenderPaused(false);
-    arm();
-    const evs = [
-      'pointerdown',
-      'pointermove',
-      'wheel',
-      'keydown',
-      'touchstart',
-    ] as const;
-    evs.forEach((e) => window.addEventListener(e, wake, { passive: true }));
-    const onVis = () => {
-      if (document.hidden) useOS.getState().setRenderPaused(true);
-      else wake();
-    };
-    document.addEventListener('visibilitychange', onVis);
-    return () => {
-      window.clearTimeout(idle);
-      evs.forEach((e) => window.removeEventListener(e, wake));
-      document.removeEventListener('visibilitychange', onVis);
-    };
-    // 模式变化时重置（deps 含 mode）
-  }, [mode]);
-
   return (
     // 3D 场景整体为装饰/视觉层（aria-hidden）：
     // 导航、内容、状态等语义信息全部在 DOM UI 层（Experience），读屏不会混淆
@@ -225,8 +171,7 @@ export default function SceneCanvas() {
     >
       <SceneErrorBoundary>
         <Canvas
-          // R46 帧率管控：renderPaused 时完全停掉 rAF 循环
-          frameloop={renderPaused ? 'never' : 'always'}
+          // R48：恢复标准连续渲染（伪休眠 frameloop 切换已移除）
           // R46 移动端彻底禁用实时软阴影（shadow map 是手机发热大户；
           // 接地感由 Plinth 的接触阴影纹理平面负责，不受此开关影响）
           shadows={isMobile ? false : cfg.shadows}

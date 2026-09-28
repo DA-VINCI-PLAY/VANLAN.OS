@@ -167,6 +167,16 @@ body {
   animation: panel-exit 0.34s linear both;
 }
 
+/* ---------- R48 PanelSwap 切换动画期：禁子级实时毛玻璃 ----------
+ * backdrop-filter 实时重绘是 WebGL 上层合成掉帧大户；
+ * 动画 ~360ms 内由 PanelSwap 容器 data-blur-off="1" 触发本规则，
+ * 落定后属性摘除即恢复毛玻璃。 */
+[data-blur-off='1'],
+[data-blur-off='1'] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* ---------- ALBUM 卡片切换（移动端，Album 1.0s linear） ---------- */
 @keyframes album-swap-in {
   from { opacity: 0; transform: translateY(8px); }
