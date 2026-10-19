@@ -88,6 +88,8 @@ const BUBBLES: Record<Exclude<Mode, 'HOME'>, BubbleSpec[]> = {
     byMode('QQ', SLOT.MID_L, { type: 'qq' }, 0.85),
   ],
   ALBUM: [],
+  // R51：接单模式以服务卡为主体，气泡会与面板正文抢注意力 → 留白
+  COMMISSION: [],
   ABOUT: [
     byMode('COMPOSER', SLOT.UP_L, { type: 'none' }),
     byMode('MUSICIAN', SLOT.UP_R, { type: 'none' }),

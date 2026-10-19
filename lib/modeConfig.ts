@@ -113,6 +113,25 @@ export const MODE_CONFIG: Record<Mode, ModeConfig> = {
     fovMobileLandscape: 62,
     node: 'CTC_002',
   },
+  /* COMMISSION —— 接单 / 定制合作（R51 新增）
+   * 正面对称机位（订单页要「被接待」的仪式感），略近于 HOME；
+   * 特斯拉红 halo 把预约区从白色雕塑空间里拉出来。 */
+  COMMISSION: {
+    ambientIntensity: 0.3,
+    directionalIntensity: 1.15,
+    lightColor: '#ffffff',
+    windowLightIntensity: 0.95,
+    shadowStrength: 1.0,
+    fogDensity: 0.014,
+    haloColor: '#e82127',
+    camera: { pos: [0, 1.62, 4.75], look: [0, 1.55, 0] },
+    cameraMobilePortrait: { pos: [0, 1.32, 6.1], look: [0, 1.3, -0.3] },
+    cameraMobileLandscape: { pos: [0, 1.78, 5.35], look: [0, 1.85, 0] },
+    fovDesktop: 42,
+    fovMobilePortrait: 55,
+    fovMobileLandscape: 62,
+    node: 'CMS_005',
+  },
   /* ALBUM —— 专辑档案 + 音频控制台（原 ALBUM ∪ MUSIC） */
   ALBUM: {
     ambientIntensity: 0.32,

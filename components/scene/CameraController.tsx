@@ -57,6 +57,8 @@ export default function CameraController() {
   const camera = useThree(
     (s) => s.camera as THREE.PerspectiveCamera,
   );
+  // R51：demand 渲染下，运镜每 tick 主动 invalidate（否则相机不重绘）
+  const invalidate = useThree((s) => s.invalidate);
   const mode = useOS((s) => s.mode);
   const reducedMotion = useOS((s) => s.reducedMotion);
   const homeFocus = useOS((s) => s.homeFocus);
@@ -199,7 +201,9 @@ export default function CameraController() {
       defaults: { ease: 'none' },
       onUpdate: () => {
         camera.lookAt(lookTarget.current);
+        invalidate();
       },
+      onComplete: () => invalidate(),
     });
 
     const seg: Array<[THREE.Vector3, 'x' | 'y' | 'z', number, number]> = [
@@ -228,6 +232,7 @@ export default function CameraController() {
         orbitBasePos.current.copy(dstPos);
         orbitAngle.current = 0;
         orbitActive.current = true;
+        invalidate();
       });
     } else {
       // R38：focus 模式 / 非 HOME → 停 orbit（避免凑近时相机还在围绕原点转）
@@ -244,7 +249,7 @@ export default function CameraController() {
     };
     // 依赖：桌面 resize / 移动端转屏时按最新视口重新收敛机位（R38: homeFocus
     // 切换也触发相机 dolly，故加入依赖数组）
-  }, [mode, camera, mobile, portrait, reducedMotion, resolveKey, homeFocus]);
+  }, [mode, camera, mobile, portrait, reducedMotion, resolveKey, homeFocus, invalidate]);
 
   // 每帧 lookAt 兜底：tween 结束后相机 position 静止，视线持续锚定目标。
   // R31：HOME 且运镜结束 → 围绕 lookTarget 慢速轨道环绕（复用向量，零分配）

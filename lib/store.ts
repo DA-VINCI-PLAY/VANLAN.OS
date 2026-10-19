@@ -6,14 +6,16 @@ export type Mode =
   | 'HOME'
   | 'GALLERY'
   | 'CONTACT'
+  | 'COMMISSION'
   | 'ALBUM'
   | 'ABOUT';
 
-/** 底部导航固定顺序：GALLERY CONTACT HOME ALBUM ABOUT（HOME 居中） */
+/** 底部导航固定顺序（HOME 居中） */
 export const MODES: Mode[] = [
   'GALLERY',
   'CONTACT',
   'HOME',
+  'COMMISSION',
   'ALBUM',
   'ABOUT',
 ];
@@ -95,6 +97,18 @@ interface OSState {
   toggleHomeFocus: () => void;
 
   /* ---------- R47b：伪休眠已彻底移除，恢复 rAF 连续渲染 ---------- */
+
+  /* ---------- R51 管理员控制台 ---------- */
+  /** 控制台是否解锁（口令校验通过后常驻本次会话） */
+  adminUnlocked: boolean;
+  setAdminUnlocked: (v: boolean) => void;
+  /** 控制台是否打开 */
+  adminOpen: boolean;
+  setAdminOpen: (v: boolean) => void;
+
+  /** R51 遥测：实际渲染帧率（1s 窗口，由 Canvas 内 FpsProbe 四舍五入写入） */
+  fps: number;
+  setFps: (v: number) => void;
 }
 
 export const useOS = create<OSState>((set, get) => ({
@@ -150,4 +164,13 @@ export const useOS = create<OSState>((set, get) => ({
   homeFocus: false,
   setHomeFocus: (v) => set({ homeFocus: v }),
   toggleHomeFocus: () => set((s) => ({ homeFocus: !s.homeFocus })),
+
+  /* R51 管理员：解锁态 + 面板开关 */
+  adminUnlocked: false,
+  setAdminUnlocked: (v) => set({ adminUnlocked: v }),
+  adminOpen: false,
+  setAdminOpen: (v) => set({ adminOpen: v }),
+
+  fps: 0,
+  setFps: (v) => set({ fps: v }),
 }));

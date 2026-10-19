@@ -14,6 +14,7 @@ import BusinessCard from './ui/BusinessCard';
 import PanelSwap from './ui/PanelSwap';
 import SettingsToggle from './ui/SettingsToggle';
 import PreloadAssets from './ui/PreloadAssets';
+import AdminConsole from './ui/AdminConsole';
 
 /** DOM UI 总装（Canvas / Fallback 之外的 overlay 层，两者共用） */
 export default function Experience() {
@@ -50,6 +51,8 @@ export default function Experience() {
       <ModePanels />
       <AudioPlayer />
       <QrModal />
+      {/* R51 隐藏管理员控制台：口令 901888！解锁，含商品 CRUD / 订单状态 / 导出 */}
+      <AdminConsole />
       <BottomNavigation />
     </>
   );

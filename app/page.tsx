@@ -9,7 +9,7 @@ const RenderRoot = dynamic(() => import('@/components/RenderRoot'), {
 
 export default function Page() {
   return (
-    <main className="fixed inset-0 w-screen h-screen overflow-hidden bg-white">
+    <main className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#090A0C]">
       <RenderRoot />
       <Experience />
     </main>

@@ -12,7 +12,7 @@ import {
 } from 'react';
 import * as THREE from 'three';
 import { MODE_CONFIG } from '@/lib/modeConfig';
-import { QUALITY_CFG, detectQuality, rankOf, qualityFromRank } from '@/lib/perf';
+import { QUALITY_CFG, detectQuality } from '@/lib/perf';
 import { useOS, type Quality } from '@/lib/store';
 import { useViewport } from '@/lib/useViewport';
 import { resolveHomeDesk } from '@/lib/viewportCam';
@@ -49,62 +49,92 @@ class SceneErrorBoundary extends Component<
 }
 
 /**
- * 极轻量 FPS 自适应监测（每 1.5s 采样一次，绝不在每帧 setState）：
- * - 连续 3 次 < 35 FPS → 降一档（HIGH→MEDIUM→LOW）
- * - 连续 5 次 > 50 FPS → 回升一档，但不高于初始检测档（避免 HIGH/LOW 抖动）
- * 短暂卡顿不触发；hysteresis 防频繁升降。
+ * FpsProbe —— R51 遥测：真实渲染帧率（1s 窗口）
+ * demand 模式下 useFrame 只在真正出帧时执行 → 读到的是渲染帧率而非屏幕刷新率。
  */
-function AdaptiveQuality({ initial }: { initial: Quality }) {
+function FpsProbe() {
   const frames = useRef(0);
   const last = useRef(0);
-  const lowStreak = useRef(0);
-  const upStreak = useRef(0);
-  const baseRank = useRef(rankOf(initial));
-
-  /* R47b 修复①：丢弃超长 dt 样本（切后台/系统卡顿后 dt 巨大，
-   * 若参与采样会被算成 <35FPS → 连续误降档 → 粒子/材质重建闪屏）。 */
-
   useFrame(() => {
     frames.current += 1;
     const now = performance.now();
-    if (last.current === 0) {
+    if (!last.current) {
       last.current = now;
       return;
     }
     const dt = now - last.current;
-    if (dt < 1500) return;
-    if (dt > 2500) {
-      // 停摆/切后台后的无效样本：丢弃并重新起算
-      frames.current = 0;
-      last.current = now;
-      return;
-    }
-    const fps = (frames.current * 1000) / dt;
+    if (dt < 1000) return;
+    const fps = Math.round((frames.current * 1000) / dt);
     frames.current = 0;
     last.current = now;
-
-    const cur = useOS.getState().quality;
-    const r = rankOf(cur);
-    if (fps < 35) {
-      lowStreak.current += 1;
-      upStreak.current = 0;
-      if (lowStreak.current >= 3 && r > 0) {
-        useOS.getState().setQuality(qualityFromRank(r - 1));
-        lowStreak.current = 0;
-      }
-    } else if (fps > 50) {
-      upStreak.current += 1;
-      lowStreak.current = 0;
-      if (upStreak.current >= 5 && r < baseRank.current) {
-        useOS.getState().setQuality(qualityFromRank(r + 1));
-        upStreak.current = 0;
-      }
-    } else {
-      lowStreak.current = 0;
-      upStreak.current = 0;
-    }
+    const cur = useOS.getState().fps;
+    // 只在变化 ≥2 时写 store，避免无意义 re-render
+    if (Math.abs(cur - fps) >= 2) useOS.getState().setFps(fps);
   });
+  return null;
+}
 
+/**
+ * RenderPump —— R51 demand 渲染的节拍器
+ *
+ * 用户指令：静态时 frameloop="demand"，只在交互 / 待机微动时出帧。
+ * 实现：保持一条极轻的 rAF 只做「时间判断 + invalidate」，真正渲染
+ * 频率按场景状态分档：
+ *  - HOME 有轨道环绕 → 桌面 30fps / 移动 24fps（旋转不卡顿）
+ *  - 其余模式（静态展厅）→ 桌面 15fps / 移动 10fps（待机呼吸即可）
+ *  - 相机运镜 / 拖拽 / 滚轮由 CameraController 与 PointerPump 额外
+ *    invalidate，瞬间回到 60fps，不牺牲交互手感。
+ */
+function RenderPump({ isMobile }: { isMobile: boolean }) {
+  const invalidate = useThree((s) => s.invalidate);
+  const mode = useOS((s) => s.mode);
+
+  const fps = isMobile
+    ? mode === 'HOME'
+      ? 24
+      : 10
+    : mode === 'HOME'
+      ? 30
+      : 15;
+
+  useEffect(() => {
+    let raf = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      if (t - last >= 1000 / fps) {
+        last = t;
+        invalidate();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [invalidate, fps]);
+
+  return null;
+}
+
+/**
+ * PointerPump —— 交互期间强制满帧（demand 模式下手势不粘手）
+ * 监听 canvas 容器的 pointer / wheel 事件，每次触发 invalidate。
+ */
+function PointerPump() {
+  const invalidate = useThree((s) => s.invalidate);
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    const el = gl.domElement;
+    const on = () => invalidate();
+    el.addEventListener('pointermove', on, { passive: true });
+    el.addEventListener('pointerdown', on, { passive: true });
+    el.addEventListener('wheel', on, { passive: true });
+    el.addEventListener('touchmove', on, { passive: true });
+    return () => {
+      el.removeEventListener('pointermove', on);
+      el.removeEventListener('pointerdown', on);
+      el.removeEventListener('wheel', on);
+      el.removeEventListener('touchmove', on);
+    };
+  }, [gl, invalidate]);
   return null;
 }
 
@@ -163,20 +193,21 @@ export default function SceneCanvas() {
     // 名片卡/导航，严防透明 canvas 挡住 UI；touch-action:none 防浏览器手势劫持。
     <div
       aria-hidden
-      className="absolute inset-0"
+      className="os-3d absolute inset-0"
       style={{
         pointerEvents: isHome ? 'none' : 'auto',
-        touchAction: 'none',
+        // R51：竖屏上下滚动不被 3D 场景完全拦截（用户手势优先）
+        touchAction: 'pan-y',
       }}
     >
       <SceneErrorBoundary>
         <Canvas
-          // R48：恢复标准连续渲染（伪休眠 frameloop 切换已移除）
-          // R46 移动端彻底禁用实时软阴影（shadow map 是手机发热大户；
-          // 接地感由 Plinth 的接触阴影纹理平面负责，不受此开关影响）
-          shadows={isMobile ? false : cfg.shadows}
-          // R46 DPR 全端封顶 1.5：禁止移动端 3x / 桌面 2x 超采样
-          dpr={[1, Math.min(isMobile ? cfg.dprCapMobile : cfg.dprCap, 1.5)]}
+          // R51：静态展厅按需渲染（待机 10–30fps，交互 / 运镜回满帧）
+          frameloop="demand"
+          // R51：实时阴影全关（性能优先；接地由接触阴影平面负责）
+          shadows={false}
+          // DPR 硬封顶 1.5：禁止 Retina 3x 全像素消耗
+          dpr={[1, Math.min(vp.dpr || 1, 1.5)]}
           camera={{
             fov: homeFov,
             // R49：near 0.1→0.5 —— 近裁切面过小会耗尽深度精度（z-fighting 主因之一）
@@ -194,18 +225,23 @@ export default function SceneCanvas() {
           onCreated={({ gl }) => {
             // 第六轮：ACES tone mapping；Phase 01：曝光 1.05 → 1.0（防石膏过曝 §二十八），
             // 显式 PCFSoft → 兽头/墙/地阴影为柔和渐变而非硬边
+            // R51：R3F 的 <Canvas style> 只作用于外层 wrapper，真正的 <canvas>
+            // 元素还得显式设置 —— 否则竖屏上下滑动会被 3D 场景完全拦截
+            gl.domElement.style.touchAction = 'pan-y';
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.0;
             gl.shadowMap.type = THREE.PCFSoftShadowMap;
             // setLoaded 不在这里触发 —— 改由 Character 的 GLBCharacter 挂载时触发，
             // 保证 LoadingScreen 盖到「真实兽头模型就绪」为止（R44 用户指令）
           }}
-          style={{ position: 'absolute', inset: 0 }}
+          style={{ position: 'absolute', inset: 0, touchAction: 'pan-y' }}
         >
-          <color attach="background" args={['#ecebe5']} />
-          <fogExp2 attach="fog" args={['#ecebe5', 0.01]} />
+          <color attach="background" args={['#0a0b0d']} />
+          <fogExp2 attach="fog" args={['#0a0b0d', 0.012]} />
 
-          <AdaptiveQuality initial={quality} />
+          <RenderPump isMobile={isMobile} />
+          <PointerPump />
+          <FpsProbe />
           <ClockReset />
 
           <Suspense fallback={null}>
@@ -213,9 +249,16 @@ export default function SceneCanvas() {
             {!isHome && <Room isMobile={isMobile} />}
             {isHome && (
               <>
-                {/* 极简白空间补光：Character 自带 SculptLighting 三件套，
-                    这里只补环境光让暗部不死黑 */}
-                <ambientLight intensity={0.55} />
+                {/* 夜间展厅补光：极低环境光，让雕塑暗部不死黑 */}
+                <ambientLight intensity={0.32} />
+                {/* 特斯拉红侧逆光：只给雕塑边缘一丝冷红，呼应 UI 强调色 */}
+                <pointLight
+                  position={[-2.6, 2.4, -2.2]}
+                  intensity={2.2}
+                  color="#e82127"
+                  distance={9}
+                  decay={2}
+                />
                 {/* R32：兽头背后的粗糙手写 VANLAN（billboard + 视口自适应，
                     相机轨道环绕时永远保持"在兽头正后方"的构图） */}
                 <HandwrittenSign />

@@ -37,7 +37,6 @@ import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { QUALITY_CFG } from '@/lib/perf';
 import { useOS, type Quality } from '@/lib/store';
-import { useIsMobile } from '@/lib/useIsMobile';
 import { plasterBase } from '@/lib/glowColor';
 import { getPlasterNormalMap, getPlasterRoughnessMap } from '@/lib/plasterTexture';
 import { ALBUMS } from '@/content/albums';
@@ -182,15 +181,14 @@ function GLBCharacter() {
  */
 function SculptLighting() {
   const quality = useOS((s) => s.quality);
-  const isMobile = useIsMobile();
   const keyTarget = useMemo(() => new THREE.Object3D(), []);
 
-  const castKey = quality !== 'low' && !isMobile;
-  const map = isMobile ? 512 : 1024;
-  // R11：常量强度（quality 决定数值，运行期不再 lerp）
-  const keyI = quality === 'low' ? 0.95 : 1.65;
-  const fillI = quality === 'low' ? 0.18 : 0.28;
-  const rimI = quality === 'low' ? 0.55 : 0.95;
+  const castKey = false; // R51：实时阴影关闭（移动端发热大户；接地由接触阴影平面负责）
+  const map = 512;
+  // R51：夜间展厅强度（原本 1.65/0.28/0.95 的亮白棚拍 → 冷调雕塑）
+  const keyI = quality === 'low' ? 0.75 : 1.18;
+  const fillI = quality === 'low' ? 0.1 : 0.15;
+  const rimI = quality === 'low' ? 0.4 : 0.62;
 
   return (
     <group position={[0, HEAD_Y, 0]}>

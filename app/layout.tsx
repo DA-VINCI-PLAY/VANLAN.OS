@@ -18,10 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body className="bg-white text-ink font-mono antialiased overflow-hidden">
-        {children}
-      </body>
+    <html lang="zh-CN" className="dark">
+      <body className="bg-[#090A0C] text-ink antialiased overflow-hidden">{children}</body>
     </html>
   );
 }

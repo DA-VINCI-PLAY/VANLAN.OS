@@ -1,5 +1,18 @@
 import type { Config } from 'tailwindcss';
 
+/**
+ * VANLAN.OS —— Tesla In-Car OS 视觉体系（R51）
+ *
+ * 色彩策略：把既有语义 token 直接反转为深色语义，
+ * 使全站 `text-ink/*`、`border-ink/*` 无需逐个改类名即可获得
+ * 正确的层级对比：
+ *   ink   原 #111（浅底黑字） → #E9EDF2（钛黑底浅字）
+ *   paper 原 #fafafa           → #090A0C（深钛黑）
+ * 新增：
+ *   accent  特斯拉警戒红 #E82127（关键按钮 / 录音态 / 激活项）
+ *   panel   玻璃面板基色 #12141A
+ *   dim     次级文字 #8B929B
+ */
 const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
@@ -8,29 +21,43 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // 科技终端感：拉丁/数字优先自托管 JetBrains Mono（跨平台观感一致），
-        // 中文走得意黑 Smiley Sans（斜切锋锐、宣言气质），兜底现代黑体防宋体回退。
+        // 工业无衬线优先（Inter / SF Pro / DIN 观感），
+        // 中文走现代黑体链；等宽仅用于数据/编号等窄场景
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          '"Segoe UI"',
+          '"PingFang SC"',
+          '"Hiragino Sans GB"',
+          '"Microsoft YaHei"',
+          '"Noto Sans CJK SC"',
+          'sans-serif',
+        ],
         mono: [
           '"JetBrains Mono"',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
           'Consolas',
-          'Liberation Mono',
-          // --- 中文：得意黑 → 现代黑体链（按平台优先级） ---
-          '"Smiley Sans"',
-          '"PingFang SC"',
-          '"Hiragino Sans GB"',
-          '"Microsoft YaHei"',
-          '微软雅黑',
-          '"Noto Sans CJK SC"',
-          '"Source Han Sans SC"',
-          'sans-serif',
+          'monospace',
         ],
       },
       colors: {
-        ink: '#111111',
-        paper: '#fafafa',
+        ink: '#E9EDF2',
+        paper: '#090A0C',
+        panel: '#12141A',
+        dim: '#8B929B',
+        accent: '#E82127',
+        line: 'rgba(255,255,255,0.08)',
+      },
+      boxShadow: {
+        os: '0 24px 64px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
+        accent: '0 0 0 1px rgba(232,33,39,0.35), 0 8px 28px rgba(232,33,39,0.22)',
+      },
+      borderRadius: {
+        os: '14px',
       },
     },
   },

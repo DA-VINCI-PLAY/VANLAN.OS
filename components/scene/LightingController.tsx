@@ -63,7 +63,7 @@ export default function LightingController({
     const env = pmrem.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = env.texture;
     if ('environmentIntensity' in scene) {
-      (scene as unknown as { environmentIntensity: number }).environmentIntensity = 0.45;
+      (scene as unknown as { environmentIntensity: number }).environmentIntensity = 0.26;
     }
     return () => {
       scene.environment = null;
@@ -130,15 +130,17 @@ export default function LightingController({
     // 与函数顶部注释（"mode 切换时 tween"）一致，而非只在挂载时执行一次。
   }, [scene, mode, activeAlbum]);
 
-  const leftCast = qc.castShadowLights >= 1;
-  const rightCast = qc.castShadowLights >= 2;
+  // R51 性能优先：实时阴影全关（接地感由 Plinth 接触阴影平面负责）
+  const leftCast = false;
+  const rightCast = false;
 
-  /* === 常量强度：quality 决定数值（运行期不 lerp，避免 AdaptiveQuality 跳变）=== */
-  const ambientI = quality === 'low' ? 0.42 : 0.36;
-  const hemiI = quality === 'low' ? 0.3 : 0.32;
-  const leftI = quality === 'low' ? 0.95 : 1.2;
-  const rightI = quality === 'low' ? 0.85 : 1.05;
-  const spotI = quality === 'low' ? 0.55 : 0.6;
+  /* === 常量强度：quality 决定数值（运行期不 lerp，避免 AdaptiveQuality 跳变）
+     R51：整体乘 0.5~0.6 → 深钛黑「夜间展厅」氛围，与 UI 同色温 */
+  const ambientI = (quality === 'low' ? 0.42 : 0.36) * 0.62;
+  const hemiI = (quality === 'low' ? 0.3 : 0.32) * 0.5;
+  const leftI = (quality === 'low' ? 0.95 : 1.2) * 0.55;
+  const rightI = (quality === 'low' ? 0.85 : 1.05) * 0.5;
+  const spotI = (quality === 'low' ? 0.55 : 0.6) * 0.5;
 
   const shadowProps = {
     'shadow-mapSize-width': shadowMap,

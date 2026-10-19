@@ -19,11 +19,12 @@ import { useOS, type Mode } from '@/lib/store';
 
 /** 与 3D 天空同族的柔和顶部色（每模式，5 键） */
 const SKY: Record<Mode, string> = {
-  HOME: '#d6e4f2',
-  GALLERY: '#ded9f1',
-  CONTACT: '#f3e6d2',
-  ALBUM: '#f4dbe6',
-  ABOUT: '#dde6db',
+  HOME: '#0e1013',
+  GALLERY: '#12101c',
+  CONTACT: '#181310',
+  COMMISSION: '#1c0f11',
+  ALBUM: '#1a1218',
+  ABOUT: '#150f11',
 };
 
 /** ALBUM 关键词 = 前三张专辑标题（由数据派生，避免写死重复） */
@@ -103,7 +104,7 @@ function SkyHead() {
           {CHIPS[mode]!.map((c, i) => (
             <span
               key={c}
-              className="whitespace-nowrap rounded-full border border-ink/12 bg-white/70 px-3.5 py-1.5 text-[10px] tracking-[0.2em] text-ink/70 shadow-[0_6px_18px_rgba(17,17,17,0.05)] backdrop-blur-sm"
+              className="whitespace-nowrap rounded-full border border-ink/12 bg-white/[0.06] px-3.5 py-1.5 text-[10px] tracking-[0.2em] text-ink/70 shadow-[0_6px_18px_rgba(17,17,17,0.05)] backdrop-blur-sm"
               style={
                 rm
                   ? {}

@@ -73,7 +73,7 @@ export default function QrModal() {
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-[6px]"
       onClick={() => setQrPlatform(null)}
     >
       <div
@@ -81,7 +81,7 @@ export default function QrModal() {
         role="dialog"
         aria-modal="true"
         aria-label={`${label} QR code`}
-        className="fade-in border border-ink/20 bg-white p-6 shadow-[0_24px_64px_rgba(17,17,17,0.10)]"
+        className="os-glass fade-in rounded-[14px] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.65)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-8">
@@ -99,7 +99,7 @@ export default function QrModal() {
           </button>
         </div>
 
-        <div className="flex h-56 w-56 items-center justify-center border border-ink/10 bg-paper">
+        <div className="flex h-56 w-56 items-center justify-center rounded-[10px] border border-white/[0.07] bg-white/[0.03]">
           {qrSrc ? (
             <QrImage src={qrSrc} />
           ) : (

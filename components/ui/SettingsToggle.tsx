@@ -39,7 +39,7 @@ function Switch({
         aria-pressed={on}
         aria-label={`${label} ${on ? onLabel : offLabel}`}
         onClick={onToggle}
-        className="touch-target inline-flex min-w-[92px] items-center justify-center border border-ink/20 bg-white/60 px-2.5 py-1 text-[9px] tracking-[0.24em] text-ink/80 transition-colors hover:border-ink"
+        className="touch-target inline-flex min-w-[92px] items-center justify-center border border-ink/20 bg-white/[0.05] px-2.5 py-1 text-[9px] tracking-[0.24em] text-ink/80 transition-colors hover:border-ink"
       >
         <span
           className={`inline-block h-1.5 w-1.5 rounded-full ${
@@ -105,13 +105,13 @@ export default function SettingsToggle() {
         aria-haspopup="true"
         aria-label="Accessibility and display settings"
         onClick={() => setOpen((v) => !v)}
-        className="border border-white/50 bg-white/25 px-2.5 py-1.5 text-[9px] tracking-[0.3em] text-ink/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-ink/[0.06] backdrop-blur-xl transition-colors hover:border-white/80 hover:bg-white/40 hover:text-ink"
+        className="border border-white/50 bg-white/[0.03] px-2.5 py-1.5 text-[9px] tracking-[0.3em] text-ink/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ring-1 ring-ink/[0.06] backdrop-blur-xl transition-colors hover:border-white/80 hover:bg-white/[0.04] hover:text-ink"
       >
         {open ? 'SYS ▾' : 'SYS ▸'}
       </button>
 
       {open && (
-        <div className="fade-in mt-2 w-[228px] border border-ink/10 bg-white/75 p-3.5 shadow-[0_16px_44px_rgba(17,17,17,0.12)] backdrop-blur-2xl">
+        <div className="fade-in mt-2 w-[228px] border border-ink/10 bg-white/[0.07] p-3.5 shadow-[0_16px_44px_rgba(17,17,17,0.12)] backdrop-blur-2xl">
           <div className="mb-1 text-[8px] tracking-[0.3em] text-ink/40">
             A11Y / DISPLAY
           </div>

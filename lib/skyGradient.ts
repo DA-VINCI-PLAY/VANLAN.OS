@@ -21,11 +21,17 @@ const WHITE = new THREE.Color('#ffffff');
  * R21：HOME → 灰阶无色（white → light gray → gray）；ABOUT → 红色调（深酒红 → 玫瑰 → 雾粉）。
  * GALLERY / CONTACT 保留 R20 高饱和电紫 / 暖橙。
  */
-const SKY_PALETTE: Record<Exclude<Mode, 'ALBUM'>, { top: string; mid: string; bot: string }> = {
-  HOME:    { top: '#ffffff', mid: '#f3f3f3', bot: '#d6d6d6' }, // 无色 → 浅灰 → 灰（窗外无色）
-  GALLERY: { top: '#7d4dff', mid: '#a98dff', bot: '#ede8ff' }, // 电紫 → 淡紫 → 薄雾
-  CONTACT: { top: '#ff8a3d', mid: '#ffb37a', bot: '#fff0e0' }, // 暖橙 → 蜜桃 → 暖白
-  ABOUT:   { top: '#9c1d2e', mid: '#c64555', bot: '#f2d7da' }, // 深酒红 → 玫瑰 → 雾粉（红色调）
+const SKY_PALETTE: Record<
+  Exclude<Mode, 'ALBUM'>,
+  { top: string; mid: string; bot: string; glow: string }
+> = {
+  // R51 Tesla 夜间氛围：整体压到近黑，只在模式间保留极弱的色相偏移，
+  // 让窗外成为「深夜城市」而非白天天空，也不会跟面板玻璃抢对比度。
+  HOME:       { top: '#0a0b0d', mid: '#0e1013', bot: '#16181c', glow: '#22252b' },
+  GALLERY:    { top: '#0b0a11', mid: '#12101c', bot: '#1a1726', glow: '#282338' },
+  CONTACT:    { top: '#100c0a', mid: '#181310', bot: '#221a15', glow: '#33261d' },
+  COMMISSION: { top: '#12090a', mid: '#1c0f11', bot: '#28161a', glow: '#3a1f22' },
+  ABOUT:      { top: '#0d0a0b', mid: '#150f11', bot: '#1e1618', glow: '#2c2124' },
 };
 
 const cache = new Map<string, THREE.CanvasTexture>();
@@ -40,18 +46,21 @@ export function getSkyTexture(mode: Mode, albumIndex = 0): THREE.CanvasTexture {
   let top: string;
   let mid: string;
   let bot: string;
+  let glow = '#22252b';
   if (mode === 'ALBUM') {
     const accent = ALBUMS[albumIndex]?.accentColor ?? '#7eb5ff';
     // R20：深色 accent（如酒红 #84343e）若直接当天空顶部会显得压抑，
     // 先 mix 白 0.12 提亮再喂进渐变，既保留高饱和又防过暗。
     top = mixHex(accent, '#ffffff', 0.12);
     mid = mixHex(accent, '#ffffff', 0.30);
-    bot = mixHex(accent, '#ffffff', 0.62);
+    bot = mixHex(accent, '#0a0b0d', 0.55);
+    glow = mixHex(accent, '#ffffff', 0.55);
   } else {
     const p = SKY_PALETTE[mode];
     top = p.top;
     mid = p.mid;
     bot = p.bot;
+    glow = p.glow;
   }
 
   const key = `${mode}-${albumIndex}-${top}-${mid}-${bot}`;
@@ -72,7 +81,7 @@ export function getSkyTexture(mode: Mode, albumIndex = 0): THREE.CanvasTexture {
   g.addColorStop(0.46, top);
   g.addColorStop(0.7, mid);
   g.addColorStop(0.88, bot);
-  g.addColorStop(1, '#ffffff');
+  g.addColorStop(1, glow);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 

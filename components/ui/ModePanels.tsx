@@ -7,6 +7,7 @@ import { SOCIALS } from '@/content/social';
 import { GALLERY } from '@/content/gallery';
 import { IDENTITY } from '@/content/about';
 import MobileContentSafeArea from './MobileContentSafeArea';
+import CommissionPanel from './CommissionPanel';
 import PanelSwap from './PanelSwap';
 import { QQ_WEB, qqAdd } from '@/lib/qq';
 
@@ -21,7 +22,7 @@ import { QQ_WEB, qqAdd } from '@/lib/qq';
  */
 
 const KBD =
-  'border border-ink/20 px-2 py-1 text-[9px] tracking-[0.2em] text-ink/70 hover:border-ink hover:text-ink transition-colors bg-white/70';
+  'border border-ink/20 px-2 py-1 text-[9px] tracking-[0.2em] text-ink/70 hover:border-ink hover:text-ink transition-colors bg-white/[0.07]';
 const LABEL = 'text-[9px] tracking-[0.3em] text-ink/50';
 
 /** 流媒体平台展示顺序与标签（过滤空值 / 旧占位 '#'） */
@@ -61,6 +62,7 @@ function StreamLinks({ links }: { links: Record<string, string | undefined> }) {
 const PANEL_MODES: Exclude<Mode, 'HOME'>[] = [
   'GALLERY',
   'CONTACT',
+  'COMMISSION',
   'ALBUM',
   'ABOUT',
 ];
@@ -76,6 +78,7 @@ export default function ModePanels() {
             <MobileContentSafeArea mode={m}>
               {m === 'GALLERY' && <GalleryPanel />}
               {m === 'CONTACT' && <ContactPanel />}
+              {m === 'COMMISSION' && <CommissionPanel />}
               {m === 'ALBUM' && <AlbumPanel />}
               {m === 'ABOUT' && <AboutPanel />}
             </MobileContentSafeArea>
@@ -101,7 +104,7 @@ function galleryDescription(raw: string, draft: boolean): string {
 function GalleryPanel() {
   if (GALLERY.length === 0) {
     return (
-      <div className="rounded-xl border border-ink/10 bg-white/55 px-5 py-10 text-center">
+      <div className="rounded-xl border border-ink/10 bg-white/[0.045] px-5 py-10 text-center">
         <div className="text-[9px] tracking-[0.3em] text-ink/55">GALLERY</div>
         <div className="mt-3 text-[12px] font-bold tracking-[0.12em] text-ink">
           NO WORKS YET
@@ -125,7 +128,7 @@ function GalleryPanel() {
         aria-label={
           draft ? `${feature.title} — pending` : `Open featured video: ${feature.title}`
         }
-        className={`block rounded-xl border border-ink/10 bg-white/60 p-4 transition-colors ${
+        className={`block rounded-xl border border-ink/10 bg-white/[0.05] p-4 transition-colors ${
           draft ? 'cursor-default' : 'hover:border-ink/40'
         }`}
       >
@@ -133,7 +136,7 @@ function GalleryPanel() {
           <span>FEATURE</span>
           <span className="text-ink/30">/</span>
           {draft ? (
-            <span className="border border-ink/40 bg-white/80 px-1.5 py-px text-[7px] tracking-[0.22em] text-ink">
+            <span className="border border-ink/40 bg-white/[0.08] px-1.5 py-px text-[7px] tracking-[0.22em] text-ink">
               DRAFT
             </span>
           ) : (
@@ -177,13 +180,13 @@ function GalleryPanel() {
               aria-label={
                 mDraft ? `${m.title} — pending` : `Open video: ${m.title}`
               }
-              className={`group rounded-xl border border-ink/8 bg-white/45 p-3 transition-colors ${
+              className={`group rounded-xl border border-ink/8 bg-white/[0.035] p-3 transition-colors ${
                 mDraft ? 'cursor-default' : 'hover:border-ink/35'
               }`}
             >
               <div className="flex items-center justify-between text-[9px] tracking-[0.2em] text-ink/50">
                 {mDraft ? (
-                  <span className="border border-ink/40 bg-white/80 px-1.5 py-px text-[7px] tracking-[0.22em] text-ink">
+                  <span className="border border-ink/40 bg-white/[0.08] px-1.5 py-px text-[7px] tracking-[0.22em] text-ink">
                     DRAFT
                   </span>
                 ) : (
@@ -283,7 +286,7 @@ function AlbumPanel() {
 
         {/* 专辑描述 */}
         {album.description && (
-          <p className="mt-4 rounded-lg border border-ink/8 bg-white/45 px-3 py-2.5 text-[10px] leading-relaxed text-ink/55">
+          <p className="mt-4 rounded-lg border border-ink/8 bg-white/[0.035] px-3 py-2.5 text-[10px] leading-relaxed text-ink/55">
             {album.description}
           </p>
         )}
@@ -344,7 +347,7 @@ function AlbumPanel() {
                 type="button"
                 onClick={prevAlbum}
                 aria-label="Previous album"
-                className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink/20 bg-white/70 text-[16px] text-ink/70 transition-colors hover:border-ink hover:text-ink"
+                className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink/20 bg-white/[0.07] text-[16px] text-ink/70 transition-colors hover:border-ink hover:text-ink"
               >
                 ‹
               </button>
@@ -388,7 +391,7 @@ function AlbumPanel() {
                 type="button"
                 onClick={nextAlbum}
                 aria-label="Next album"
-                className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink/20 bg-white/70 text-[16px] text-ink/70 transition-colors hover:border-ink hover:text-ink"
+                className="touch-target flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink/20 bg-white/[0.07] text-[16px] text-ink/70 transition-colors hover:border-ink hover:text-ink"
               >
                 ›
               </button>
@@ -408,7 +411,7 @@ function AlbumPanel() {
 
           {/* 描述 */}
           {album.description && (
-            <p className="mt-2.5 line-clamp-2 rounded-lg border border-ink/8 bg-white/45 px-3 py-2 text-[9px] leading-relaxed text-ink/55">
+            <p className="mt-2.5 line-clamp-2 rounded-lg border border-ink/8 bg-white/[0.035] px-3 py-2 text-[9px] leading-relaxed text-ink/55">
               {album.description}
             </p>
           )}
@@ -491,7 +494,7 @@ function AboutPanel() {
   return (
     <div className="space-y-3">
       {/* 名字主卡 */}
-      <div className="rounded-lg border border-ink/10 bg-white/60 px-4 py-4">
+      <div className="rounded-lg border border-ink/10 bg-white/[0.05] px-4 py-4">
         <div className="text-[22px] font-bold leading-none tracking-[0.08em] text-ink">
           {IDENTITY.name}
         </div>
@@ -504,7 +507,7 @@ function AboutPanel() {
         {IDENTITY.tags.map((t) => (
           <span
             key={t}
-            className="border border-ink/15 bg-white/50 px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-ink/65"
+            className="border border-ink/15 bg-white/[0.04] px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-ink/65"
           >
             {t}
           </span>
@@ -515,7 +518,7 @@ function AboutPanel() {
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-lg border border-ink/10 bg-white/50 px-2 py-3 text-center"
+            className="rounded-lg border border-ink/10 bg-white/[0.04] px-2 py-3 text-center"
           >
             <div className="text-[18px] font-bold leading-none text-ink">
               {s.value}
@@ -587,7 +590,7 @@ function ContactPanel() {
           {SOCIALS.map((s) => (
             <li
               key={s.id}
-              className="rounded-lg border border-ink/8 bg-white/50 px-3 py-2.5"
+              className="rounded-lg border border-ink/8 bg-white/[0.04] px-3 py-2.5"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -641,7 +644,7 @@ function ContactPanel() {
       </div>
 
       {/* LOCATION */}
-      <div className="rounded-lg border border-ink/8 bg-white/50 px-3 py-2.5">
+      <div className="rounded-lg border border-ink/8 bg-white/[0.04] px-3 py-2.5">
         <div className={LABEL}>LOCATION</div>
         <div className="mt-1 text-[11px] tracking-[0.1em] text-ink/70">
           GUANGDONG, CN
