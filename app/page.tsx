@@ -1,17 +1,12 @@
-import dynamic from 'next/dynamic';
-import Experience from '@/components/Experience';
+import OpShell from '@/components/op/OpShell';
 
-/* RenderRoot 仅客户端：决定 3D Canvas 或 2D Fallback（SSR 不渲染，避免 WebGL 探测水合错位） */
-const RenderRoot = dynamic(() => import('@/components/RenderRoot'), {
-  ssr: false,
-  loading: () => null,
-});
-
+/**
+ * VANLAN.OS · R52
+ *
+ * 结构：2D 动漫 OP 分镜背景（底层） + 透明 3D 兽头（中层） +
+ *       时间轴驱动的四段前景（上层）。
+ * 所有交互与状态都在客户端组件内，服务端只输出外壳。
+ */
 export default function Page() {
-  return (
-    <main className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#090A0C]">
-      <RenderRoot />
-      <Experience />
-    </main>
-  );
+  return <OpShell />;
 }
