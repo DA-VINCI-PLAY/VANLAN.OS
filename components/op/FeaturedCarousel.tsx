@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFeatured, type Work } from '@/lib/featured';
 import { type ActId, scrub, subscribeAct } from '@/lib/opTimeline';
+import { useWorksDrawer } from '@/lib/worksDrawer';
 
 const TAG_ICON: Record<string, string> = {
   BILIBILI: 'bilibili',
@@ -236,6 +237,15 @@ export default function FeaturedCarousel() {
           onClick={() => setPaused((v) => !v)}
         >
           <i />
+        </button>
+        {/* 手机端：流内作品带 + 「全部」进底部抽屉 */}
+        <button
+          type="button"
+          className="fc-all"
+          aria-label="查看全部作品"
+          onClick={() => useWorksDrawer.getState().setOpen(true)}
+        >
+          全部 ›
         </button>
       </header>
 

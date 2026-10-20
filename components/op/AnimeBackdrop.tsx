@@ -57,7 +57,7 @@ export default function AnimeBackdrop() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    bootGateRef.current = performance.now() + 1250;
+    bootGateRef.current = performance.now() + 1700;
     let raf = 0;
 
     const tick = () => {

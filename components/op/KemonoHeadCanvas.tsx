@@ -28,6 +28,23 @@ const TARGET_H = 1.75;
 
 useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
 
+/**
+ * 断点档案（R66）—— 与 CSS 断点同源：<768 手机 / 768~1023 平板 / ≥1024 桌面。
+ * 判据用「画布容器宽度」而不是 aspect：手机竖屏的舞台已被压到 35vh，
+ * 宽高比不再能代表设备形态。
+ */
+function stageProfile(width: number) {
+  if (width < 768) {
+    // 手机：独占 35vh 舞台，略右移让出左侧大字
+    return { k: 0.9, x: 0.12, y: 0.02, camZ: 0.3, fov: 2, eyeY: 0.06, lookY: 0.02 };
+  }
+  if (width < 1024) {
+    // 平板：缩到 85%，向右让出左侧大字与轮播带
+    return { k: 0.85, x: 0.26, y: 0.04, camZ: 0.35, fov: 2, eyeY: 0.08, lookY: 0.04 };
+  }
+  return { k: 1, x: 0, y: 0, camZ: 0, fov: 0, eyeY: 0.05, lookY: 0.02 };
+}
+
 /* ---------------- 兽头本体 ---------------- */
 function KemonoHead() {
   const { scene } = useGLTF(MODEL_URL, DRACO_DECODER_PATH);
@@ -67,23 +84,20 @@ function KemonoHead() {
   useFrame((state, delta) => {
     const s = sampleHead(scrub.progress);
     const t = state.clock.elapsedTime;
-    const aspect = size.width / Math.max(size.height, 1);
-    /** 竖屏：把兽头收窄偏移并抬高，给底部面板腾位置 */
-    const narrow = aspect < 0.92;
-    const k = narrow ? 0.55 : 1;
+    const prof = stageProfile(size.width);
 
     const g = root.current;
     if (g) {
       // 阻尼跟随：拖动快时也不会瞬移，保持「镜头在跟」的物理感
       g.rotation.y = THREE.MathUtils.damp(g.rotation.y, BASE_YAW + s.yaw, 6, delta);
       g.rotation.x = THREE.MathUtils.damp(g.rotation.x, s.pitch, 6, delta);
-      g.position.x = THREE.MathUtils.damp(g.position.x, s.x * k, 6, delta);
-      g.position.y = THREE.MathUtils.damp(
-        g.position.y,
-        s.y + (narrow ? 0.2 : 0),
+      g.position.x = THREE.MathUtils.damp(
+        g.position.x,
+        s.x * prof.k + prof.x,
         6,
         delta,
       );
+      g.position.y = THREE.MathUtils.damp(g.position.y, s.y + prof.y, 6, delta);
     }
     const b = bob.current;
     if (b) {
@@ -116,14 +130,13 @@ function CameraRig() {
 
   useFrame((_, delta) => {
     const s = sampleHead(scrub.progress);
-    const aspect = size.width / Math.max(size.height, 1);
-    const narrow = aspect < 0.92;
-    const wantZ = s.camZ + (narrow ? 1.3 : 0);
-    const wantFov = s.fov + (narrow ? 8 : 0);
+    const prof = stageProfile(size.width);
+    const wantZ = s.camZ + prof.camZ;
+    const wantFov = s.fov + prof.fov;
 
     camera.position.z = THREE.MathUtils.damp(camera.position.z, wantZ, 4.2, delta);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, narrow ? 0.16 : 0.05, 4, delta);
-    camera.lookAt(0, narrow ? 0.12 : 0.02, 0);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, prof.eyeY, 4, delta);
+    camera.lookAt(0, prof.lookY, 0);
 
     const nextFov = THREE.MathUtils.damp(camera.fov, wantFov, 4.2, delta);
     if (Math.abs(nextFov - camera.fov) > 0.01) {

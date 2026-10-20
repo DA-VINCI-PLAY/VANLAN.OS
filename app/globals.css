@@ -3368,3 +3368,612 @@ select:focus-visible {
     transform: none !important;
   }
 }
+
+/* ============================================================
+   R66 · 全设备自适应重构 + 动漫 OP 开场引导
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. 开场引导：深钛黑底 / 激光扫描线 / 斜切百叶窗交错揭开
+   —— 全部只动 transform / opacity
+   ------------------------------------------------------------ */
+.op-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow: hidden;
+  pointer-events: none;
+  animation: op-intro-hide 0s linear 1.5s both;
+}
+@keyframes op-intro-hide {
+  to { visibility: hidden; opacity: 0; }
+}
+
+.op-intro-blinds {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.op-intro-blinds i {
+  position: relative;
+  flex: 1 1 0;
+  background-image: linear-gradient(180deg, #0a0b0d 0%, #14161a 62%, #0a0b0d 100%);
+  animation: op-blind-up 0.84s cubic-bezier(0.76, 0, 0.24, 1) both;
+  animation-delay: calc(0.5s + var(--d, 0ms));
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.op-intro-blinds i:nth-child(even) {
+  animation-name: op-blind-down;
+}
+@keyframes op-blind-up {
+  from { transform: translate3d(0, 0, 0) skewY(0deg); }
+  to   { transform: translate3d(0, -103%, 0) skewY(-4deg); }
+}
+@keyframes op-blind-down {
+  from { transform: translate3d(0, 0, 0) skewY(0deg); }
+  to   { transform: translate3d(0, 103%, 0) skewY(4deg); }
+}
+
+/* 每片百叶的刃口高光：橙色细线沿着揭开方向划过 */
+.op-intro-blinds i::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(243, 90, 23, 0.9), transparent);
+  opacity: 0.9;
+}
+.op-intro-blinds i:nth-child(even)::after {
+  bottom: auto;
+  top: 0;
+}
+
+/* —— 激光扫描线 —— */
+.op-intro-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 178, 122, 0.7) 18%,
+    #ffd0a8 46%,
+    #f35a17 52%,
+    rgba(255, 178, 122, 0.7) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 0 22px 5px rgba(243, 90, 23, 0.5);
+  opacity: 0;
+  animation: op-scan 0.66s cubic-bezier(0.3, 0, 0.2, 1) 0.08s both;
+  will-change: transform, opacity;
+}
+.op-intro-scan::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 92px;
+  background: linear-gradient(
+    180deg,
+    rgba(243, 90, 23, 0.16) 0%,
+    rgba(243, 90, 23, 0.04) 40%,
+    transparent 100%
+  );
+}
+@keyframes op-scan {
+  0%   { transform: translate3d(0, -4vh, 0); opacity: 0; }
+  12%  { opacity: 1; }
+  86%  { opacity: 1; }
+  100% { transform: translate3d(0, 104vh, 0); opacity: 0; }
+}
+
+/* —— 品牌标记 —— */
+.op-intro-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  animation: op-mark-out 0.36s cubic-bezier(0.7, 0, 0.84, 0) 0.92s both;
+}
+@keyframes op-mark-out {
+  to { opacity: 0; transform: translate3d(0, -12px, 0); }
+}
+.op-intro-brand {
+  display: flex;
+  align-items: baseline;
+  font-size: clamp(30px, 5.4vw, 58px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: #f4f1ea;
+}
+.op-intro-brand b {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  animation: op-mark-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(0.05s * var(--i, 0));
+}
+.op-intro-brand em {
+  font-style: normal;
+  margin-left: 2px;
+  font-size: 0.42em;
+  letter-spacing: 0.24em;
+  color: #f35a17;
+  opacity: 0;
+  animation: op-mark-in 0.52s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+@keyframes op-mark-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); filter: blur(6px); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+.op-intro-sub {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: 0.42em;
+  color: rgba(244, 241, 234, 0.32);
+  opacity: 0;
+  animation: op-mark-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.46s both;
+}
+.op-intro-bar {
+  width: 148px;
+  height: 2px;
+  margin-top: 5px;
+  background: rgba(244, 241, 234, 0.12);
+  overflow: hidden;
+  opacity: 0;
+  animation: op-mark-in 0.4s ease-out 0.3s both;
+}
+.op-intro-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #f35a17, #ffb27a);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: op-intro-fill 0.64s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+@keyframes op-intro-fill {
+  to { transform: scaleX(1); }
+}
+
+/* ------------------------------------------------------------
+   2. 3D 兽头破空入场：scale(0.85) → 1 + 透传淡入
+   ------------------------------------------------------------ */
+.op-canvas {
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0.85);
+  transform-origin: 50% 52%;
+  transition:
+    opacity 1.05s cubic-bezier(0.25, 1, 0.5, 1) 0.06s,
+    transform 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.06s;
+  will-change: opacity, transform;
+}
+.op-root.is-ready .op-canvas {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* —— 特斯拉红光晕：藏在兽头后面闪一次（z 19 < 画布 20）—— */
+.op-rim-flash {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  z-index: 19;
+  width: 46vmin;
+  height: 46vmin;
+  margin: -23vmin 0 0 -23vmin;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    rgba(243, 90, 23, 0) 46%,
+    rgba(243, 90, 23, 0.34) 62%,
+    rgba(255, 140, 80, 0.2) 72%,
+    rgba(243, 90, 23, 0) 80%
+  );
+  filter: blur(5px);
+  mix-blend-mode: screen;
+}
+.op-rim-flash.is-on {
+  animation: op-rim-flash 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both;
+}
+@keyframes op-rim-flash {
+  0%   { opacity: 0; transform: scale(0.62); }
+  20%  { opacity: 0.95; }
+  100% { opacity: 0; transform: scale(1.22); }
+}
+
+/* ------------------------------------------------------------
+   3. 首屏轻量互动引导
+   ------------------------------------------------------------ */
+.op-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  z-index: 45;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(243, 90, 23, 0.22);
+  background: rgba(255, 253, 249, 0.76);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  box-shadow: 0 10px 26px rgba(46, 36, 24, 0.12);
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  transition:
+    opacity 0.4s var(--ease-soft),
+    transform 0.4s var(--ease-out-quint);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.op-hint.is-on { opacity: 1; transform: translate3d(0, 0, 0); }
+.op-hint-ico {
+  position: relative;
+  flex-shrink: 0;
+  width: 17px;
+  height: 25px;
+  border-radius: 9px;
+  border: 1px solid rgba(243, 90, 23, 0.5);
+}
+.op-hint-ico i {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 3px;
+  height: 6px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #f35a17;
+  animation: op-hint-dot 1.4s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+@keyframes op-hint-dot {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.35; }
+  50%      { transform: translate3d(0, 8px, 0); opacity: 1; }
+}
+.op-hint-txt { display: flex; flex-direction: column; gap: 1px; }
+.op-hint-txt b {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #d94e1f;
+}
+.op-hint-txt em {
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: rgba(27, 30, 35, 0.42);
+}
+.op-hint-mob { display: none; }
+
+/* ------------------------------------------------------------
+   4. 移动端 chrome（<768 才存在）
+   ------------------------------------------------------------ */
+.op-mchrome { display: none; }
+.fc-all { display: none; }
+
+/* ------------------------------------------------------------
+   5. 平板 / 折叠屏横屏（768 ~ 1023）
+   —— 兽头 85% 微右移；左侧大字与轮播带收窄；名片改浮动毛玻璃抽屉
+   ------------------------------------------------------------ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root { --pad-x: 32px; }
+
+  .op-meta-tl { left: 32px; top: 26px; }
+  .op-act-index { left: 32px; top: 58px; }
+
+  .op-headline { left: 32px; top: 41%; }
+  .op-headline-intro .op-line-outline {
+    font-size: clamp(54px, 8.6vw, 88px);
+    -webkit-text-stroke-width: 1.6px;
+    letter-spacing: -0.045em;
+  }
+  .op-headline-intro .op-line-solid {
+    font-size: clamp(14px, 2.2vw, 22px);
+    margin-top: 8px;
+  }
+  .op-headline-intro::after { width: clamp(52px, 5.4vw, 78px); margin-top: 12px; }
+  .op-act-foot { left: 32px; bottom: 8vh; max-width: min(38vw, 300px); }
+
+  /* 名片：浮动毛玻璃抽屉，右侧留 104px 给时间轴 */
+  .op-panel-intro,
+  .op-panel-credits {
+    left: auto;
+    right: 104px;
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+    width: min(310px, 31vw);
+    max-height: 76vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 14px;
+    gap: 10px;
+    border-radius: 16px;
+    background: rgba(255, 253, 249, 0.76);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    backdrop-filter: blur(22px) saturate(135%);
+    box-shadow: 0 22px 54px rgba(46, 36, 24, 0.16);
+  }
+  .op-panel-intro .op-card-line,
+  .op-panel-credits .op-card-line { font-size: 9.5px; line-height: 1.6; }
+  .op-panel-intro .op-chips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .op-panel-intro .op-name { font-size: 16px; }
+  .op-card-foot > span { display: none; }
+  .op-card-foot { justify-content: flex-end; padding-top: 6px; }
+
+  .op-panel-store {
+    left: 32px;
+    right: auto;
+    top: 9vh;
+    bottom: 8vh;
+    width: min(430px, 52vw);
+    max-height: none;
+  }
+  .op-panel-sound {
+    left: 32px;
+    right: auto;
+    bottom: 8vh;
+    width: min(420px, 52vw);
+  }
+
+  /* 轮播带：整体收窄，卡片略小 */
+  .fc-root {
+    left: 32px;
+    width: min(46vw, 400px);
+    top: 61%;
+  }
+  .fc-card { width: 178px; height: 100px; }
+  .fc-kicker-sub { display: none; }
+}
+
+/* —— 紧凑桌面（1024 ~ 1339）：轮播带收窄，避开右侧名片 —— */
+@media (min-width: 1024px) and (max-width: 1339px) {
+  .fc-root { width: min(38vw, 480px); }
+  .fc-card { width: 192px; height: 108px; }
+}
+
+/* ------------------------------------------------------------
+   6. 超宽屏（≥ 1800）：放大基准线，避免三栏被拉成孤岛
+   ------------------------------------------------------------ */
+@media (min-width: 1800px) {
+  :root { --pad-x: clamp(80px, 6vw, 168px); }
+
+  .op-meta-tl { top: 44px; }
+  .op-act-index { top: 84px; }
+  .op-headline-intro .op-line-outline { font-size: clamp(124px, 7.2vw, 198px); }
+  .op-headline-intro .op-line-solid { font-size: clamp(22px, 1.9vw, 38px); }
+  .op-act-foot { bottom: 48px; max-width: min(38vw, 520px); }
+
+  .fc-root { width: clamp(620px, 40vw, 820px); top: 60%; }
+  .fc-card { width: 232px; height: 130px; }
+
+  .op-panel-intro,
+  .op-panel-credits {
+    right: clamp(170px, 11vw, 280px);
+    width: 420px;
+  }
+  .op-timeline { right: clamp(24px, 3vw, 56px); }
+  .op-meta-br { right: clamp(210px, 14vw, 330px); }
+}
+
+/* ------------------------------------------------------------
+   7. 手机竖屏（< 768）：单列流式
+      顶部 Mini Header → 35vh 兽头舞台 → 横向作品 → 吸底名片
+   ------------------------------------------------------------ */
+@media (max-width: 767px) {
+  /* —— 7.1 顶栏 + 底部微型进度条 —— */
+  .op-mchrome {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 44;
+    pointer-events: none;
+  }
+  .op-mhead {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: calc(44px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 18px 0;
+    background: linear-gradient(
+      180deg,
+      rgba(250, 248, 244, 0.95) 0%,
+      rgba(250, 248, 244, 0.72) 52%,
+      rgba(250, 248, 244, 0) 100%
+    );
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+  .op-mhead-brand {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: rgba(27, 30, 35, 0.78);
+  }
+  .op-mhead-sep {
+    width: 1px;
+    height: 10px;
+    background: rgba(27, 30, 35, 0.16);
+  }
+  .op-mhead-act {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: #d94e1f;
+  }
+  .op-mhead-label {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: rgba(27, 30, 35, 0.42);
+  }
+
+  .op-mprog {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 14px calc(9px + env(safe-area-inset-bottom));
+    pointer-events: auto;
+    touch-action: none;
+  }
+  .op-mprog-rail {
+    position: relative;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(22, 24, 28, 0.1);
+    touch-action: none;
+  }
+  /* 视觉 3px、热区 25px */
+  .op-mprog-rail::before {
+    content: '';
+    position: absolute;
+    inset: -11px 0;
+  }
+  .op-mprog-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #ff8a3d, #f35a17);
+    transform-origin: left center;
+    transform: scaleX(var(--p, 0));
+    will-change: transform;
+  }
+  .op-mprog-dot {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: #f35a17;
+    box-shadow: 0 0 0 4px rgba(243, 90, 23, 0.16), 0 0 12px rgba(243, 90, 23, 0.7);
+    transform: translate3d(calc(var(--p, 0) * (100vw - 28px)), 0, 0);
+    will-change: transform;
+  }
+
+  /* 侧边时间轴让位：改用底部横向进度条 */
+  .op-timeline { display: none; }
+  .op-meta-tl { display: none; }
+
+  /* —— 7.2 3D 舞台：锁定上方 35% —— */
+  .op-canvas {
+    inset: 0 0 auto 0;
+    height: 35vh;
+  }
+  .op-rim-flash {
+    top: 18vh;
+    width: 58vmin;
+    height: 58vmin;
+    margin: -29vmin 0 0 -29vmin;
+  }
+
+  /* —— 7.3 大字：上移到舞台顶部，不再与顶栏打架 —— */
+  .op-headline { top: 9vh; left: 18px; }
+  .op-headline-intro .op-line-outline {
+    font-size: clamp(34px, 10.5vw, 52px);
+    -webkit-text-stroke-width: 1px;
+  }
+  .op-headline-intro .op-line-solid {
+    font-size: clamp(11px, 3.6vw, 15px);
+    margin-top: 4px;
+  }
+  .op-headline-intro::after { width: 52px; height: 4px; margin-top: 8px; }
+
+  /* —— 7.4 作品带：回到流内，横向滑动 —— */
+  .fc-root {
+    display: block;
+    left: 0;
+    right: 0;
+    width: auto;
+    top: calc(35vh + 8px);
+    bottom: auto;
+    padding-left: 18px;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .fc-head { margin-bottom: 6px; padding-right: 18px; }
+  .fc-kicker { font-size: 7px; letter-spacing: 0.22em; }
+  .fc-kicker-sub { display: none; }
+  .fc-arrow, .fc-dot { display: none; }
+  .fc-all {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(243, 90, 23, 0.3);
+    background: rgba(255, 253, 249, 0.7);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 7.5px;
+    letter-spacing: 0.12em;
+    color: #d94e1f;
+  }
+  .fc-viewport { padding-right: 18px; }
+  .fc-card { width: 148px; height: 83px; }
+  .fc-meta b { font-size: 8px; }
+  .fc-tag { font-size: 6.5px; }
+
+  /* —— 7.5 名片：吸底浮动，让出底部进度条 —— */
+  .op-panel {
+    bottom: calc(30px + env(safe-area-inset-bottom));
+    max-height: 40vh;
+    padding: 14px 15px 11px;
+    gap: 10px;
+    border-radius: 20px;
+    box-shadow: 0 18px 44px rgba(46, 36, 24, 0.2);
+  }
+  .op-panel-store { max-height: 62vh; }
+  .op-panel-store:has(.op-form) { max-height: 64vh; }
+
+  /* 胶囊入口让位给流内作品带（抽屉入口改到作品带右上角「全部」） */
+  .mw-pill { display: none; }
+
+  .op-hint {
+    bottom: auto;
+    top: calc(35vh - 54px);
+    padding: 7px 12px 7px 10px;
+  }
+  .op-hint-desk { display: none; }
+  .op-hint-mob { display: block; }
+}
+
+/* ------------------------------------------------------------
+   8. 减少动态效果：片头直接跳过，引导常显但不闪
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .op-intro { display: none; }
+  .op-intro-blinds i,
+  .op-intro-scan,
+  .op-intro-mark { animation: none; }
+  .op-canvas {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .op-rim-flash { display: none; }
+  .op-hint-ico i { animation: none; }
+}

@@ -6,7 +6,7 @@
  * 负责三件全局的事：
  *   1. 手势：滚轮 / 触摸上下滑动推进时间轴（面板内部滚动时不劫持）
  *   2. 键盘：↑↓ 步进 2%，L 切换中英文，Home 回到开头
- *   3. 启动幕：等 GLB 就绪 + 最短 900ms，避免闪白
+ *   3. 开场引导：1.5s 动漫 OP 片头，680ms 时点亮 3D 兽头（破空入场）
  */
 
 import { useEffect, useState } from 'react';
@@ -15,6 +15,8 @@ import KemonoHeadCanvas from './KemonoHeadCanvas';
 import OpHeadline from './OpHeadline';
 import FeaturedCarousel from './FeaturedCarousel';
 import MobileWorksDrawer from './MobileWorksDrawer';
+import MobileChrome from './MobileChrome';
+import IntroSequence from './IntroSequence';
 import TimelineScrubber from './TimelineScrubber';
 import StageOverlay from './StageOverlay';
 import AdminConsole from '@/components/ui/AdminConsole';
@@ -51,11 +53,12 @@ const isNarrow = () =>
 
 export default function OpShell() {
   const toggleLang = useOS((s) => s.toggleLang);
-  const [booted, setBooted] = useState(false);
+  /** 片头揭幕进度：680ms 时点亮兽头，片头本身由 CSS 动画自主跑满 1.5s */
+  const [ready, setReady] = useState(false);
 
-  // 启动幕
   useEffect(() => {
-    const t = window.setTimeout(() => setBooted(true), 1100);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const t = window.setTimeout(() => setReady(true), reduce ? 40 : 680);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -164,7 +167,7 @@ export default function OpShell() {
   }, [toggleLang]);
 
   return (
-    <main className="op-root">
+    <main className={`op-root${ready ? ' is-ready' : ''}`}>
       <AnimeBackdrop />
       <KemonoHeadCanvas />
       <OpHeadline />
@@ -172,18 +175,11 @@ export default function OpShell() {
       <MobileWorksDrawer />
       <StageOverlay />
       <TimelineScrubber />
+      <MobileChrome />
       <AdminConsole />
 
-      {/* 启动幕 */}
-      <div className={`op-boot${booted ? ' is-done' : ''}`} aria-hidden={booted}>
-        <div className="op-boot-inner">
-          <span className="op-boot-brand">VANLAN.OS</span>
-          <span className="op-boot-line">
-            <i />
-          </span>
-          <span className="op-boot-sub">LOADING 2D OP STAGE</span>
-        </div>
-      </div>
+      {/* 动漫 OP 开场引导 + 首次交互提示 */}
+      <IntroSequence ready={ready} />
     </main>
   );
 }
