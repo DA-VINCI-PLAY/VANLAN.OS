@@ -2044,3 +2044,89 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-media-card { padding: 8px 10px; }
   .op-media-body em { font-size: 8px; }
 }
+
+/* ============================================================
+   R59 · 工坊中文化 + 表单细节精修
+   ============================================================ */
+
+/* ---------- 1. 焦点：表单控件不吃全局 outline，环做在控件本身 ---------- */
+input:not([type='range']):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+.op-panel-store input:not([type='range']),
+.op-panel-store textarea {
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.op-panel-store input:not([type='range']):focus,
+.op-panel-store textarea:focus {
+  border-color: #e85d2a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(232, 93, 42, 0.12);
+}
+
+/* ---------- 2. 联系方式切换：选中态高对比 ---------- */
+.op-tab {
+  padding: 6px 0;
+  border: 1px solid rgba(22, 24, 28, 0.08);
+  border-radius: 8px;
+  background: transparent;
+  color: #555555;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s ease, color 0.2s ease,
+    background-color 0.2s ease;
+}
+.op-tab:hover {
+  border-color: rgba(232, 93, 42, 0.35);
+  color: #d94e1f;
+}
+.op-tab.is-on {
+  border: 1.5px solid #e85d2a;
+  background: rgba(232, 93, 42, 0.1);
+  color: #d94e1f;
+  font-weight: 600;
+}
+
+/* ---------- 3. 数字排版：强制西文字体栈，半角紧凑 ---------- */
+.op-num {
+  font-family: 'Inter', 'SF Pro Display', 'DIN Alternate', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.02em;
+}
+.op-budget-echo .op-num { font-size: 20px; }
+.op-budget-presets button b.op-num { font-size: 10px; letter-spacing: -0.01em; }
+
+/* ---------- 4. 快捷档位选中：暖橙边框 + 淡橙底 ---------- */
+.op-budget-presets button.is-on {
+  border-color: #e85d2a;
+  background: rgba(232, 93, 42, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(232, 93, 42, 0.18);
+}
+.op-budget-presets button.is-on b { color: #d94e1f; }
+
+/* ---------- 5. 工坊头部副标题 ---------- */
+.op-store-sub {
+  margin-top: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: rgba(27, 30, 35, 0.4);
+}
+
+/* 移动端：档位卡两列文字更紧凑 */
+@media (max-width: 900px) {
+  .op-budget-presets button { padding: 6px 9px; }
+  .op-budget-presets button b.op-num { font-size: 9.5px; }
+  .op-budget-presets button i { font-size: 7px; letter-spacing: 0.08em; }
+  .op-budget-echo .op-num { font-size: 18px; }
+}

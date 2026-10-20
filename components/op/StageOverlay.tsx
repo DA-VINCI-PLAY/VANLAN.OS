@@ -414,8 +414,9 @@ function CommissionStage() {
     <section className="op-panel op-panel-store" aria-label="定制接单">
       <div className="op-store-head">
         <div>
-          <div className="op-kicker">COMMISSION DESK</div>
+          <div className="op-kicker">COMMISSION // 工坊</div>
           <h2 className="op-store-title">定制合作</h2>
+          <div className="op-store-sub">填写需求信息，我将尽快与您取得联系</div>
         </div>
         <span className="op-store-badge">OPEN</span>
       </div>

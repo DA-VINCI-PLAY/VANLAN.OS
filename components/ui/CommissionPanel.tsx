@@ -41,10 +41,10 @@ const BUDGET_STEP = 500;
 const money = (n: number) => `¥${n.toLocaleString('zh-CN')}`;
 
 const BUDGET_PRESETS: { label: string; hint: string; range: [number, number] }[] = [
-  { label: '¥500-1.5k', hint: '轻量级', range: [500, 1500] },
-  { label: '¥1.5k-4k', hint: '标准商业', range: [1500, 4000] },
-  { label: '¥4k-10k', hint: '深度定制', range: [4000, 10000] },
-  { label: '¥10k+', hint: '旗舰级', range: [10000, 20000] },
+  { label: '¥500 - 1.5k', hint: '轻量级 · Demo或单项协助', range: [500, 1500] },
+  { label: '¥1.5k - 4k', hint: '标准商业 · 完整编曲/混音/模型', range: [1500, 4000] },
+  { label: '¥4k - 10k', hint: '深度定制 · 词曲编混全案/高精3D', range: [4000, 10000] },
+  { label: '¥10k+', hint: '旗舰级 · 专辑制作/大型商业项目', range: [10000, 20000] },
 ];
 
 function priceLine(p: ServiceProduct): string {
@@ -74,6 +74,7 @@ export default function CommissionPanel() {
   const [error, setError] = useState('');
   const [pushing, setPushing] = useState<'idle' | 'sending' | 'done'>('idle');
   const [pushNote, setPushNote] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -117,6 +118,7 @@ export default function CommissionPanel() {
     if (!c) return setError('请留下可联系到你的账号');
     if (b.length < 6) return setError('需求描述至少 6 个字，方便准确报价');
 
+    setSending(true);
     const created = addOrder({
       serviceId: picked.id,
       serviceName: picked.name,
@@ -128,7 +130,11 @@ export default function CommissionPanel() {
       demo,
     });
     setOrder(created);
-    setView('done');
+    // 留一点「正在发送需求…」的可感知反馈，再切回执
+    window.setTimeout(() => {
+      setSending(false);
+      setView('done');
+    }, 320);
 
     // 实时推送（不阻断 UI；失败也不影响订单落库）
     setPushing('sending');
@@ -250,37 +256,37 @@ export default function CommissionPanel() {
           onClick={() => setView('list')}
           className="font-mono text-[9px] tracking-[0.16em] text-ink/40 transition-colors hover:text-ink"
         >
-          ← {lang === 'zh' ? '返回服务列表' : 'BACK'}
+          ← 返回服务列表
         </button>
 
-        <div className="rounded-lg border border-[#F35A17]/25 bg-[#F35A17]/[0.06] px-3 py-2.5">
-          <div className="font-mono text-[9px] tracking-[0.16em] text-[#F35A17]">
+        <div className="rounded-lg border border-[#E85D2A]/25 bg-[#E85D2A]/[0.06] px-3 py-2.5">
+          <div className="font-mono text-[9px] tracking-[0.16em] text-[#D94E1F]">
             {CATEGORY_EN[picked.category]}
           </div>
           <div className="mt-0.5 text-[12px] font-semibold text-ink">
             {picked.name}
           </div>
           <div className="mt-1 font-mono text-[9px] text-ink/40">
-            {priceLine(picked)} · {picked.turnaround}
+            <span className="op-num">{priceLine(picked)}</span> · {picked.turnaround}
           </div>
         </div>
 
         <div>
           <label className={LABEL} htmlFor="c-name">
-            {lang === 'zh' ? '你的称呼' : 'YOUR NAME'} *
+            您的称呼 *
           </label>
           <input
             id="c-name"
             className={FIELD}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={lang === 'zh' ? '怎么称呼你' : 'How should I address you'}
+            placeholder="怎么称呼您？如：陈先生 / 工作室名称"
             maxLength={32}
           />
         </div>
 
         <div>
-          <span className={LABEL}>{lang === 'zh' ? '联系方式' : 'CONTACT'} *</span>
+          <span className={LABEL}>联系方式 *</span>
           <div className="mb-1.5 grid grid-cols-3 gap-1">
             {CONTACT_TYPES.map((t) => (
               <button
@@ -288,13 +294,9 @@ export default function CommissionPanel() {
                 type="button"
                 onClick={() => setContactType(t)}
                 aria-pressed={contactType === t}
-                className={`rounded-md border py-1.5 font-mono text-[9px] tracking-[0.1em] transition-colors ${
-                  contactType === t
-                    ? 'border-[#F35A17]/60 bg-[#F35A17]/15 text-white'
-                    : 'border-black/[0.08] text-ink/45 hover:border-black/20'
-                }`}
+                className={`op-tab${contactType === t ? ' is-on' : ''}`}
               >
-                {t}
+                {t === 'WeChat' ? '微信 WeChat' : t === 'Email' ? '邮箱 Email' : 'QQ'}
               </button>
             ))}
           </div>
@@ -304,10 +306,10 @@ export default function CommissionPanel() {
             onChange={(e) => setContact(e.target.value)}
             placeholder={
               contactType === 'Email'
-                ? 'you@example.com'
+                ? '请输入您的常用邮箱地址'
                 : contactType === 'QQ'
-                  ? 'QQ 号'
-                  : '微信号'
+                  ? '请输入您的 QQ 号码'
+                  : '请输入您的微信号（方便添加好友沟通）'
             }
             maxLength={64}
           />
@@ -315,19 +317,17 @@ export default function CommissionPanel() {
 
         <div>
           <div className="flex items-baseline justify-between">
-            <span className={`${LABEL} mb-1`}>
-              {lang === 'zh' ? '预算区间' : 'BUDGET RANGE'}
-            </span>
-            <span className="font-mono text-[8px] tracking-[0.18em] text-ink/30">
-              CNY
+            <span className={`${LABEL} mb-1`}>预算范围 / BUDGET</span>
+            <span className="font-mono text-[8px] tracking-[0.14em] text-ink/30">
+              CNY（人民币）
             </span>
           </div>
 
           {/* 遥测：大号等宽数字随拖动跳动 */}
           <div className="op-budget-echo" aria-live="polite">
-            <span>{money(budgetMin)}</span>
+            <span className="op-num">{money(budgetMin)}</span>
             <i>—</i>
-            <span>
+            <span className="op-num">
               {money(budgetMax)}
               {budgetMax >= BUDGET_CEIL ? '+' : ''}
             </span>
@@ -370,7 +370,7 @@ export default function CommissionPanel() {
                   onClick={() => applyPreset(p.range)}
                   className={on ? 'is-on' : ''}
                 >
-                  <b>{p.label}</b>
+                  <b className="op-num">{p.label}</b>
                   <i>{p.hint}</i>
                 </button>
               );
@@ -380,18 +380,14 @@ export default function CommissionPanel() {
 
         <div>
           <label className={LABEL} htmlFor="c-brief">
-            {lang === 'zh' ? '需求描述' : 'PROJECT BRIEF'} *
+            需求描述 / PROJECT BRIEF *
           </label>
           <textarea
             id="c-brief"
             className={`${FIELD} min-h-[84px] resize-none leading-relaxed`}
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
-            placeholder={
-              lang === 'zh'
-                ? '用途、参考风格、时长、截止日期…'
-                : 'Use case, references, length, deadline…'
-            }
+            placeholder="请简述您的项目用途、参考风格（Reference）、预计时长、交付周期要求等..."
             maxLength={800}
           />
         </div>
@@ -402,16 +398,16 @@ export default function CommissionPanel() {
           aria-pressed={demo}
           className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${
             demo
-              ? 'border-[#F35A17]/45 bg-[#F35A17]/10'
+              ? 'border-[#E85D2A]/50 bg-[#E85D2A]/10'
               : 'border-black/[0.08] hover:border-black/20'
           }`}
         >
           <span className="text-left">
             <span className="block text-[11px] text-ink/80">
-              {lang === 'zh' ? '需要试听小样 demo' : 'Request a demo preview'}
+              申请免费试听小样（Demo Preview）
             </span>
             <span className="mt-0.5 block text-[8px] text-ink/30">
-              {lang === 'zh' ? '先听听方向是否对味' : 'Hear the direction first'}
+              先试听一段方向小样，满意后再推进正式合作
             </span>
           </span>
           <span aria-hidden className={`os-switch${demo ? ' is-on' : ''}`}>
@@ -420,7 +416,7 @@ export default function CommissionPanel() {
         </button>
 
         {error && (
-          <p className="rounded-md border border-[#F35A17]/30 bg-[#F35A17]/10 px-3 py-2 text-[10px] text-[#D94709]">
+          <p className="rounded-md border border-[#E85D2A]/30 bg-[#E85D2A]/10 px-3 py-2 text-[10px] text-[#D94E1F]">
             {error}
           </p>
         )}
@@ -428,14 +424,16 @@ export default function CommissionPanel() {
         <button
           type="button"
           onClick={submit}
-          className="os-btn-accent w-full rounded-lg py-3 font-mono text-[10px] font-semibold tracking-[0.22em]"
+          disabled={sending}
+          className="os-btn-accent w-full rounded-lg py-3 font-mono text-[10px] font-semibold tracking-[0.16em] disabled:opacity-70"
         >
-          {lang === 'zh' ? '提交委托' : 'SUBMIT REQUEST'}
+          {sending ? '正在发送需求...' : '提交定制需求 · SUBMIT'}
         </button>
-        <p className="text-center text-[8px] text-ink/25">
-          {lang === 'zh'
-            ? '提交后 48 小时内回复 · 不收取任何预付款'
-            : 'Reply within 48h · No upfront payment'}
+        <p className="text-center text-[8.5px] leading-relaxed text-ink/30">
+          48 小时内极速响应 · 确认合作前无需支付任何定金
+        </p>
+        <p className="text-center font-mono text-[7.5px] tracking-[0.14em] text-ink/20">
+          编曲制作 · 混音母带 · 3D 建模 · 商业定制
         </p>
       </div>
     );
