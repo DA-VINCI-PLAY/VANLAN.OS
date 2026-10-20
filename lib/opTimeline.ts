@@ -47,26 +47,26 @@ export const ACTS: Act[] = [
     accent: '#F35A17',
   },
   {
-    id: 'SOUND',
+    id: 'COMMISSION',
     code: 'ACT 02',
-    en: 'SOUND_TRACK',
-    zh: '原声 · 试听',
+    en: 'COMMISSION_STORE',
+    zh: '接单 · 工坊',
     start: 25,
     end: 50,
     startP: S(25),
     endP: S(50),
-    accent: '#FF8A3D',
+    accent: '#F35A17',
   },
   {
-    id: 'COMMISSION',
+    id: 'SOUND',
     code: 'ACT 03',
-    en: 'COMMISSION_STORE',
-    zh: '接单 · 商店',
+    en: 'SOUND_TRACK',
+    zh: '原声 · 专辑',
     start: 50,
     end: 75,
     startP: S(50),
     endP: S(75),
-    accent: '#F35A17',
+    accent: '#FF8A3D',
   },
   {
     id: 'CREDITS',
@@ -83,10 +83,10 @@ export const ACTS: Act[] = [
 
 export function actAt(p: number): ActId {
   const v = clamp01(p);
-  if (v < ACTS[1].startP) return 'INTRO';
-  if (v < ACTS[2].startP) return 'SOUND';
-  if (v < ACTS[3].startP) return 'COMMISSION';
-  return 'CREDITS';
+  for (let i = ACTS.length - 1; i >= 0; i -= 1) {
+    if (v >= ACTS[i].startP) return ACTS[i].id;
+  }
+  return ACTS[0].id;
 }
 
 export function actMeta(id: ActId): Act {
@@ -139,11 +139,12 @@ export interface HeadKey {
 /**
  * 四个章节各一个机位，章节内缓慢推进 —— 让每一次拖动都有连续反馈，
  * 而不是「跳四张图」。数值按 16:9 桌面构图调，窄屏由相机层再补偿。
+ * R55：幕序改为 名片 → 工坊 → 专辑 → 片尾，机位跟随各幕重排。
  */
 export const HEAD_KEYS: HeadKey[] = [
   { p: 0.0, yaw: 0.34, pitch: -0.02, x: 0.22, y: 0.0, camZ: 3.25, fov: 38, rim: 0.55, key: 1.0 },
-  { p: 0.278, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
-  { p: 0.556, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
+  { p: 0.278, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
+  { p: 0.556, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
   { p: 0.833, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },
   { p: 1.0, yaw: 1.5, pitch: 0.0, x: 0.0, y: 0.0, camZ: 4.1, fov: 46, rim: 0.45, key: 0.75 },
 ];

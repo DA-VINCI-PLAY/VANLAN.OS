@@ -27,7 +27,7 @@ const ACT_COPY: Record<
   },
   SOUND: {
     line1: 'SOUND',
-    line2: 'TRACK / 02',
+    line2: 'TRACK / 03',
     sub: '原创编曲 · 混音 · 音色设计',
     tag: 'OP // THEME SONG',
   },

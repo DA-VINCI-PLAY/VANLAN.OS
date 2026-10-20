@@ -39,10 +39,10 @@ function KemonoHead() {
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#e9e2d5',
-        roughness: 0.62,
-        metalness: 0.04,
-        envMapIntensity: 0.2,
+        color: '#f4f1ea',
+        roughness: 0.92,
+        metalness: 0,
+        envMapIntensity: 0.12,
       }),
     [],
   );
@@ -129,7 +129,7 @@ function CameraRig() {
   return null;
 }
 
-/* ---------------- 灯光：主光 + 暖环境 + 活力橙轮廓（白底靠明暗塑形） ---------------- */
+/* ---------------- 灯光：主光 + 暖环境 + 活力橙轮廓（石膏白靠明暗塑形） ---------------- */
 function ThreePointLights() {
   const rim = useRef<THREE.PointLight>(null);
   const key = useRef<THREE.DirectionalLight>(null);
@@ -140,15 +140,15 @@ function ThreePointLights() {
       rim.current.intensity = THREE.MathUtils.damp(rim.current.intensity, s.rim * 3.6, 5, delta);
     }
     if (key.current) {
-      key.current.intensity = THREE.MathUtils.damp(key.current.intensity, 1.15 * s.key, 5, delta);
+      key.current.intensity = THREE.MathUtils.damp(key.current.intensity, 1.45 * s.key, 5, delta);
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.34} color="#f2ead9" />
-      <directionalLight ref={key} position={[3.2, 3.0, 3.6]} color="#fff8ee" intensity={1.55} />
-      <directionalLight position={[-3.6, 0.6, 2.2]} color="#d9e2ec" intensity={0.24} />
+      <ambientLight intensity={0.55} color="#f6efe2" />
+      <directionalLight ref={key} position={[3.2, 3.0, 3.6]} color="#fff8ee" intensity={1.9} />
+      <directionalLight position={[-3.6, 0.6, 2.2]} color="#e3e7ee" intensity={0.32} />
       <pointLight ref={rim} position={[-0.6, 1.5, -2.4]} color="#f35a17" intensity={2.2} distance={9} decay={2} />
     </>
   );
@@ -194,6 +194,10 @@ export default function KemonoHeadCanvas() {
         frameloop="demand"
         dpr={[1, 1.5]}
         shadows={false}
+        onCreated={(state) => {
+          // ACES 会压灰近白材质，抬高曝光还原石膏白
+          state.gl.toneMappingExposure = 1.16;
+        }}
         gl={{
           alpha: true,
           antialias: true,

@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * StageOverlay —— 前景分镜层（R52）
+ * StageOverlay —— 前景分镜层（R52 / R55）
  *
- * 时间轴进入哪个 ACT，就渲染哪一块前景：
- *   INTRO      名片 + 7 大社交矩阵
+ * 时间轴进入哪个 ACT，就渲染哪一块前景（R55 幕序：名片 → 工坊 → 专辑 → 片尾）：
+ *   INTRO      名片 + 社交图标矩阵
+ *   COMMISSION 接单工坊（复用 CommissionPanel，含下单表单）
  *   SOUND      内嵌试听器（波形 / 曲目 / 时间码）
- *   COMMISSION 接单商城（复用 CommissionPanel，含下单表单）
  *   CREDITS    系统状态 + 语言切换 + 管理员终端入口
  *
  * 只在 act 变化时重渲染（subscribeAct → useState），拖动过程中不触发任何 React 更新。
@@ -25,7 +25,12 @@ import { ALBUMS } from '@/content/albums';
 import { IDENTITY } from '@/content/about';
 import { SOCIALS } from '@/content/social';
 import { qqAdd } from '@/lib/qq';
+import BrandIcon from '@/components/op/BrandIcon';
 import CommissionPanel from '@/components/ui/CommissionPanel';
+
+/** 跳到指定幕的起始位置 */
+const gotoAct = (id: ActId) =>
+  setProgress((ACTS.find((a) => a.id === id) ?? ACTS[0]).startP + 0.001);
 
 /** 曲目用的 mm:ss（时间轴那套 00:00:00 是 90 秒总长的归一化时间码） */
 const fmt = (sec: number): string => {
@@ -120,12 +125,20 @@ function IntroStage() {
           : 'Composition, mixing, 3D characters and interactive visuals — making ideas audible and playable.'}
       </p>
 
-      {/* 联系直达 */}
+      {/* 联系直达：图标 + 精简文字 */}
       <div className="op-contact-row">
         {qq && (
           <button type="button" onClick={() => fire(qq)} className="op-contact-btn">
-            <span className="op-dot-blue" />
-            QQ <b>{qq.value}</b>
+            <svg viewBox="0 0 24 24" className="op-cicon" aria-hidden>
+              <path
+                d="M12 4.5c-4.5 0-8 3-8 6.8 0 2.2 1.2 4.1 3.1 5.4l-.6 2.8 3.2-1.6c.7.2 1.5.3 2.3.3 4.5 0 8-3 8-6.9s-3.5-6.8-8-6.8Z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <b>{qq.value}</b>
             <em>ADD</em>
           </button>
         )}
@@ -135,13 +148,33 @@ function IntroStage() {
             onClick={() => copy(email.value, email.id)}
             className="op-contact-btn"
           >
-            <span className="op-dot-red" />
-            EMAIL <b>{copied === email.id ? 'COPIED' : 'COPY'}</b>
+            <svg viewBox="0 0 24 24" className="op-cicon" aria-hidden>
+              <rect
+                x="3.5"
+                y="5.5"
+                width="17"
+                height="13"
+                rx="2.6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              />
+              <path
+                d="m4.5 7.5 7.5 5.5 7.5-5.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <b>{copied === email.id ? 'COPIED' : 'EMAIL'}</b>
+            <em>COPY</em>
           </button>
         )}
       </div>
 
-      {/* 社交矩阵 */}
+      {/* 社交矩阵：纯图标，hover/无障碍由 title 与 aria-label 兼底 */}
       <div className="op-chips">
         {chips.map((s) => (
           <a
@@ -156,24 +189,25 @@ function IntroStage() {
               }
             }}
             className="op-chip"
+            title={s.platform}
+            aria-label={s.platform}
           >
-            <span>{s.platform}</span>
-            <i aria-hidden>↗</i>
+            <BrandIcon id={s.id} />
           </a>
         ))}
       </div>
 
       <div className="op-card-foot">
         <span>SCROLL / DRAG →</span>
-        <button type="button" onClick={() => setProgress(ACTS[1].startP + 0.001)}>
-          NEXT · SOUND_TRACK
+        <button type="button" onClick={() => gotoAct('COMMISSION')}>
+          工坊 →
         </button>
       </div>
     </section>
   );
 }
 
-/* ============ ACT 02 · 试听 ============ */
+/* ============ ACT 03 · 专辑试听 ============ */
 function SoundStage() {
   const [albumIdx, setAlbumIdx] = useState(0);
   const [trackIdx, setTrackIdx] = useState(0);
@@ -322,8 +356,8 @@ function SoundStage() {
 
       <div className="op-card-foot">
         <span>{album.description.slice(0, 34)}…</span>
-        <button type="button" onClick={() => setProgress(ACTS[2].startP + 0.001)}>
-          NEXT · STORE →
+        <button type="button" onClick={() => gotoAct('CREDITS')}>
+          片尾 →
         </button>
       </div>
 
@@ -346,7 +380,7 @@ function SoundStage() {
   );
 }
 
-/* ============ ACT 03 · 接单商城 ============ */
+/* ============ ACT 02 · 接单工坊 ============ */
 function CommissionStage() {
   return (
     <section className="op-panel op-panel-store" aria-label="定制接单">
@@ -359,6 +393,12 @@ function CommissionStage() {
       </div>
       <div className="op-store-body os-scroll" data-scroll>
         <CommissionPanel />
+      </div>
+      <div className="op-card-foot">
+        <span className="op-foot-note">COMPOSITION · MIXING · 3D · CUSTOM</span>
+        <button type="button" onClick={() => gotoAct('SOUND')}>
+          专辑 →
+        </button>
       </div>
     </section>
   );
@@ -392,7 +432,7 @@ function CreditsStage() {
         </li>
         <li>
           <span>BUILD</span>
-          <b>R52 · 2D OP STAGE</b>
+          <b>R55 · 2D OP STAGE</b>
         </li>
       </ul>
 
