@@ -18,7 +18,7 @@ export const SUBMISSION_KEY = 'vanlan_submissions';
 
 /** 默认星表版本：升级后老存档会自动补进新增的默认星（已删的不复活） */
 const STAR_VER_KEY = 'vanlan_kepler_ver';
-const STAR_VER = 2;
+const STAR_VER = 3;
 
 /** 恒星-专辑 / 行星-单曲 / 流星-随笔碎片 */
 export type StarKind = 'star' | 'planet' | 'meteor';
@@ -55,6 +55,8 @@ export interface KeplerStar {
   cover: string;
   /** 音频 URL（空 = Web Audio 氛围八音盒兜底） */
   audio: string;
+  /** Spotify 曲目 ID（可选，卡片里给一个「在 Spotify 打开」的出口） */
+  spotify?: string;
   kind: StarKind;
   /** 星体颜色，空 = 按 kind 取默认 */
   color: string;
@@ -268,76 +270,76 @@ const OWN_STARS: KeplerStar[] = [
    点开只有「歌名 / 歌手 / 第几首」—— 星图负责记住你听过什么。
    ------------------------------------------------------------------ */
 
-const PLAYLIST: [string, string][] = [
-  ['Tomorrow will be fine.', '蘇打綠'],
-  ['Perfect Celebrity', 'Lady Gaga'],
-  ['Sympathy is a knife', 'Charli xcx'],
-  ['The One That Got Away', 'Katy Perry'],
-  ['Dying for You', 'Charli xcx'],
-  ['Chains of Love', 'Charli xcx'],
-  ['費洛蒙小姐', '吳青峰'],
-  ['蓋亞', '林憶蓮'],
-  ['ALIEN SUPERSTAR', 'Beyoncé'],
-  ['絲路', '梁靜茹'],
-  ['Wenn Ich Tanzen Will', 'Theater an der Wien'],
-  ['Rebel Heart', 'Madonna'],
-  ['飛鳥', '魏如萱'],
-  ['蜕 (Peel The Skin)', 'Siyan'],
-  ['生鏽遊樂場', '蔡健雅'],
-  ['Vivre à en crever', 'Mozart Opera Rock'],
-  ['Dors mon ange', 'Mozart Opera Rock'],
-  ['極限', '徐佳瑩'],
-  ['Just Another Day', 'Next To Normal'],
-  ['nowhere, nobody', 'Ariana Grande'],
-  ['克卜勒', '孙燕姿'],
-  ['愛錯', '王力宏'],
-  ['刻在我心底的名字', '盧廣仲'],
-  ["L'AMOUR DE MA VIE", 'Billie Eilish'],
-  ['太空人', '吳青峰'],
-  ['The Faith', '尚雯婕'],
-  ['bandaids', 'Katy Perry'],
-  ['Pink Pony Club', 'Chappell Roan'],
-  ['Green Light', 'Lorde'],
-  ['Summerboy', 'Lady Gaga'],
-  ['我會 我會', '吳青峰'],
-  ['還你茉莉', '單依純'],
-  ['我的滑板鞋2016', '華晨宇'],
-  ['Plastic Doll', 'Lady Gaga'],
-  ['How Bad Do U Want Me', 'Lady Gaga'],
-  ['Vanish Into You', 'Lady Gaga'],
-  ['LoveDrug', 'Lady Gaga'],
-  ['good 4 u', 'Olivia Rodrigo'],
-  ['Witness', 'Katy Perry'],
-  ['老人與海', '鄧紫棋'],
-  ['Speechless', 'Lady Gaga'],
-  ['Paparazzi', 'Lady Gaga'],
-  ['champagne problems', 'Taylor Swift'],
-  ['tolerate it', 'Taylor Swift'],
-  ['Tightrope', 'Michelle Williams'],
-  ['倒流時間', '鄧紫棋'],
-  ["I'm so Stupid", 'Madonna'],
-  ['So Long, London', 'Taylor Swift'],
-  ['willow', 'Taylor Swift'],
-  ['illicit affairs', 'Taylor Swift'],
-  ['Call It What You Want', 'Taylor Swift'],
-  ['Applause', 'Lady Gaga'],
-  ['Roulette', 'Katy Perry'],
-  ["I'm not yours", '蔡依林'],
-  ["Now That We Don't Talk", 'Taylor Swift'],
-  ['I Have Never Felt More Alive', 'Madison Beer'],
-  ['Circus', 'Britney Spears'],
-  ['TRUSTFALL', 'P!nk'],
-  ['Rich, White, Straight Men', 'Kesha'],
-  ['HELL', '鄧紫棋'],
-  ['Swine', 'Lady Gaga'],
-  ['天空沒有極限', '鄧紫棋'],
-  ['Dumb Blonde', 'Avril Lavigne'],
-  ['Dance In The Dark', 'Lady Gaga'],
-  ['Bois Lie', 'Avril Lavigne'],
-  ['Gypsy', 'Lady Gaga'],
-  ['Cannonball', 'Avril Lavigne'],
-  ['Monster', 'Lady Gaga'],
-  ['Getting Older', 'Billie Eilish'],
+const PLAYLIST: [string, string, string, string][] = [
+  ['Tomorrow will be fine.', '蘇打綠', '3tzi8a5FEO3bczurgbNuAJ', 'https://p.scdn.co/mp3-preview/7ab76650e08de6065201345dac69000039a30239'], // 1
+  ['Perfect Celebrity', 'Lady Gaga', '0Tqn5Th0wk55eLdga96vZM', 'https://p.scdn.co/mp3-preview/8c849021bc5029df6eaf819d60d89ca190b638ec'], // 2
+  ['Sympathy is a knife', 'Charli xcx', '5c9tBmJKbTdn1vhzXHeAwW', 'https://p.scdn.co/mp3-preview/9ae5e70bf871a591034c923a5e361d2f00cf3904'], // 3
+  ['The One That Got Away', 'Katy Perry', '3oL3XRtkP1WVbMxf7dtTdu', 'https://p.scdn.co/mp3-preview/5a1bf93027db1e2bd8bc7cd71fc465ba4c5126dc'], // 4
+  ['Dying for You', 'Charli xcx', '0T3sHoiR3t9HtwbIOgTI7J', 'https://p.scdn.co/mp3-preview/77b0eb33af6948a7c0d7749f5e6a5c1e2c326b8b'], // 5
+  ['Chains of Love', 'Charli xcx', '77qLAmRzMPetmXywybpH15', 'https://p.scdn.co/mp3-preview/421ee63ddb138e0f86cf7f0d4144269d317eb02d'], // 6
+  ['費洛蒙小姐', '吳青峰', '43awhRjJRYcBdfyAIGmvzN', 'https://p.scdn.co/mp3-preview/3534a125ed01dba83782f3648c765da38d18b8b5'], // 7
+  ['蓋亞', '林憶蓮', '0VVpMr7XqPiJMuIhzzMorh', 'https://p.scdn.co/mp3-preview/628b22302da356e5213ef6d3d8cd91732bbdffe5'], // 8
+  ['ALIEN SUPERSTAR', 'Beyoncé', '1Hohk6AufHZOrrhMXZppax', 'https://p.scdn.co/mp3-preview/2f27d82d984f8f84a017a44b7992a7723ec8b6c4'], // 9
+  ['絲路', '梁靜茹', '3n1pQaVXdH9KGW8z2BbqAP', 'https://p.scdn.co/mp3-preview/06e9bea54adba652ed473429c0614c6a603770f2'], // 10
+  ['Wenn Ich Tanzen Will', 'Theater an der Wien Ensemble, Orchester der Vereinigten Bühnen Wien', '3oiRwDSqLWAUyELhUCYwar', 'https://p.scdn.co/mp3-preview/8e988d9dd1152fbb4adfc418496340366a66e80e'], // 11
+  ['Rebel Heart', 'Madonna', '1cCVKNYOBi99Jo3S2iWudL', 'https://p.scdn.co/mp3-preview/198aa38b5c274010ef523ddedd4e1f4c61f42e39'], // 12
+  ['飛鳥', '魏如萱', '4jIDRIjSAoPdcoiuO5vJ7u', 'https://p.scdn.co/mp3-preview/5d0f4e66d6e546206a79c01fc84a84b09939b589'], // 13
+  ['蜕 (Peel The Skin)', 'Siyan', '1kZsvem68TRERAoPvVR1qP', ''], // 14
+  ['生鏽遊樂場', '蔡健雅', '4EjU1O2s7i73CVNZGS8CNn', 'https://p.scdn.co/mp3-preview/5e729e7454f5a662fe4a7cb85403016b8de6b3c1'], // 15
+  ['Vivre à en crever', 'Mozart Opera Rock', '7JDcceMelimTjxLmWMOjMd', 'https://p.scdn.co/mp3-preview/1f3ee32807ea4f112ca46222bad597874bf452d7'], // 16
+  ['Dors mon ange', 'Mozart Opera Rock', '265Er1GtG5t9e1c4FStYQZ', 'https://p.scdn.co/mp3-preview/46f1233ecf79ad1d9f06327a3ebd45c427a64bef'], // 17
+  ['極限', '徐佳瑩', '1nNzdeQAbkMpiHNCcJhuGv', 'https://p.scdn.co/mp3-preview/cc91c4650d3afe5effcbac7e09af7c2bbbd5d444'], // 18
+  ['Just Another Day', 'Next To Normal 2024 Original London Company', '6bhjbZGzuderX1tYOvGpAS', 'https://p.scdn.co/mp3-preview/45f8581fbe9a6c5138ef0aee5f94de7c899530cd'], // 19
+  ['nowhere, nobody', 'Ariana Grande', '5JbnupagBhD0AanbkCELdH', 'https://p.scdn.co/mp3-preview/b9e978df77e9ede079f075102759dddf6f9b68c0'], // 20
+  ['克卜勒', '孙燕姿', '15tD731GK0VYsmd1Im4C7q', 'https://p.scdn.co/mp3-preview/f6a29d8c65d61d566f941f5330edb3bfe74b7a67'], // 21
+  ['愛錯', '王力宏', '4vdX5mQE0oXkflFqsqQkUP', 'https://p.scdn.co/mp3-preview/e58d6342271f243b16323c3c0ce29f7881390c44'], // 22
+  ['刻在我心底的名字 (Your Name Engraved Herein) - 電影<刻在你心底的名字>主題曲', '盧廣仲', '3OC84eKMxRJ4x0Hcwl9i4i', 'https://p.scdn.co/mp3-preview/3343d7c68b4098437f7a4137ce8101954ce2ab73'], // 23
+  ['L’AMOUR DE MA VIE', 'Billie Eilish', '6fPan2saHdFaIHuTSatORv', 'https://p.scdn.co/mp3-preview/c1c545337b56496e5f098e1f4190f95043369b45'], // 24
+  ['太空人', '吳青峰', '0aIF8XCR5hVmzN6rI7tpOv', 'https://p.scdn.co/mp3-preview/18e877a57d457efa03b3ee3645ba43dd06541278'], // 25
+  ['The Faith', '尚雯婕', '7dg3GoD2vXfjRTXMNOMGri', 'https://p.scdn.co/mp3-preview/1066dc5aef8374ed37155de8e31446b9c2748e24'], // 26
+  ['bandaids', 'Katy Perry', '7vlkotgJCvYzVrmRqDYNYh', 'https://p.scdn.co/mp3-preview/66222c6b21866205793812386af14159c8a93025'], // 27
+  ['Pink Pony Club', 'Chappell Roan', '1k2pQc5i348DCHwbn5KTdc', 'https://p.scdn.co/mp3-preview/064dd33ec1b86bb205a7e6875a247d61da32e8e9'], // 28
+  ['Green Light', 'Lorde', '6ie2Bw3xLj2JcGowOlcMhb', 'https://p.scdn.co/mp3-preview/4ea9fa151649665d85f266dcb65646e5c716227e'], // 29
+  ['Summerboy', 'Lady Gaga', '17xFcSuciJ9O10WqDERQep', 'https://p.scdn.co/mp3-preview/3c83eea3817a5512c76b226c282d65311454a6ba'], // 30
+  ['我會 我會', '吳青峰', '5w4wpfcnMxOt0pbxzLNT1j', 'https://p.scdn.co/mp3-preview/d0b32ba8fba70133478b1575a25f05bb6bcf0189'], // 31
+  ['還你茉莉', '單依純', '7yztuchKRg40qPNw3ihlCL', 'https://p.scdn.co/mp3-preview/8a4216e3cdc815c3dbc8b90f41fce02b75daaef2'], // 32
+  ['我的滑板鞋2016', '華晨宇', '1PjpweQVZBZrH7fYWFB6h0', 'https://p.scdn.co/mp3-preview/18494cfda7ebee1f790c890935a841e7201ee301'], // 33
+  ['Plastic Doll', 'Lady Gaga', '3CidPLqWXqgesJlwYVJZdy', 'https://p.scdn.co/mp3-preview/9fac12e52b67635d7efbd0d4687b7c1b6ff6e094'], // 34
+  ['How Bad Do U Want Me', 'Lady Gaga', '2rvd6akG8qEtBNUvQpN7iY', 'https://p.scdn.co/mp3-preview/f443b8f88b93d0a0f9e8bb5267cd45ed3cdca150'], // 35
+  ['Vanish Into You', 'Lady Gaga', '5IoPnNiYAOvHHJpz13wzRL', 'https://p.scdn.co/mp3-preview/32e68e4ef93bcc4d8edb23b948b9a30ce748fa6c'], // 36
+  ['LoveDrug', 'Lady Gaga', '3hcivoswCVR8LZkHR8MYA5', 'https://p.scdn.co/mp3-preview/2127095bc2b11bc22e598a9900e72c41cc6acb4a'], // 37
+  ['good 4 u', 'Olivia Rodrigo', '4ZtFanR9U6ndgddUvNcjcG', 'https://p.scdn.co/mp3-preview/b842388e0a8bb4c8667f77d645b25fdcd50961c1'], // 38
+  ['Witness', 'Katy Perry', '6EzuVdWmzgOBmqHpzbbzfQ', 'https://p.scdn.co/mp3-preview/a651ad3be63029170f474fb14d286a2f004ea2da'], // 39
+  ['老人與海', '鄧紫棋', '0Sk5Fa1PS5BfAHSWJ2HjAo', 'https://p.scdn.co/mp3-preview/770c46906311f819dceefdde7f2f2303fca9ca80'], // 40
+  ['Speechless', 'Lady Gaga', '0hwfOlSrYQ36ULiphozHgJ', 'https://p.scdn.co/mp3-preview/7a59dcc8015d4ac6dec691c5e6d170a08fe0518e'], // 41
+  ['Paparazzi', 'Lady Gaga', '02XnQdf7sipaKBBHixz3Zp', 'https://p.scdn.co/mp3-preview/769475c6a0156d8458fa41b1110860d8ff41a3cf'], // 42
+  ['champagne problems', 'Taylor Swift', '0sY6ZUTh4yoctD8VIXz339', 'https://p.scdn.co/mp3-preview/033519b1930ef8cf19f2e42bfc31edc97f0bfa1f'], // 43
+  ['tolerate it', 'Taylor Swift', '0PurA4JVJ8YQgSVopY8fn6', 'https://p.scdn.co/mp3-preview/b63028cc03668a0b097c4bdf1f7a7cfe2970e276'], // 44
+  ['Tightrope', 'Michelle Williams', '0GVuLQtPXFaL18ijEOqoAa', 'https://p.scdn.co/mp3-preview/a0c94ba385f00edd86d80a99812708c7a2d35073'], // 45
+  ['倒流時間', '鄧紫棋', '0vrLUOZBlfezUK7k1rxmsw', 'https://p.scdn.co/mp3-preview/0783f35932fbcf101806ca3240c1b77d662724a2'], // 46
+  ['I\'m so Stupid', 'Madonna', '2mdKGSHfYj97sPr1rjyLEp', 'https://p.scdn.co/mp3-preview/5c5f645980b6f46b3caa2cc43b5bd184f17f3dc9'], // 47
+  ['So Long, London', 'Taylor Swift', '7wAkQFShJ27V8362MqevQr', 'https://p.scdn.co/mp3-preview/4f43fbe8b01d36f14d576fb976368721ccb8cb8a'], // 48
+  ['willow', 'Taylor Swift', '0lx2cLdOt3piJbcaXIV74f', 'https://p.scdn.co/mp3-preview/6c828e79c55b0fe731ef9029ee2f2f2b2ff9f032'], // 49
+  ['illicit affairs', 'Taylor Swift', '2NmsngXHeC1GQ9wWrzhOMf', 'https://p.scdn.co/mp3-preview/93886065c09a3a093391c2b4dd01b7a7827f0a79'], // 50
+  ['Call It What You Want', 'Taylor Swift', '1GwMQaZz6Au3QLDbjbMdme', 'https://p.scdn.co/mp3-preview/3188f3522112569b1406de6676e6211456d1ce30'], // 51
+  ['Applause', 'Lady Gaga', '5ka2ajep9OAvU5Sgduhiex', 'https://p.scdn.co/mp3-preview/b8c840f3b4d07e6021e0a2028f5c3c6e08af7f3a'], // 52
+  ['Roulette', 'Katy Perry', '2rk4s5NBhtHhhJIfjoaWES', 'https://p.scdn.co/mp3-preview/4eca3d9cf05a3537edc85daee1ea0f2f58b0684e'], // 53
+  ['I\'m not yours (feat. 安室奈美惠)', 'JOLIN蔡依林, 安室奈美惠', '0k4FG9l3OrxLt5NQU3uEkR', 'https://p.scdn.co/mp3-preview/19d84405532fe733076d442c652a4d46f4d6b0a6'], // 54
+  ['Now That We Don\'t Talk (Taylor\'s Version) (From The Vault)', 'Taylor Swift', '5KD6AEm19QnMbfWpfoOHMl', 'https://p.scdn.co/mp3-preview/403045fb66ac0dd6519f941d571b0f06537c89cd'], // 55
+  ['I Have Never Felt More Alive - from the feature film "Fall"', 'Madison Beer', '3Hz0axxTsemGQSNK3BiRa9', 'https://p.scdn.co/mp3-preview/27609ca56d5c1cae1d675a362869d64d9d0c44d0'], // 56
+  ['Circus', 'Britney Spears', '7jk7gqyEonmVVYahZN5zhW', 'https://p.scdn.co/mp3-preview/b77fb43c0133e94eacdfb4c2f6310a869b8cfaa0'], // 57
+  ['TRUSTFALL', 'P!nk', '1gUwi1o1S9W9P0FQgJdY8s', 'https://p.scdn.co/mp3-preview/1b33af874205626b878ddcf415f39118d0435a34'], // 58
+  ['Rich, White, Straight Men', 'Kesha', '0esnwtbSdqUZQoboUvApH4', 'https://p.scdn.co/mp3-preview/00705dd4778cd914a1c6572604b0b8296a1f853f'], // 59
+  ['HELL', '鄧紫棋', '3KYs6A8fOWMEX0sjYxA4gY', 'https://p.scdn.co/mp3-preview/2b812288008aafc67c42fdefee359d6f619c5052'], // 60
+  ['Swine', 'Lady Gaga', '6AczxDV0grtXZZ7h8xI5cS', 'https://p.scdn.co/mp3-preview/5eee0aff4b646a77d6f729a639a68d3966c22dc4'], // 61
+  ['天空沒有極限', '鄧紫棋', '4nivAUgvOrWdkv44kjAlxs', 'https://p.scdn.co/mp3-preview/42a528692c54dd34524ea9ca882f4bd86f656251'], // 62
+  ['Dumb Blonde (feat. Nicki Minaj)', 'Avril Lavigne, Nicki Minaj', '1Spmq0UazGU6ovMIlGldZX', 'https://p.scdn.co/mp3-preview/2bd3a3929391583222318ee6976662276a48e9da'], // 63
+  ['Dance In The Dark', 'Lady Gaga', '6Qh10T7u43YciJsJa99R3v', 'https://p.scdn.co/mp3-preview/b8c51ceaf95a1f32516ca8bf1b03bddf5e884150'], // 64
+  ['Bois Lie (feat. Machine Gun Kelly)', 'Avril Lavigne, mgk', '2lHktSigIAZqf7BkA7NRS7', 'https://p.scdn.co/mp3-preview/5249e290c9704c8411d6ab01a075640db747c6f2'], // 65
+  ['Gypsy', 'Lady Gaga', '2BnfMbmWbfqi7ac5y7GHXn', 'https://p.scdn.co/mp3-preview/cb03791a6d54fc0b15bfc624d5fb6636d79544b9'], // 66
+  ['Cannonball', 'Avril Lavigne', '6xXzhKhNNmBJ4q0Qzw485o', 'https://p.scdn.co/mp3-preview/5e9ecfc64819eb8c74687ff881c3e05294e429b1'], // 67
+  ['Monster', 'Lady Gaga', '2WgyOP8Z1D6GQYumCwH4Dk', 'https://p.scdn.co/mp3-preview/28c012655ff54128299060f1886383c9c0099d4f'], // 68
+  ['Getting Older', 'Billie Eilish', '4HOryCnbme0zBnF8LWij3f', 'https://p.scdn.co/mp3-preview/9a679878063b9c440d6f611d42811737acfdece4'], // 69
 ];
 
 export const PLAYLIST_ALBUM = '克卜勒计划';
@@ -353,7 +355,7 @@ function sphereAt(i: number, n: number) {
 
 const PLAYLIST_TINT = ['#DCEAFF', '#9CC8FF', '#7FA8E8', '#B8D6FF', '#8FBDF5'];
 
-const PLAYLIST_STARS: KeplerStar[] = PLAYLIST.map(([name, artist], i) => {
+const PLAYLIST_STARS: KeplerStar[] = PLAYLIST.map(([name, artist, spotify, preview], i) => {
   const orbit = sphereAt(i, PLAYLIST.length);
   const namesake = name === '克卜勒';
   return {
@@ -363,7 +365,9 @@ const PLAYLIST_STARS: KeplerStar[] = PLAYLIST.map(([name, artist], i) => {
     lyric: '',
     story: `${artist}\n\n歌单《克卜勒计划》第 ${i + 1} 首。`,
     cover: '',
-    audio: '',
+    // Spotify 的 30 秒试听直链：加载不到会自动落回合成试听
+    audio: preview,
+    spotify,
     // 同名那首升成主星，其余都是安静的小流星
     kind: namesake ? 'star' : 'meteor',
     color: namesake ? '#EAF4FF' : PLAYLIST_TINT[i % PLAYLIST_TINT.length],
@@ -437,8 +441,14 @@ export const useKeplerStars = create<StarState>((set, get) => ({
       if (readJSON<number>(STAR_VER_KEY) !== STAR_VER) {
         const have = new Set(fixed.map((s) => s.id));
         const missing = DEFAULT_STARS.filter((s) => !have.has(s.id));
-        if (missing.length > 0) {
-          const merged = [...fixed, ...missing];
+        // 歌单星的内容（试听直链 / Spotify ID）以后可能整批更新，直接以默认表为准
+        const refreshed = fixed.map((s) => {
+          if (!s.id.startsWith('kp-pl-')) return s;
+          const def = DEFAULT_STARS.find((d) => d.id === s.id);
+          return def ? { ...s, audio: def.audio, spotify: def.spotify } : s;
+        });
+        const merged = [...refreshed, ...missing];
+        if (missing.length > 0 || refreshed.some((s, i) => s !== fixed[i])) {
           writeJSON(KEPLER_KEY, merged);
           set({ stars: merged });
         }

@@ -37,6 +37,7 @@ const EMPTY: StarDraft = {
   story: '',
   cover: '',
   audio: '',
+  spotify: '',
   kind: 'planet',
   color: '',
   year: String(new Date().getFullYear()),
@@ -44,6 +45,12 @@ const EMPTY: StarDraft = {
 };
 
 const deg = (rad: number) => Math.round((rad * 180) / Math.PI);
+
+/** 允许直接粘 Spotify 链接，自动抽出 22 位曲目 ID */
+const spotifyId = (v: string) => {
+  const m = v.match(/track[/:]([A-Za-z0-9]{22})/);
+  return m ? m[1] : v.trim();
+};
 
 export function KeplerStarsPanel() {
   const stars = useKeplerStars((s) => s.stars);
@@ -68,6 +75,7 @@ export function KeplerStarsPanel() {
       story: draft.story.trim(),
       cover: (draft.cover || '').trim(),
       audio: (draft.audio || '').trim(),
+      spotify: spotifyId(draft.spotify || ''),
       color: (draft.color || '').trim(),
       year: (draft.year || '').trim(),
       roles: (draft.roles || '').trim(),
@@ -91,6 +99,7 @@ export function KeplerStarsPanel() {
       story: s.story,
       cover: s.cover,
       audio: s.audio,
+      spotify: s.spotify ?? '',
       kind: s.kind,
       color: s.color,
       year: s.year,
@@ -206,6 +215,17 @@ export function KeplerStarsPanel() {
                 placeholder="/audio/xx.mp3"
               />
             </div>
+          </div>
+
+          <div>
+            <label className={LABEL} htmlFor="k-spotify">Spotify 曲目链接（可选）</label>
+            <input
+              id="k-spotify"
+              className={FIELD}
+              value={draft.spotify}
+              onChange={(e) => set('spotify', e.target.value)}
+              placeholder="https://open.spotify.com/track/…"
+            />
           </div>
 
           <div>

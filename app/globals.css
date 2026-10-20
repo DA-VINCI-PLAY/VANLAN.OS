@@ -4777,6 +4777,24 @@ select:focus-visible {
   letter-spacing: 0.1em;
   color: rgba(232, 240, 255, 0.4);
 }
+.kp-spotify-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border: 1px solid rgba(186, 216, 255, 0.22);
+  border-radius: 999px;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(200, 224, 255, 0.72);
+  text-decoration: none;
+  transition: color 0.24s ease, border-color 0.24s ease, background 0.24s ease;
+}
+.kp-spotify-link:hover {
+  color: #eaf3ff;
+  border-color: rgba(186, 216, 255, 0.5);
+  background: rgba(186, 216, 255, 0.1);
+}
 
 .kp-lyric {
   margin: 0;

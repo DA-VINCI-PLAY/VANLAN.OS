@@ -54,8 +54,10 @@ export default function StoryCard() {
   const [now, setNow] = useState(0);
   const [total, setTotal] = useState(0);
   const [muted, setMuted] = useState(false);
+  /** 外链音源（Spotify 试听直链）拉不到时，退回合成试听，别让播放键变成死的 */
+  const [broken, setBroken] = useState(false);
 
-  const hasAudio = Boolean(star?.audio);
+  const hasAudio = Boolean(star?.audio) && !broken;
 
   /* 换星 / 关卡片：全停 */
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function StoryCard() {
     setProgress(0);
     setNow(0);
     setTotal(0);
+    setBroken(false);
     const a = audioRef.current;
     if (a) {
       a.pause();
@@ -199,6 +202,16 @@ export default function StoryCard() {
               <span className="kp-track-sub">
                 {star.year || '——'} · {star.roles || 'VANLAN'}
               </span>
+              {star.spotify && (
+                <a
+                  className="kp-spotify-link"
+                  href={`https://open.spotify.com/track/${star.spotify}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  在 Spotify 打开 ↗
+                </a>
+              )}
             </div>
           </div>
 
@@ -232,6 +245,10 @@ export default function StoryCard() {
               onEnded={() => {
                 setPlaying(false);
                 setProgress(0);
+              }}
+              onError={() => {
+                setBroken(true);
+                setPlaying(false);
               }}
               muted={muted}
             />
@@ -297,7 +314,13 @@ export default function StoryCard() {
 
           <div className="kp-card-foot">
             <span className="kp-foot-hint">
-              {hasAudio ? '真实音源' : '未填音频 · 已启用合成试听'}
+              {hasAudio
+                ? star?.spotify
+                  ? 'Spotify 试听 · 30 秒'
+                  : '真实音源'
+                : broken
+                  ? '外链音源连不上 · 已切合成试听'
+                  : '未填音频 · 已启用合成试听'}
             </span>
             <button type="button" className="kp-next" onClick={goNext}>
               下一颗星 ➔
