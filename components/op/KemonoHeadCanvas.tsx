@@ -37,8 +37,8 @@ useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
  */
 function stageProfile(width: number) {
   if (width < 768) {
-    // 手机：35vh 舞台，稍拉远一点避免兽头贴边
-    return { camZ: 0.32, fov: 2, eyeY: 0.06, lookY: 0.02 };
+    // 手机：38vh 舞台，稍微拉远一点避免兽头贴边
+    return { camZ: 0.26, fov: 2, eyeY: 0.06, lookY: 0.02 };
   }
   if (width < 1024) {
     return { camZ: 0.22, fov: 1, eyeY: 0.08, lookY: 0.04 };

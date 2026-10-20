@@ -813,13 +813,18 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
     width: auto;
     max-height: 54vh;
     overflow-y: auto;
+    scrollbar-width: none; /* 抽屉内滚但不出滚动条，手机上那条灰轨太丑 */
     padding: 16px 16px 12px;
     gap: 12px;
     border-radius: 18px;
   }
+  .op-panel::-webkit-scrollbar { display: none; }
+  /* 片尾抽屉内容偏短，压到 50vh 免得中间一大块空场；首幕要给作品轮播留位 */
+  .op-panel-credits { min-height: 50vh; }
   /* 商城面板：外层不滚，滚动权交给 .op-store-body 单层 */
   .op-panel-store {
     max-height: 62vh;
+    min-height: 0;
     overflow: hidden;
   }
   .op-panel-store .op-store-body {
@@ -3878,10 +3883,10 @@ select:focus-visible {
   .op-timeline { display: none; }
   .op-meta-tl { display: none; }
 
-  /* —— 7.2 3D 舞台：锁定上方 35% —— */
+  /* —— 7.2 3D 舞台：锁定上方 38%（R72：35→38，兽头更有存在感） —— */
   .op-canvas {
     inset: 0 0 auto 0;
-    height: 35vh;
+    height: 38vh;
   }
   .op-rim-flash {
     top: 18vh;
@@ -5514,6 +5519,23 @@ select:focus-visible {
 .op-kepler-entry:hover {
   transform: translateY(-3px);
   box-shadow: 0 18px 44px rgba(11, 13, 20, 0.34), 0 0 30px rgba(186, 216, 255, 0.18);
+}
+/* 手机上抽屉窄，按钮不许折行折成两截 */
+@media (max-width: 900px) {
+  .op-kepler-entry {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    white-space: nowrap;
+    gap: 8px;
+    padding: 11px 12px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+  .op-kepler-entry i {
+    font-size: 7.5px;
+    letter-spacing: 0.06em;
+  }
 }
 
 .op-tl-kp {
