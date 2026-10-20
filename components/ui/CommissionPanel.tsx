@@ -152,8 +152,9 @@ export default function CommissionPanel() {
     })
       .then((r) => {
         setPushing('done');
-        if (r.mail === 'ok') setPushNote('通知已推送到邮箱');
-        else if (r.mail === 'fail') setPushNote('邮件通道未激活，请到邮箱点击 Activate');
+        if (r.mail === 'ok') setPushNote('通知已推送至邮箱');
+        else if (r.mail === 'fail')
+          setPushNote('邮件通道未激活（订单已保存，可先通过微信/QQ 联系）');
         else if (r.push === 'ok') setPushNote('已通过微信推送');
       })
       .catch(() => {

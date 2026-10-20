@@ -600,6 +600,10 @@ export default function AdminConsole() {
                       setTestNote(`✅ 邮件已成功推送至 ${notify.primaryEmail}！`);
                     } else if (r.push === 'ok') {
                       setTestNote('✅ 已通过 PushPlus 推送到微信！');
+                    } else if (r.mail === 'fail') {
+                      setTestNote(
+                        '⚠ 通道未激活：已触发新的 Activate 邮件，请到 Gmail 关闭翻译后点击 Activate Form 再试',
+                      );
                     } else {
                       setTestNote(
                         `MAIL ${r.mail.toUpperCase()} · PUSH ${r.push.toUpperCase()}`,
