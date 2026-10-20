@@ -16,6 +16,10 @@ import { FORM_TOKEN, readNotifySettings } from './notify';
 export const KEPLER_KEY = 'vanlan_kepler_stars';
 export const SUBMISSION_KEY = 'vanlan_submissions';
 
+/** 默认星表版本：升级后老存档会自动补进新增的默认星（已删的不复活） */
+const STAR_VER_KEY = 'vanlan_kepler_ver';
+const STAR_VER = 2;
+
 /** 恒星-专辑 / 行星-单曲 / 流星-随笔碎片 */
 export type StarKind = 'star' | 'planet' | 'meteor';
 
@@ -85,7 +89,7 @@ export function autoOrbit(index: number): { theta: number; phi: number; radius: 
 }
 
 /** 默认星群：诊疗日志 8 首 + 专辑恒星 + 克卜勒致敬恒星 */
-export const DEFAULT_STARS: KeplerStar[] = [
+const OWN_STARS: KeplerStar[] = [
   {
     id: 'kp-album',
     name: 'DIAGNOSIS DIARY',
@@ -258,6 +262,119 @@ export const DEFAULT_STARS: KeplerStar[] = [
   },
 ];
 
+/* ------------------------------------------------------------------
+   R71 ·「克卜勒计划」Spotify 歌单 69 首
+   这些不是自己的作品，所以只占一颗小流星：不给歌词、不配音源，
+   点开只有「歌名 / 歌手 / 第几首」—— 星图负责记住你听过什么。
+   ------------------------------------------------------------------ */
+
+const PLAYLIST: [string, string][] = [
+  ['Tomorrow will be fine.', '蘇打綠'],
+  ['Perfect Celebrity', 'Lady Gaga'],
+  ['Sympathy is a knife', 'Charli xcx'],
+  ['The One That Got Away', 'Katy Perry'],
+  ['Dying for You', 'Charli xcx'],
+  ['Chains of Love', 'Charli xcx'],
+  ['費洛蒙小姐', '吳青峰'],
+  ['蓋亞', '林憶蓮'],
+  ['ALIEN SUPERSTAR', 'Beyoncé'],
+  ['絲路', '梁靜茹'],
+  ['Wenn Ich Tanzen Will', 'Theater an der Wien'],
+  ['Rebel Heart', 'Madonna'],
+  ['飛鳥', '魏如萱'],
+  ['蜕 (Peel The Skin)', 'Siyan'],
+  ['生鏽遊樂場', '蔡健雅'],
+  ['Vivre à en crever', 'Mozart Opera Rock'],
+  ['Dors mon ange', 'Mozart Opera Rock'],
+  ['極限', '徐佳瑩'],
+  ['Just Another Day', 'Next To Normal'],
+  ['nowhere, nobody', 'Ariana Grande'],
+  ['克卜勒', '孙燕姿'],
+  ['愛錯', '王力宏'],
+  ['刻在我心底的名字', '盧廣仲'],
+  ["L'AMOUR DE MA VIE", 'Billie Eilish'],
+  ['太空人', '吳青峰'],
+  ['The Faith', '尚雯婕'],
+  ['bandaids', 'Katy Perry'],
+  ['Pink Pony Club', 'Chappell Roan'],
+  ['Green Light', 'Lorde'],
+  ['Summerboy', 'Lady Gaga'],
+  ['我會 我會', '吳青峰'],
+  ['還你茉莉', '單依純'],
+  ['我的滑板鞋2016', '華晨宇'],
+  ['Plastic Doll', 'Lady Gaga'],
+  ['How Bad Do U Want Me', 'Lady Gaga'],
+  ['Vanish Into You', 'Lady Gaga'],
+  ['LoveDrug', 'Lady Gaga'],
+  ['good 4 u', 'Olivia Rodrigo'],
+  ['Witness', 'Katy Perry'],
+  ['老人與海', '鄧紫棋'],
+  ['Speechless', 'Lady Gaga'],
+  ['Paparazzi', 'Lady Gaga'],
+  ['champagne problems', 'Taylor Swift'],
+  ['tolerate it', 'Taylor Swift'],
+  ['Tightrope', 'Michelle Williams'],
+  ['倒流時間', '鄧紫棋'],
+  ["I'm so Stupid", 'Madonna'],
+  ['So Long, London', 'Taylor Swift'],
+  ['willow', 'Taylor Swift'],
+  ['illicit affairs', 'Taylor Swift'],
+  ['Call It What You Want', 'Taylor Swift'],
+  ['Applause', 'Lady Gaga'],
+  ['Roulette', 'Katy Perry'],
+  ["I'm not yours", '蔡依林'],
+  ["Now That We Don't Talk", 'Taylor Swift'],
+  ['I Have Never Felt More Alive', 'Madison Beer'],
+  ['Circus', 'Britney Spears'],
+  ['TRUSTFALL', 'P!nk'],
+  ['Rich, White, Straight Men', 'Kesha'],
+  ['HELL', '鄧紫棋'],
+  ['Swine', 'Lady Gaga'],
+  ['天空沒有極限', '鄧紫棋'],
+  ['Dumb Blonde', 'Avril Lavigne'],
+  ['Dance In The Dark', 'Lady Gaga'],
+  ['Bois Lie', 'Avril Lavigne'],
+  ['Gypsy', 'Lady Gaga'],
+  ['Cannonball', 'Avril Lavigne'],
+  ['Monster', 'Lady Gaga'],
+  ['Getting Older', 'Billie Eilish'],
+];
+
+export const PLAYLIST_ALBUM = '克卜勒计划';
+
+/** 斐波那契球面：69 颗也能均匀铺开，不会挤成一坨 */
+function sphereAt(i: number, n: number) {
+  return {
+    phi: Math.asin(Math.max(-1, Math.min(1, -1 + (2 * (i + 0.5)) / n))),
+    theta: (i * GOLDEN) % (Math.PI * 2),
+    radius: 1.58 + ((i * 23) % 8) * 0.062,
+  };
+}
+
+const PLAYLIST_TINT = ['#DCEAFF', '#9CC8FF', '#7FA8E8', '#B8D6FF', '#8FBDF5'];
+
+const PLAYLIST_STARS: KeplerStar[] = PLAYLIST.map(([name, artist], i) => {
+  const orbit = sphereAt(i, PLAYLIST.length);
+  const namesake = name === '克卜勒';
+  return {
+    id: `kp-pl-${String(i + 1).padStart(2, '0')}`,
+    name,
+    album: PLAYLIST_ALBUM,
+    lyric: '',
+    story: `${artist}\n\n歌单《克卜勒计划》第 ${i + 1} 首。`,
+    cover: '',
+    audio: '',
+    // 同名那首升成主星，其余都是安静的小流星
+    kind: namesake ? 'star' : 'meteor',
+    color: namesake ? '#EAF4FF' : PLAYLIST_TINT[i % PLAYLIST_TINT.length],
+    year: '2026',
+    roles: artist,
+    ...orbit,
+  };
+});
+
+export const DEFAULT_STARS: KeplerStar[] = [...OWN_STARS, ...PLAYLIST_STARS];
+
 /* ---------------- 存储 ---------------- */
 function readJSON<T>(key: string): T | null {
   if (typeof window === 'undefined') return null;
@@ -315,8 +432,21 @@ export const useKeplerStars = create<StarState>((set, get) => ({
         } as KeplerStar;
       });
       set({ stars: fixed, hydrated: true });
+
+      // 老存档补新星：只补「默认表里新增、存档里没有」的那些，用户删掉的不复活
+      if (readJSON<number>(STAR_VER_KEY) !== STAR_VER) {
+        const have = new Set(fixed.map((s) => s.id));
+        const missing = DEFAULT_STARS.filter((s) => !have.has(s.id));
+        if (missing.length > 0) {
+          const merged = [...fixed, ...missing];
+          writeJSON(KEPLER_KEY, merged);
+          set({ stars: merged });
+        }
+        writeJSON(STAR_VER_KEY, STAR_VER);
+      }
     } else {
       writeJSON(KEPLER_KEY, DEFAULT_STARS);
+      writeJSON(STAR_VER_KEY, STAR_VER);
       set({ stars: DEFAULT_STARS, hydrated: true });
     }
   },

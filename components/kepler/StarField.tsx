@@ -389,6 +389,8 @@ export default function StarField() {
       const conv = kpFX.converge;
 
       const pts = new Map<string, { x: number; y: number; z: number }>();
+      // 星星多了（歌单 69 颗）就别再逐颗做景深模糊，省得合成器扛不住
+      const many = starsRef.current.length > 40;
 
       for (const s of starsRef.current) {
         const el = starRefs.current.get(s.id);
@@ -441,8 +443,8 @@ export default function StarField() {
         el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
         el.style.opacity = op.toFixed(3);
         el.style.zIndex = String(1000 - Math.round(zc * 100));
-        // 远景模糊（景深）—— 小屏关掉，省一次 raster
-        if (!small) {
+        // 远景模糊（景深）—— 小屏 / 星多时关掉，省一次 raster
+        if (!small && !many) {
           const blur = depth > 0.55 ? (depth - 0.55) * 3.2 : 0;
           if (Math.abs(Number(el.dataset.blur || 0) - blur) > 0.12) {
             el.dataset.blur = blur.toFixed(2);
