@@ -17,14 +17,22 @@ import {
   ACTS,
   TOTAL_SEC,
   TOTAL_TIMECODE,
+  cancelSettle,
   clamp01,
   formatTimecode,
+  nearestActStart,
   scrub,
   setProgress,
+  settleProgress,
   subscribeFrame,
 } from '@/lib/opTimeline';
 
 const TICK_STEP = 5; // 每 5 秒一条刻度
+
+/** 移动端：松手后吸附回最近的幕起点，绝不卡在两幕中间 */
+const isNarrow = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(max-width: 767px)').matches;
 
 export default function TimelineScrubber() {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -52,6 +60,7 @@ export default function TimelineScrubber() {
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    cancelSettle();
     draggingRef.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
     setProgress(progressFromY(e.clientY));
@@ -63,9 +72,13 @@ export default function TimelineScrubber() {
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const wasDragging = draggingRef.current;
     draggingRef.current = false;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    if (wasDragging && isNarrow()) {
+      settleProgress(nearestActStart(scrub.progress));
     }
   };
 
@@ -134,7 +147,10 @@ export default function TimelineScrubber() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              setProgress(a.startP + 0.001);
+              cancelSettle();
+              const target = a.startP + 0.001;
+              if (isNarrow()) settleProgress(target, 16);
+              else setProgress(target);
             }}
             aria-label={`跳到 ${a.code} ${a.en}`}
           >

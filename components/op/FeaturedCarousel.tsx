@@ -26,7 +26,7 @@ const TAG_ICON: Record<string, string> = {
   INSTAGRAM: 'instagram',
 };
 
-function CoverArt({ work, index }: { work: Work; index: number }) {
+export function CoverArt({ work, index }: { work: Work; index: number }) {
   if (work.cover) {
     return (
       <span
@@ -44,6 +44,52 @@ function CoverArt({ work, index }: { work: Work; index: number }) {
       <b>{String(index + 1).padStart(2, '0')}</b>
       <i />
     </span>
+  );
+}
+
+/** 无外链作品的轻量预览：portal 到 body，避免被父级层叠上下文困住 */
+export function WorkLightbox({
+  work,
+  onClose,
+}: {
+  work: Work;
+  onClose: () => void;
+}) {
+  return createPortal(
+    <div
+      className="fc-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={work.title}
+      onClick={onClose}
+    >
+      <div className="fc-box" onClick={(e) => e.stopPropagation()}>
+        <div className="fc-box-cover">
+          <CoverArt work={work} index={0} />
+          <span className="fc-play is-large" aria-hidden>
+            ▶
+          </span>
+        </div>
+        <div className="fc-box-foot">
+          <div>
+            <div className="fc-kicker">{work.tag}</div>
+            <div className="fc-box-title">{work.title}</div>
+          </div>
+          <button
+            type="button"
+            className="fc-close"
+            aria-label="关闭预览"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+        <p className="fc-box-note">
+          该作品尚未配置外链。可在管理员后台「首屏轮播」里补上视频地址。
+        </p>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -221,43 +267,9 @@ export default function FeaturedCarousel() {
       </div>
 
       {/* portal 到 body：逃出 .fc-root（z15）的层叠上下文，否则会被 3D 画布（z20）盖住 */}
-      {preview &&
-        createPortal(
-          <div
-            className="fc-lightbox"
-            role="dialog"
-            aria-modal="true"
-            aria-label={preview.title}
-            onClick={() => setPreview(null)}
-          >
-            <div className="fc-box" onClick={(e) => e.stopPropagation()}>
-              <div className="fc-box-cover">
-                <CoverArt work={preview} index={0} />
-                <span className="fc-play is-large" aria-hidden>
-                  ▶
-                </span>
-              </div>
-              <div className="fc-box-foot">
-                <div>
-                  <div className="fc-kicker">{preview.tag}</div>
-                  <div className="fc-box-title">{preview.title}</div>
-                </div>
-                <button
-                  type="button"
-                  className="fc-close"
-                  aria-label="关闭预览"
-                  onClick={() => setPreview(null)}
-                >
-                  ✕
-                </button>
-              </div>
-              <p className="fc-box-note">
-                该作品尚未配置外链。可在管理员后台「首屏轮播」里补上视频地址。
-              </p>
-            </div>
-          </div>,
-          document.body,
-        )}
+      {preview && (
+        <WorkLightbox work={preview} onClose={() => setPreview(null)} />
+      )}
     </section>
   );
 }

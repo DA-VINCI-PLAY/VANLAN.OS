@@ -513,7 +513,7 @@ export default function CommissionPanel() {
                 placeholder="请简述您的项目用途、参考风格（Reference）、预计时长、交付周期要求等..."
                 maxLength={800}
               />
-              <div className="mt-1 flex items-center justify-between font-mono text-[7.5px] tracking-[0.1em] text-ink/25">
+              <div className="op-form-hint mt-1 flex items-center justify-between font-mono text-[7.5px] tracking-[0.1em] text-ink/25">
                 <span>用途 · 参考 · 时长 · 交付周期</span>
                 <span className="op-num">{brief.length}/800</span>
               </div>

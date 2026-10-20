@@ -14,16 +14,28 @@ import AnimeBackdrop from './AnimeBackdrop';
 import KemonoHeadCanvas from './KemonoHeadCanvas';
 import OpHeadline from './OpHeadline';
 import FeaturedCarousel from './FeaturedCarousel';
+import MobileWorksDrawer from './MobileWorksDrawer';
 import TimelineScrubber from './TimelineScrubber';
 import StageOverlay from './StageOverlay';
 import AdminConsole from '@/components/ui/AdminConsole';
-import { clamp01, scrub, setProgress } from '@/lib/opTimeline';
+import {
+  actFocus,
+  cancelSettle,
+  clamp01,
+  nearestActStart,
+  scrub,
+  setProgress,
+  settleProgress,
+  subscribeFrame,
+} from '@/lib/opTimeline';
 import { useOS } from '@/lib/store';
 
 /** 面板内部可滚动区域：滚到底/顶之后才把滚动权交回时间轴 */
 function insideScrollable(target: EventTarget | null): boolean {
   let el = target as HTMLElement | null;
   while (el && el !== document.body) {
+    // 移动端抽屉整体接管手势，不做逐元素判断
+    if (el.dataset && el.dataset.drawer !== undefined) return true;
     if (el.dataset && el.dataset.scroll !== undefined) {
       // 容器本身可滚动 → 手势归容器；不可滚动（内容没溢出）才让给时间轴
       return el.scrollHeight - el.clientHeight > 6;
@@ -32,6 +44,10 @@ function insideScrollable(target: EventTarget | null): boolean {
   }
   return false;
 }
+
+const NARROW = '(max-width: 767px)';
+const isNarrow = () =>
+  typeof window !== 'undefined' && window.matchMedia(NARROW).matches;
 
 export default function OpShell() {
   const toggleLang = useOS((s) => s.toggleLang);
@@ -50,6 +66,7 @@ export default function OpShell() {
       const st = useOS.getState();
       if (st.adminOpen || st.qrPlatform) return;
       e.preventDefault();
+      cancelSettle();
       // 统一方向：向下滚 = 往后播；统一灵敏度（触控板 / 鼠标分别标定）
       const unit = e.deltaMode === 1 ? 18 : e.deltaMode === 2 ? 400 : 1;
       setProgress(scrub.progress + (e.deltaY * unit) / 5200);
@@ -58,14 +75,17 @@ export default function OpShell() {
     return () => window.removeEventListener('wheel', onWheel);
   }, []);
 
-  // 触摸滑动推进
+  // 触摸滑动推进：窄屏灵敏度更高（一次滑动≈一幕），松手吸附到幕起点
   useEffect(() => {
     let startY = 0;
     let tracking = false;
     let blocked = false;
+    let travel = 0;
 
     const onStart = (e: TouchEvent) => {
+      cancelSettle();
       blocked = insideScrollable(e.target);
+      travel = 0;
       if (blocked) return;
       startY = e.touches[0].clientY;
       tracking = true;
@@ -76,21 +96,44 @@ export default function OpShell() {
       const dy = startY - e.touches[0].clientY;
       if (Math.abs(dy) < 2) return;
       e.preventDefault();
-      setProgress(scrub.progress + dy / 2600);
+      travel += dy;
+      // 窄屏 1250：约 200px 的滑动 ≈ 一幕，既跟手又不用反复划
+      setProgress(scrub.progress + dy / (isNarrow() ? 1250 : 2600));
       startY = e.touches[0].clientY;
     };
     const onEnd = () => {
+      const wasTracking = tracking && !blocked;
       tracking = false;
+      // 回退保护：手机端松手后吸附到最近幕起点，绝不卡在两幕之间
+      if (wasTracking && isNarrow() && Math.abs(travel) > 12) {
+        settleProgress(nearestActStart(scrub.progress));
+      }
     };
 
     window.addEventListener('touchstart', onStart, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onEnd, { passive: true });
+    window.addEventListener('touchcancel', onEnd, { passive: true });
     return () => {
       window.removeEventListener('touchstart', onStart);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onEnd);
     };
+  }, []);
+
+  // 焦点权重：把 actFocus 写进 .op-stage-layer 的 CSS 变量，
+  // 移动端由 CSS 换算成 opacity / scale —— 全程不触发 React 重渲染
+  useEffect(() => {
+    const layer = document.querySelector<HTMLElement>('.op-stage-layer');
+    if (!layer) return;
+    let last = -1;
+    return subscribeFrame((p) => {
+      const f = actFocus(p);
+      if (Math.abs(f - last) < 0.004) return;
+      last = f;
+      layer.style.setProperty('--focus', f.toFixed(3));
+    });
   }, []);
 
   // 键盘
@@ -126,6 +169,7 @@ export default function OpShell() {
       <KemonoHeadCanvas />
       <OpHeadline />
       <FeaturedCarousel />
+      <MobileWorksDrawer />
       <StageOverlay />
       <TimelineScrubber />
       <AdminConsole />

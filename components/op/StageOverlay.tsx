@@ -27,6 +27,7 @@ import { SOCIALS } from '@/content/social';
 import { qqAdd } from '@/lib/qq';
 import BrandIcon from '@/components/op/BrandIcon';
 import CommissionPanel from '@/components/ui/CommissionPanel';
+import { WorksPill } from '@/components/op/MobileWorksDrawer';
 
 /** 跳到指定幕的起始位置 */
 const gotoAct = (id: ActId) =>
@@ -224,6 +225,9 @@ function IntroStage() {
           </a>
         ))}
       </div>
+
+      {/* 移动端：轮播带收成一枚胶囊，点开是底部抽屉（桌面端隐藏，走穿插轮播带） */}
+      <WorksPill />
 
       <div className="op-card-foot">
         <span>SCROLL / DRAG →</span>

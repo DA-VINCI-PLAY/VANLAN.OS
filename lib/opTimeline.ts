@@ -260,6 +260,81 @@ export function nudgeProgress(delta: number): number {
   return setProgress(scrub.progress + delta);
 }
 
+/* ---------------- 移动端：吸附回退 + 焦点权重 ---------------- */
+
+/** 离 p 最近的幕起点（吸附目标，保证不会卡在两幕中间） */
+export function nearestActStart(p: number): number {
+  let best = ACTS[0].startP;
+  let bd = Infinity;
+  for (const a of ACTS) {
+    const d = Math.abs(p - a.startP);
+    if (d < bd) {
+      bd = d;
+      best = a.startP;
+    }
+  }
+  return best;
+}
+
+let settleRaf = 0;
+
+/** 指数阻尼插值到目标进度；每帧只有一次 setProgress，不触发 React 渲染 */
+export function settleProgress(target: number, stiffness = 13): void {
+  cancelSettle();
+  const goal = clamp01(target);
+  let last = performance.now();
+  let idle = 0;
+
+  const step = (now: number) => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const p = scrub.progress;
+    const next = p + (goal - p) * (1 - Math.exp(-stiffness * dt));
+    setProgress(next);
+
+    if (Math.abs(goal - next) < 0.0004) {
+      idle += 1;
+      // 连续两帧贴近目标即正式落位，避免浮点尾巴永远收敛不完
+      if (idle >= 2) {
+        setProgress(goal);
+        settleRaf = 0;
+        return;
+      }
+    } else {
+      idle = 0;
+    }
+    settleRaf = window.requestAnimationFrame(step);
+  };
+
+  settleRaf = window.requestAnimationFrame(step);
+}
+
+export function cancelSettle(): void {
+  if (settleRaf) {
+    window.cancelAnimationFrame(settleRaf);
+    settleRaf = 0;
+  }
+}
+
+export function isSettling(): boolean {
+  return settleRaf !== 0;
+}
+
+/**
+ * 焦点权重 1 → 0（移动端淡出缩放用）。
+ *
+ * 幕内前 58% 保持满权重，越靠近幕尾越退焦；返回 0 表示该面板已「退到背景」。
+ * 只输出 0~1 的锐度，具体的不透明度 / 缩放区间交给 CSS：
+ *   opacity = 0.35 + 0.65 × focus, scale = 0.94 + 0.06 × focus
+ */
+export function actFocus(p: number): number {
+  const v = clamp01(p);
+  const act = ACTS.find((a) => v >= a.startP && v < a.endP) ?? ACTS[ACTS.length - 1];
+  const len = Math.max(act.endP - act.startP, 1e-6);
+  const t = clamp01((v - act.startP) / len);
+  return 1 - smoothstep(clamp01((t - 0.58) / 0.42));
+}
+
 /**
  * 章节内插值权重（用于 2D 背景层的切换）。
  *
