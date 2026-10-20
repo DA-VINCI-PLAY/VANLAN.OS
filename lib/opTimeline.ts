@@ -142,7 +142,7 @@ export interface HeadKey {
  * R55：幕序改为 名片 → 工坊 → 专辑 → 片尾，机位跟随各幕重排。
  */
 export const HEAD_KEYS: HeadKey[] = [
-  { p: 0.0, yaw: 0.34, pitch: -0.02, x: 0.22, y: 0.0, camZ: 3.25, fov: 38, rim: 0.55, key: 1.0 },
+  { p: 0.0, yaw: 0.34, pitch: -0.02, x: -0.04, y: 0.0, camZ: 3.25, fov: 38, rim: 0.55, key: 1.0 },
   { p: 0.278, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
   { p: 0.556, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
   { p: 0.833, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },

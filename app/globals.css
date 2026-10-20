@@ -1643,3 +1643,99 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   z-index: 15;
   pointer-events: none;
 }
+
+/* ============================================================
+   R57 · 排版总修：安全边距网格 / 三栏比例 / 穿模治理 / 移动端三段式
+   ============================================================ */
+:root {
+  --pad-x: clamp(40px, 5vw, 80px);
+}
+
+/* —— 1. 统一左基准线 ——
+   VANLAN.OS / ACT 01 / 主标题 / OP // MAIN VISUAL 共用 --pad-x */
+.op-meta-tl { left: var(--pad-x); top: 36px; }
+.op-act-index { left: var(--pad-x); top: 72px; }
+.op-act-foot { left: var(--pad-x); bottom: 36px; max-width: min(42vw, 420px); }
+/* 右下状态让开第三方角标（Netlify badge），与左下信息同底 */
+.op-meta-br { right: 190px; bottom: 36px; }
+
+/* —— 2. 三明治层级：背景 + 大字(9) < 兽头(10) < 面板/时间轴(20/30) —— */
+.op-headline-layer { z-index: 9; }
+
+/* —— 3. 桌面三栏：左 38% / 中 32% / 右 30% —— */
+@media (min-width: 1024px) {
+  .op-headline { top: 46%; }
+  .op-headline-intro .op-line-outline {
+    font-size: clamp(72px, 8.5vw, 136px);
+    letter-spacing: -0.045em;
+  }
+  .op-headline-intro .op-line-solid {
+    font-size: clamp(17px, 2.2vw, 34px);
+    letter-spacing: 0.03em;
+    margin-top: 10px;
+  }
+  .op-headline-intro::after { width: clamp(56px, 6vw, 96px); margin-top: 14px; }
+
+  /* 右栏名片：固定 384px，距时间轴 48px（26 + 74 + 48 = 148） */
+  .op-panel-intro,
+  .op-panel-credits {
+    right: 150px;
+    width: 384px;
+    top: 50%;
+    translate: 0 -50%;
+  }
+}
+
+/* SOUND 幕左下说明行让位给试听面板 */
+@media (min-width: 901px) {
+  .op-act-sound .op-act-foot { display: none; }
+  /* 时间轴：时钟与 VANLAN.OS 同高 */
+  .op-timeline { top: 36px; transform: none; }
+  .op-tl-track { height: min(52vh, 460px); }
+}
+
+/* —— 4. 名片内部：7 图标等分，与双按钮左右严丝合缝 —— */
+.op-chips {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.op-chip {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-height: 40px;
+}
+
+/* —— 5. 移动端三段式：标题带 / 3D 舞台 / 名片抽屉 —— */
+@media (max-width: 900px) {
+  :root { --pad-x: 24px; }
+  .op-meta-tl { left: var(--pad-x); top: 18px; }
+  .op-act-index { left: var(--pad-x); top: 46px; }
+  .op-headline {
+    left: var(--pad-x);
+    top: 9vh;
+    translate: none;
+  }
+  .op-headline .op-line-outline { font-size: clamp(48px, 13vw, 67px); }
+  .op-headline .op-line-solid { font-size: clamp(13px, 4.2vw, 18px); margin-top: 4px; }
+  .op-headline-intro::after { height: 4px; margin-top: 8px; width: 56px; }
+  /* 修复半空截断：说明行整体隐藏，交给名片内部承载 */
+  .op-act-foot { display: none; }
+
+  .op-timeline { right: 10px; top: 25vh; }
+  .op-tl-track { height: 33vh; }
+
+  .op-panel {
+    left: 16px;
+    right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    max-height: 40vh;
+    padding: 14px 16px 12px;
+    gap: 10px;
+  }
+  .op-panel-store { max-height: 44vh; }
+
+  .op-chips { gap: 5px; }
+  .op-chip { min-height: 36px; border-radius: 10px; }
+}

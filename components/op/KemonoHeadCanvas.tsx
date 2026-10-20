@@ -24,7 +24,7 @@ const MODEL_URL = '/models/vanlan.glb';
 const DRACO_DECODER_PATH = '/draco/';
 /** GLB forward = +X，旋转 -π/2 让兽头面向 +Z（相机方向） */
 const BASE_YAW = -Math.PI / 2;
-const TARGET_H = 1.9;
+const TARGET_H = 1.75;
 
 useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
 
@@ -70,7 +70,7 @@ function KemonoHead() {
     const aspect = size.width / Math.max(size.height, 1);
     /** 竖屏：把兽头收窄偏移并抬高，给底部面板腾位置 */
     const narrow = aspect < 0.92;
-    const k = narrow ? 0.4 : 1;
+    const k = narrow ? 0.55 : 1;
 
     const g = root.current;
     if (g) {
@@ -80,7 +80,7 @@ function KemonoHead() {
       g.position.x = THREE.MathUtils.damp(g.position.x, s.x * k, 6, delta);
       g.position.y = THREE.MathUtils.damp(
         g.position.y,
-        s.y + (narrow ? 0.34 : 0),
+        s.y + (narrow ? 0.2 : 0),
         6,
         delta,
       );
@@ -113,7 +113,7 @@ function CameraRig() {
     const s = sampleHead(scrub.progress);
     const aspect = size.width / Math.max(size.height, 1);
     const narrow = aspect < 0.92;
-    const wantZ = s.camZ + (narrow ? 1.15 : 0);
+    const wantZ = s.camZ + (narrow ? 1.3 : 0);
     const wantFov = s.fov + (narrow ? 8 : 0);
 
     camera.position.z = THREE.MathUtils.damp(camera.position.z, wantZ, 4.2, delta);
