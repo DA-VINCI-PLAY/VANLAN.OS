@@ -11,8 +11,11 @@
  *   PRODUCTS —— 服务上下架 CRUD（名称 / 分类 / 价格 / 周期 / 描述 / 交付项 / 封面）
  *   ORDERS   —— 访客委托单列表，状态流转 待沟通 → 制作中 → 已交付，
  *               支持 JSON / CSV 导出与一键清空。
+ *   FEATURED —— 首屏穿插式轮播带卡片管理（标题 / 平台标签 / 封面 / 外链 / 时长）。
+ *   PUSH     —— 委托单邮件与微信推送通道。
  *
- * 数据：lib/commerce 的 localStorage 持久化（vanlan_products / vanlan_orders）。
+ * 数据：lib/commerce 的 localStorage 持久化（vanlan_products / vanlan_orders）；
+ *       轮播卡片存 lib/featured（vanlan_featured_works）。
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -41,8 +44,30 @@ import {
   writeNotifySettings,
   type NotifySettings,
 } from '@/lib/notify';
+import {
+  DEFAULT_WORKS,
+  useFeatured,
+  type WorkDraft,
+} from '@/lib/featured';
 
-type Tab = 'products' | 'orders' | 'push';
+type Tab = 'products' | 'orders' | 'featured' | 'push';
+
+const EMPTY_WORK: WorkDraft = {
+  title: '',
+  tag: 'BILIBILI',
+  cover: '',
+  href: '',
+  duration: '00:00',
+};
+
+const TAG_PRESETS = [
+  'BILIBILI',
+  'DOUYIN',
+  'RED 小红书',
+  'ORIGINAL MIX',
+  '3D RIGGING',
+  'YOUTUBE',
+];
 
 const CATEGORIES: ServiceCategory[] = [
   'COMPOSER',
@@ -83,6 +108,13 @@ export default function AdminConsole() {
   const removeOrder = useCommerce((s) => s.removeOrder);
   const clearOrders = useCommerce((s) => s.clearOrders);
 
+  const hydrateFeatured = useFeatured((s) => s.hydrate);
+  const works = useFeatured((s) => s.works);
+  const addWork = useFeatured((s) => s.addWork);
+  const updateWork = useFeatured((s) => s.updateWork);
+  const removeWork = useFeatured((s) => s.removeWork);
+  const resetWorks = useFeatured((s) => s.resetWorks);
+
   const [pass, setPass] = useState('');
   const [authError, setAuthError] = useState('');
   const [tab, setTab] = useState<Tab>('products');
@@ -99,10 +131,16 @@ export default function AdminConsole() {
   const [testState, setTestState] = useState<'idle' | 'sending' | 'ok' | 'fail'>('idle');
   const [testNote, setTestNote] = useState('');
   const [saved, setSaved] = useState(false);
+  const [workDraft, setWorkDraft] = useState<WorkDraft>(EMPTY_WORK);
+  const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) hydrate();
   }, [open, hydrate]);
+
+  useEffect(() => {
+    if (open) hydrateFeatured();
+  }, [open, hydrateFeatured]);
 
   // 打开后台时同步推送设置
   useEffect(() => {
@@ -238,6 +276,38 @@ export default function AdminConsole() {
     setTab('products');
   };
 
+  const submitWork = () => {
+    const clean: WorkDraft = {
+      title: workDraft.title.trim(),
+      tag: (workDraft.tag || '').trim() || 'ORIGINAL',
+      cover: (workDraft.cover || '').trim(),
+      href: (workDraft.href || '').trim(),
+      duration: (workDraft.duration || '').trim() || '00:00',
+    };
+    if (!clean.title) return;
+    if (editingWorkId) {
+      updateWork(editingWorkId, clean);
+    } else {
+      addWork(clean);
+    }
+    setWorkDraft(EMPTY_WORK);
+    setEditingWorkId(null);
+  };
+
+  const startEditWork = (id: string) => {
+    const w = works.find((x) => x.id === id);
+    if (!w) return;
+    setEditingWorkId(id);
+    setWorkDraft({
+      title: w.title,
+      tag: w.tag,
+      cover: w.cover,
+      href: w.href,
+      duration: w.duration,
+    });
+    setTab('featured');
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#FAF8F4]/97 backdrop-blur-lg">
       {/* 顶栏 */}
@@ -267,7 +337,7 @@ export default function AdminConsole() {
 
       {/* Tabs */}
       <div className="flex shrink-0 gap-1 border-b border-black/[0.07] px-4 py-2 sm:px-6">
-        {(['products', 'orders', 'push'] as Tab[]).map((t) => (
+        {(['products', 'orders', 'featured', 'push'] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -283,7 +353,9 @@ export default function AdminConsole() {
               ? `SERVICES · ${products.length}`
               : t === 'orders'
                 ? `ORDERS · ${orders.length}`
-                : 'PUSH'}
+                : t === 'featured'
+                  ? `FEATURED · ${works.length}`
+                  : 'PUSH'}
           </button>
         ))}
       </div>
@@ -495,6 +567,185 @@ export default function AdminConsole() {
                   </div>
                 </article>
               ))}
+            </section>
+          </div>
+        ) : tab === 'featured' ? (
+          /* ---------------- 首屏轮播作品管理 ---------------- */
+          <div className="mx-auto grid max-w-[1100px] gap-4 lg:grid-cols-[380px_1fr]">
+            <section className="h-fit rounded-xl border border-black/[0.08] bg-black/[0.02] p-4">
+              <div className="flex items-center justify-between">
+                <span className={LABEL.replace('mb-1', 'mb-0')}>
+                  {editingWorkId ? 'EDIT CARD' : 'NEW CARD'}
+                </span>
+                {editingWorkId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingWorkId(null);
+                      setWorkDraft(EMPTY_WORK);
+                    }}
+                    className="font-mono text-[8px] tracking-[0.14em] text-ink/35 hover:text-ink"
+                  >
+                    CANCEL
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-3 space-y-2.5">
+                <div>
+                  <label className={LABEL} htmlFor="w-title">作品标题</label>
+                  <input
+                    id="w-title"
+                    className={FIELD}
+                    value={workDraft.title}
+                    onChange={(e) =>
+                      setWorkDraft({ ...workDraft, title: e.target.value })
+                    }
+                    placeholder="《合成器流行编曲工程》"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={LABEL} htmlFor="w-tag">平台标签</label>
+                    <input
+                      id="w-tag"
+                      className={FIELD}
+                      list="w-tag-presets"
+                      value={workDraft.tag}
+                      onChange={(e) =>
+                        setWorkDraft({ ...workDraft, tag: e.target.value })
+                      }
+                      placeholder="BILIBILI"
+                    />
+                    <datalist id="w-tag-presets">
+                      {TAG_PRESETS.map((t) => (
+                        <option key={t} value={t} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className={LABEL} htmlFor="w-dur">时长角标</label>
+                    <input
+                      id="w-dur"
+                      className={FIELD}
+                      value={workDraft.duration}
+                      onChange={(e) =>
+                        setWorkDraft({ ...workDraft, duration: e.target.value })
+                      }
+                      placeholder="03:24"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={LABEL} htmlFor="w-cover">封面图 URL（留空自动生成）</label>
+                  <input
+                    id="w-cover"
+                    className={FIELD}
+                    value={workDraft.cover}
+                    onChange={(e) =>
+                      setWorkDraft({ ...workDraft, cover: e.target.value })
+                    }
+                    placeholder="/covers/xxx.png"
+                  />
+                </div>
+
+                <div>
+                  <label className={LABEL} htmlFor="w-href">跳转外链（留空=内置预览）</label>
+                  <input
+                    id="w-href"
+                    className={FIELD}
+                    value={workDraft.href}
+                    onChange={(e) =>
+                      setWorkDraft({ ...workDraft, href: e.target.value })
+                    }
+                    placeholder="https://…"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={submitWork}
+                  className="os-btn-accent w-full rounded-lg py-2.5 font-mono text-[9px] font-semibold tracking-[0.2em]"
+                >
+                  {editingWorkId ? 'SAVE CARD' : 'ADD CARD'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetWorks();
+                    setWorkDraft(EMPTY_WORK);
+                    setEditingWorkId(null);
+                  }}
+                  className="w-full rounded-lg border border-black/10 py-2 font-mono text-[8px] tracking-[0.16em] text-ink/40 transition-colors hover:border-[#F35A17]/50 hover:text-[#F35A17]"
+                >
+                  RESET TO DEFAULTS
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              {works.length === 0 && (
+                <div className="rounded-xl border border-black/[0.08] py-12 text-center text-[10px] text-ink/30">
+                  轮播带为空，先在左侧添加卡片。
+                </div>
+              )}
+              {works.map((w, i) => (
+                <article
+                  key={w.id}
+                  className="flex items-start gap-3 rounded-xl border border-black/[0.08] bg-black/[0.02] p-3"
+                >
+                  <div
+                    className="mt-0.5 h-[52px] w-[92px] shrink-0 overflow-hidden rounded-md border border-black/10 bg-black/[0.06] bg-cover bg-center"
+                    style={
+                      w.cover ? { backgroundImage: `url('${w.cover}')` } : undefined
+                    }
+                  >
+                    {!w.cover && (
+                      <div className="flex h-full w-full items-center justify-center font-mono text-[9px] tracking-[0.16em] text-ink/25">
+                        {String(i + 1).padStart(2, '0')}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-[8px] tracking-[0.18em] text-[#F35A17]">
+                      {w.tag} · {w.duration}
+                    </div>
+                    <div className="mt-0.5 truncate text-[12px] font-semibold text-ink">
+                      {w.title}
+                    </div>
+                    <div className="mt-0.5 truncate font-mono text-[8px] text-ink/30">
+                      {w.href || '内置预览（无外链）'}
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => startEditWork(w.id)}
+                      className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/50 hover:border-black/25 hover:text-ink"
+                    >
+                      EDIT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeWork(w.id)}
+                      className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/35 hover:border-[#F35A17]/50 hover:text-[#F35A17]"
+                    >
+                      DEL
+                    </button>
+                  </div>
+                </article>
+              ))}
+
+              <p className="pt-1 text-[9px] leading-relaxed text-ink/35">
+                共 {works.length} 张卡片，存于本机
+                localStorage（{DEFAULT_WORKS.length} 张为默认预设）。
+                首屏每秒匀速左移约 26px，鼠标悬停即暂停。
+              </p>
             </section>
           </div>
         ) : tab === 'push' ? (

@@ -2147,3 +2147,347 @@ select:focus-visible {
 .op-panel-store .op-card-foot {
   flex-shrink: 0;
 }
+
+/* ============================================================
+   R61 · 首屏穿插式作品轮播带（z 15：大字之上 / 兽头之下）
+   ============================================================ */
+
+/* 层级阶梯重排：背景 0 < 标题 9 < 轮播 15 < 兽头 20 < 面板 30 < 时间轴 40 */
+.op-canvas { z-index: 20; }
+.op-stage-layer { z-index: 30; }
+.op-timeline { z-index: 40; }
+
+.fc-root {
+  position: fixed;
+  left: clamp(40px, 5vw, 80px);
+  top: 59%;
+  z-index: 15;
+  width: clamp(460px, 46vw, 680px);
+  pointer-events: auto;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.fc-root[data-on='false'] {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+/* —— 导视栏 —— */
+.fc-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-left: 1px;
+}
+.fc-kicker {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  color: #d94e1f;
+}
+.fc-kicker-sub {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(27, 30, 35, 0.38);
+}
+.fc-head-bar {
+  flex: 1;
+  height: 1px;
+  margin: 0 6px;
+  background: linear-gradient(90deg, rgba(232, 93, 42, 0.35), transparent);
+}
+.fc-arrow {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(22, 24, 28, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 253, 249, 0.6);
+  color: rgba(27, 30, 35, 0.55);
+  font-size: 11px;
+  line-height: 1;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+.fc-arrow:hover {
+  border-color: #e85d2a;
+  color: #d94e1f;
+  background: #fff;
+}
+.fc-dot {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+}
+.fc-dot > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e85d2a;
+  box-shadow: 0 0 0 3px rgba(232, 93, 42, 0.16);
+  transition: opacity 0.2s;
+}
+.fc-dot[aria-pressed='true'] > i {
+  opacity: 0.28;
+  box-shadow: none;
+}
+
+/* —— 轨道 —— */
+.fc-viewport {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
+}
+.fc-track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  will-change: transform;
+}
+
+/* —— 卡片 16:9 —— */
+.fc-card {
+  position: relative;
+  flex: none;
+  width: 210px;
+  height: 118px;
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(232, 93, 42, 0.22);
+  background: #f6f2ea;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.fc-card:hover {
+  border-color: rgba(232, 93, 42, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(46, 36, 24, 0.18);
+}
+
+.fc-cover {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  display: block;
+}
+.fc-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      120% 90% at 50% 40%,
+      transparent 30%,
+      rgba(20, 14, 10, 0.45) 100%
+    ),
+    linear-gradient(0deg, rgba(16, 11, 8, 0.75) 0%, transparent 52%);
+}
+/* 程序化封面：五种暖橙 / 墨色渐变，像 OP 分镜帧 */
+.fc-cover-g1 { background-image: linear-gradient(135deg, #ffb27a 0%, #e85d2a 48%, #7a2b12 100%); }
+.fc-cover-g2 { background-image: linear-gradient(135deg, #f7e7d3 0%, #d9b48c 42%, #4a3a2c 100%); }
+.fc-cover-g3 { background-image: linear-gradient(135deg, #ffd0a8 0%, #f35a17 55%, #241a14 100%); }
+.fc-cover-g4 { background-image: linear-gradient(135deg, #2c2118 0%, #8c4a24 55%, #ff9b57 100%); }
+.fc-cover-g5 { background-image: linear-gradient(135deg, #fff3e6 0%, #ffad70 40%, #b23d12 100%); }
+.fc-cover > b {
+  position: absolute;
+  right: 8px;
+  bottom: 26px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.22);
+  z-index: 1;
+}
+.fc-cover > i {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.5;
+}
+
+.fc-tag {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(18, 13, 10, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 6.5px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.92);
+  z-index: 2;
+}
+.fc-tag-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffb27a;
+}
+
+.fc-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 10px;
+  padding-left: 2px;
+  z-index: 2;
+  transition: background-color 0.25s, transform 0.25s, border-color 0.25s;
+}
+.fc-card:hover .fc-play {
+  background: #e85d2a;
+  border-color: #e85d2a;
+  transform: scale(1.1);
+}
+.fc-play.is-large {
+  width: 54px;
+  height: 54px;
+  font-size: 15px;
+  position: absolute;
+  translate: -50% -50%;
+}
+
+.fc-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  z-index: 2;
+}
+.fc-meta b {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.fc-meta i {
+  flex-shrink: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-style: normal;
+  font-size: 7.5px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* —— 内置预览弹窗 —— */
+.fc-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 14, 10, 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.fc-box {
+  width: min(560px, 92vw);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(252, 249, 245, 0.98);
+  box-shadow: 0 32px 80px rgba(30, 20, 12, 0.4);
+}
+.fc-box-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+}
+.fc-box-cover .fc-cover { position: absolute; inset: 0; }
+.fc-box-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 6px;
+}
+.fc-box-title {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1b1e23;
+}
+.fc-close {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(22, 24, 28, 0.12);
+  background: transparent;
+  color: rgba(27, 30, 35, 0.55);
+  font-size: 11px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.fc-close:hover { border-color: #e85d2a; color: #d94e1f; }
+.fc-box-note {
+  padding: 0 16px 16px;
+  font-size: 9px;
+  line-height: 1.6;
+  color: rgba(27, 30, 35, 0.4);
+}
+
+/* —— 移动端：兽头下方 / 名片上方，通栏原生滑动 —— */
+@media (max-width: 767px) {
+  .fc-root {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    top: auto;
+    bottom: calc(40vh + 24px + env(safe-area-inset-bottom));
+  }
+  .fc-head { margin-bottom: 6px; }
+  .fc-kicker { font-size: 7px; letter-spacing: 0.2em; }
+  .fc-kicker-sub { display: none; }
+  .fc-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+  }
+  .fc-viewport::-webkit-scrollbar { display: none; }
+  .fc-track { transform: none !important; }
+  .fc-card {
+    width: 158px;
+    height: 89px;
+    scroll-snap-align: start;
+  }
+  .fc-meta b { font-size: 8px; }
+  .fc-play { width: 28px; height: 28px; font-size: 9px; }
+}
