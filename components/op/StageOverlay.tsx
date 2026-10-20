@@ -116,7 +116,7 @@ function IntroStage() {
   };
 
   return (
-    <section className="op-panel op-panel-intro" aria-label="个人名片">
+    <section className="op-panel op-panel-intro" data-scroll aria-label="个人名片">
       <header className="op-card-head">
         <div className="op-avatar">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,8 +232,13 @@ function IntroStage() {
 
       <div className="op-card-foot">
         <span>SCROLL / DRAG →</span>
-        <button type="button" onClick={() => gotoAct('COMMISSION')}>
-          工坊 →
+        <button type="button" className="op-foot-go" onClick={() => gotoAct('COMMISSION')}>
+          <span className="op-foot-long">定制工坊</span>
+          <span className="op-foot-short">工坊</span> →
+        </button>
+        {/* 手机专属：名片卡第二枚胶囊，直接潜进星空（桌面端隐藏） */}
+        <button type="button" className="op-foot-kp" onClick={() => openKepler()}>
+          <b aria-hidden>✦</b> 克卜勒星空
         </button>
       </div>
     </section>
@@ -286,7 +291,7 @@ function SoundStage() {
   };
 
   return (
-    <section className="op-panel op-panel-sound" aria-label="作品试听">
+    <section className="op-panel op-panel-sound" data-scroll aria-label="作品试听">
       <header className="op-snd-head">
         <div>
           <div className="op-kicker">NOW PLAYING</div>
@@ -502,7 +507,7 @@ function CreditsStage() {
   const unlocked = useOS((s) => s.adminUnlocked);
 
   return (
-    <section className="op-panel op-panel-credits" aria-label="系统与职员表">
+    <section className="op-panel op-panel-credits" data-scroll aria-label="系统与职员表">
       <div className="op-kicker">END CARD // SYSTEM</div>
       <h2 className="op-credits-title">
         {lang === 'zh' ? '到这里，先谢幕。' : 'That’s a wrap.'}

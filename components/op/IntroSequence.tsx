@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState, type CSSProperties } from 'react';
+import { subscribeAct } from '@/lib/opTimeline';
 
 const BLINDS = 6;
 
@@ -29,6 +30,20 @@ export default function IntroSequence({ ready }: { ready: boolean }) {
     const t = window.setTimeout(() => setHint(true), 820);
     return () => window.clearTimeout(t);
   }, [ready]);
+
+  // 切章也收（R73：章节条点按直达后，提示不该压在别的分镜面板上）
+  useEffect(() => {
+    if (!hint) return;
+    const off = subscribeAct((a) => {
+      if (a !== 'INTRO') {
+        setHint(false);
+        setDismissed(true);
+      }
+    });
+    return () => {
+      off();
+    };
+  }, [hint]);
 
   // 首次交互 → 淡出并永久隐藏
   useEffect(() => {

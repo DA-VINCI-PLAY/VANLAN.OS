@@ -98,9 +98,28 @@ export default function KeplerCompass() {
       )}
 
       <nav className="kp-compass" aria-label="星图罗盘" ref={wrapRef}>
+        {/* R73：手机底部只留三颗胶囊，随机摘星顶掉「列表」的位置 */}
         <button
           type="button"
-          className={`kp-cbtn${listOpen ? ' is-on' : ''}`}
+          className="kp-cbtn kp-cbtn-dice"
+          onClick={() => {
+            if (!stars.length) return;
+            unlockAudio();
+            const pool = stars.filter((s) => s.id !== selectedId);
+            const pick = (pool.length ? pool : stars)[
+              Math.floor(Math.random() * (pool.length ? pool.length : stars.length))
+            ];
+            if (!pick) return;
+            select(pick.id);
+            chime(523.25, 0.12);
+          }}
+        >
+          <b>🔀</b> 随机摘星
+        </button>
+
+        <button
+          type="button"
+          className={`kp-cbtn kp-cbtn-list${listOpen ? ' is-on' : ''}`}
           onClick={() => setListOpen((v) => !v)}
           aria-expanded={listOpen}
         >

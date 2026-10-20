@@ -37,13 +37,13 @@ useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
  */
 function stageProfile(width: number) {
   if (width < 768) {
-    // 手机：38vh 舞台，稍微拉远一点避免兽头贴边
-    return { camZ: 0.26, fov: 2, eyeY: 0.06, lookY: 0.02 };
+    // 手机：38vh 舞台 + 1.25 倍视野（R73：兽头顶到大字前面，压住 LAN 描边）
+    return { camZ: 0.26, fov: 2, eyeY: 0.06, lookY: 0.02, zoom: 1.25 };
   }
   if (width < 1024) {
-    return { camZ: 0.22, fov: 1, eyeY: 0.08, lookY: 0.04 };
+    return { camZ: 0.22, fov: 1, eyeY: 0.08, lookY: 0.04, zoom: 1 };
   }
-  return { camZ: 0, fov: 0, eyeY: 0.05, lookY: 0.02 };
+  return { camZ: 0, fov: 0, eyeY: 0.05, lookY: 0.02, zoom: 1 };
 }
 
 /**
@@ -164,7 +164,8 @@ function CameraRig() {
         ? Math.min(1.12, 700 / Math.max(1, size.height))
         : 1;
     // 容器越窄，相机越远 —— 防止兽头在窄窗口里被横向裁掉、进而压住文字
-    const wantZ = (s.camZ + prof.camZ) * fitFactor(size.width, size.height) * shortBias;
+    const wantZ =
+      ((s.camZ + prof.camZ) / prof.zoom) * fitFactor(size.width, size.height) * shortBias;
     const wantFov = s.fov + prof.fov;
 
     camera.position.z = THREE.MathUtils.damp(camera.position.z, wantZ, 4.2, delta);

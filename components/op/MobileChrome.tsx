@@ -1,14 +1,17 @@
 'use client';
 
 /**
- * MobileChrome —— 移动端竖屏专用的「Mini Header + 底部微型进度条」（R66）
+ * MobileChrome —— 移动端竖屏专用的「顶部章节胶囊栏 + 右缘极简滑轨」（R73）
  *
- * 侧边时间轴在 <768px 会隐藏（抓取带 74px 太占手指），这里补两件替代品：
- *   1. 顶部迷你标题栏：品牌 / 章节序号 / 章节名
- *   2. 底部横向进度条：可直接按住拖动，松手按 nearestActStart 吸附回幕起点
+ * R66 只做了「标题 + 底部横条」，两个痛点：
+ *   1. 底部横条吃掉最后 30px，名片卡被迫上抬，一屏塞不下；
+ *   2. 只能滑，不能「点某一章直达」。
  *
- * 进度条用 --p 自定义属性驱动 scaleX / translate3d，全程不触发 React 渲染；
- * 只在换幕时 setAct 渲染一次。
+ * R73 改成：
+ *   · 顶部一行：VANLAN.OS + [01 名片][02 工坊][03 试听][04 矩阵][05 片尾][✦ 星图]
+ *     章节名与真实分镜序号一致（工坊就是 ACT 02），点一下 gotoAct 直达；
+ *   · 右缘 3px 竖轨：`--p` 直写 scaleY / top，全程 0 React 渲染，按住可拖动；
+ *   · 底部彻底让空，名片卡能贴到屏幕下沿 14px。
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -24,13 +27,21 @@ import {
   subscribeAct,
   subscribeFrame,
 } from '@/lib/opTimeline';
+import { openKepler } from '@/lib/kepler';
 
 const ACT_LABEL: Record<ActId, string> = {
   INTRO: '名片',
   COMMISSION: '工坊',
-  SOUND: '专辑',
+  SOUND: '试听',
   MEDIA: '矩阵',
   CREDITS: '片尾',
+};
+
+/** 跳到某幕起点（+1e-3 保证 actAt 落在这幕而不是上一幕边界） */
+const jump = (id: ActId) => {
+  const act = ACTS.find((a) => a.id === id) ?? ACTS[0];
+  cancelSettle();
+  setProgress(act.startP + 0.001);
 };
 
 export default function MobileChrome() {
@@ -46,18 +57,18 @@ export default function MobileChrome() {
     };
   }, []);
 
-  // --p 直写：填充条与滑块都靠它换算，不经过 React
+  // --p 直写：竖轨填充与拖点都靠它换算，不经过 React
   useEffect(() => {
     return subscribeFrame((p) => {
       rootRef.current?.style.setProperty('--p', p.toFixed(4));
     });
   }, []);
 
-  const progressFromX = (clientX: number): number => {
+  const progressFromY = (clientY: number): number => {
     const el = railRef.current;
     if (!el) return 0;
     const r = el.getBoundingClientRect();
-    return clamp01((clientX - r.left) / Math.max(r.width, 1));
+    return clamp01(1 - (clientY - r.top) / Math.max(r.height, 1));
   };
 
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -65,12 +76,12 @@ export default function MobileChrome() {
     dragging.current = true;
     cancelSettle();
     e.currentTarget.setPointerCapture(e.pointerId);
-    setProgress(progressFromX(e.clientX));
+    setProgress(progressFromY(e.clientY));
   };
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
-    setProgress(progressFromX(e.clientX));
+    setProgress(progressFromY(e.clientY));
   };
 
   const onUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -83,24 +94,40 @@ export default function MobileChrome() {
     settleProgress(nearestActStart(scrub.progress));
   };
 
-  const idx = ACTS.findIndex((a) => a.id === act);
-
   return (
     <div ref={rootRef} className="op-mchrome">
-      <header className="op-mhead" aria-hidden>
+      <header className="op-mhead">
         <span className="op-mhead-brand">VANLAN.OS</span>
-        <span className="op-mhead-sep" />
-        <span className="op-mhead-act op-num">
-          {String(idx + 1).padStart(2, '0')}/{String(ACTS.length).padStart(2, '0')}
-        </span>
-        <span className="op-mhead-label">{ACT_LABEL[act]}</span>
+
+        <nav className="op-macts" aria-label="章节切换">
+          {ACTS.map((a, i) => (
+            <button
+              key={a.id}
+              type="button"
+              className={`op-mact${act === a.id ? ' is-on' : ''}`}
+              aria-current={act === a.id}
+              onClick={() => jump(a.id)}
+            >
+              <i className="op-num">{String(i + 1).padStart(2, '0')}</i>
+              {ACT_LABEL[a.id]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="op-mact is-kp"
+            aria-label="进入克卜勒星图"
+            onClick={() => openKepler()}
+          >
+            <i aria-hidden>✦</i>星图
+          </button>
+        </nav>
       </header>
 
-      {/* data-drawer：让 OpShell 的全局手势让位给这个拖拽条 */}
-      <div className="op-mprog" data-drawer>
+      {/* data-drawer：让 OpShell 的全局滑动手势让位给这条竖轨 */}
+      <div className="op-mrail" data-drawer>
         <div
           ref={railRef}
-          className="op-mprog-rail"
+          className="op-mrail-track"
           role="slider"
           tabIndex={-1}
           aria-label="分镜进度"
@@ -112,8 +139,8 @@ export default function MobileChrome() {
           onPointerUp={onUp}
           onPointerCancel={onUp}
         >
-          <span className="op-mprog-fill" />
-          <span className="op-mprog-dot" />
+          <span className="op-mrail-fill" />
+          <span className="op-mrail-dot" />
         </div>
       </div>
     </div>
