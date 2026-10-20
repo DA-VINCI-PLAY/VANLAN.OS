@@ -1485,3 +1485,90 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-credits-list li { font-size: 8px; padding-bottom: 5px; }
   .op-credits-title { font-size: 17px; }
 }
+
+/* ============================================================
+   R54 · VANLAN 标题醒目化 + 分镜入场引导动画
+   （is-enter 由 rAF 在章节激活瞬间挂上/摘下，拖回重进会重播）
+   ============================================================ */
+
+/* —— 逐字入场：下坠上弹 + 轻微旋转，45ms stagger —— */
+.op-ch {
+  display: inline-block;
+}
+.op-act.is-enter .op-ch {
+  animation: op-char-in 0.58s cubic-bezier(0.18, 0.9, 0.24, 1.14) both;
+  animation-delay: calc(var(--i, 0) * 48ms);
+}
+@keyframes op-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em) rotate(5deg) scale(0.88);
+  }
+  62% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+/* —— 副行：左→右扫入（延迟到逐字近半时） —— */
+.op-act.is-enter .op-line-solid {
+  clip-path: inset(-10% 102% -10% -2%);
+  animation: op-swipe-in 0.52s cubic-bezier(0.72, 0, 0.28, 1) 0.42s both;
+}
+@keyframes op-swipe-in {
+  from {
+    clip-path: inset(-10% 102% -10% -2%);
+  }
+  to {
+    clip-path: inset(-10% -2% -10% -2%);
+  }
+}
+
+/* —— 标题下橙条：常驻 + 入场时从左拉开 —— */
+.op-headline::after {
+  content: '';
+  display: block;
+  width: clamp(64px, 8vw, 128px);
+  height: 6px;
+  margin-top: 16px;
+  background: linear-gradient(90deg, #f35a17 0%, rgba(243, 90, 23, 0.35) 100%);
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+.op-act.is-enter .op-headline::after {
+  animation: op-bar-in 0.5s cubic-bezier(0.72, 0, 0.28, 1) 0.6s both;
+}
+@keyframes op-bar-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* —— VANLAN 专属醒目化：橙 VAN 实心（带墨色投影）+ 加粗描边 LAN —— */
+.op-act-intro .op-line-outline {
+  font-size: clamp(62px, 16vw, 224px);
+  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-color: rgba(27, 30, 35, 0.85);
+}
+.op-act-intro .op-ch:nth-child(-n + 3) {
+  color: #f35a17;
+  -webkit-text-stroke: 0;
+  text-shadow: 0.04em 0.05em 0 rgba(27, 30, 35, 0.92);
+}
+
+/* 移动端：VANLAN 再醒目一档 */
+@media (max-width: 767px) {
+  .op-act-intro .op-line-outline {
+    font-size: clamp(46px, 18vw, 92px);
+  }
+  .op-act-intro .op-headline::after {
+    height: 5px;
+    margin-top: 10px;
+  }
+}
