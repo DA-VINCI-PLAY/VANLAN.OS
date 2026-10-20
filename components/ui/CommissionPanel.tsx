@@ -30,7 +30,7 @@ import { useOS } from '@/lib/store';
 type View = 'list' | 'form' | 'done';
 
 const FIELD =
-  'w-full rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2.5 text-[12px] text-ink placeholder:text-ink/25 outline-none transition-colors duration-200 focus:border-[#E82127]/60';
+  'w-full rounded-lg border border-black/10 bg-black/[0.03] px-3 py-2.5 text-[12px] text-ink placeholder:text-ink/25 outline-none transition-colors duration-200 focus:border-[#F35A17]/60';
 const LABEL =
   'mb-1.5 block font-mono text-[8px] tracking-[0.22em] text-ink/40';
 
@@ -110,7 +110,7 @@ export default function CommissionPanel() {
     return (
       <div className="os-sheet-in space-y-4">
         <div className="flex items-start gap-3">
-          <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#3ddc84]/30 bg-[#3ddc84]/10 text-[13px] text-[#3ddc84]">
+          <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#18A057]/30 bg-[#18A057]/10 text-[13px] text-[#18A057]">
             ✓
           </span>
           <div>
@@ -125,12 +125,12 @@ export default function CommissionPanel() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <div className="rounded-xl border border-black/[0.08] bg-black/[0.02] p-4">
           <div className={LABEL}>ORDER ID</div>
-          <div className="font-mono text-[17px] tracking-[0.14em] text-[#E82127]">
+          <div className="font-mono text-[17px] tracking-[0.14em] text-[#F35A17]">
             {order.id}
           </div>
-          <div className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-3 font-mono text-[10px] text-ink/55">
+          <div className="mt-3 space-y-1.5 border-t border-black/[0.07] pt-3 font-mono text-[10px] text-ink/55">
             <div className="flex justify-between gap-3">
               <span className="text-ink/30">SERVICE</span>
               <span className="truncate text-right text-ink/85">
@@ -145,7 +145,7 @@ export default function CommissionPanel() {
             </div>
             <div className="flex justify-between gap-3">
               <span className="text-ink/30">STATUS</span>
-              <span className="text-[#f2c14e]">
+              <span className="text-[#E08E00]">
                 {ORDER_STATUS_LABEL[order.status]}
               </span>
             </div>
@@ -161,7 +161,7 @@ export default function CommissionPanel() {
         <button
           type="button"
           onClick={resetAll}
-          className="w-full rounded-lg border border-white/[0.1] py-2.5 font-mono text-[10px] tracking-[0.2em] text-ink/70 transition-colors hover:border-white/25 hover:text-ink"
+          className="w-full rounded-lg border border-black/10 py-2.5 font-mono text-[10px] tracking-[0.2em] text-ink/70 transition-colors hover:border-black/25 hover:text-ink"
         >
           {lang === 'zh' ? '再下一单' : 'NEW REQUEST'}
         </button>
@@ -181,8 +181,8 @@ export default function CommissionPanel() {
           ← {lang === 'zh' ? '返回服务列表' : 'BACK'}
         </button>
 
-        <div className="rounded-lg border border-[#E82127]/25 bg-[#E82127]/[0.06] px-3 py-2.5">
-          <div className="font-mono text-[9px] tracking-[0.16em] text-[#E82127]">
+        <div className="rounded-lg border border-[#F35A17]/25 bg-[#F35A17]/[0.06] px-3 py-2.5">
+          <div className="font-mono text-[9px] tracking-[0.16em] text-[#F35A17]">
             {CATEGORY_EN[picked.category]}
           </div>
           <div className="mt-0.5 text-[12px] font-semibold text-ink">
@@ -218,8 +218,8 @@ export default function CommissionPanel() {
                 aria-pressed={contactType === t}
                 className={`rounded-md border py-1.5 font-mono text-[9px] tracking-[0.1em] transition-colors ${
                   contactType === t
-                    ? 'border-[#E82127]/60 bg-[#E82127]/15 text-white'
-                    : 'border-white/[0.08] text-ink/45 hover:border-white/20'
+                    ? 'border-[#F35A17]/60 bg-[#F35A17]/15 text-white'
+                    : 'border-black/[0.08] text-ink/45 hover:border-black/20'
                 }`}
               >
                 {t}
@@ -252,7 +252,7 @@ export default function CommissionPanel() {
             onChange={(e) => setBudget(e.target.value)}
           >
             {BUDGET_OPTIONS.map((b) => (
-              <option key={b} value={b} className="bg-[#12141A]">
+              <option key={b} value={b} className="bg-white">
                 {b}
               </option>
             ))}
@@ -283,8 +283,8 @@ export default function CommissionPanel() {
           aria-pressed={demo}
           className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${
             demo
-              ? 'border-[#E82127]/45 bg-[#E82127]/10'
-              : 'border-white/[0.08] hover:border-white/20'
+              ? 'border-[#F35A17]/45 bg-[#F35A17]/10'
+              : 'border-black/[0.08] hover:border-black/20'
           }`}
         >
           <span className="text-left">
@@ -298,7 +298,7 @@ export default function CommissionPanel() {
           <span
             aria-hidden
             className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-              demo ? 'bg-[#E82127]' : 'bg-white/15'
+              demo ? 'bg-[#F35A17]' : 'bg-black/15'
             }`}
           >
             <span
@@ -310,7 +310,7 @@ export default function CommissionPanel() {
         </button>
 
         {error && (
-          <p className="rounded-md border border-[#E82127]/30 bg-[#E82127]/10 px-3 py-2 text-[10px] text-[#ff8f92]">
+          <p className="rounded-md border border-[#F35A17]/30 bg-[#F35A17]/10 px-3 py-2 text-[10px] text-[#D94709]">
             {error}
           </p>
         )}
@@ -352,7 +352,7 @@ export default function CommissionPanel() {
       )}
 
       {hydrated && active.length === 0 && (
-        <div className="rounded-lg border border-white/[0.08] py-8 text-center text-[10px] text-ink/35">
+        <div className="rounded-lg border border-black/[0.08] py-8 text-center text-[10px] text-ink/35">
           {lang === 'zh' ? '服务整理中，稍后再来。' : 'Services are being updated.'}
         </div>
       )}
@@ -364,7 +364,7 @@ export default function CommissionPanel() {
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <div className="font-mono text-[8px] tracking-[0.2em] text-[#E82127]">
+              <div className="font-mono text-[8px] tracking-[0.2em] text-[#F35A17]">
                 {CATEGORY_EN[p.category]} · {CATEGORY_LABEL[p.category]}
               </div>
               <h3 className="mt-1 text-[12.5px] font-semibold leading-snug text-ink">
@@ -391,7 +391,7 @@ export default function CommissionPanel() {
                 key={d}
                 className="flex items-start gap-1.5 text-[9px] leading-snug text-ink/55"
               >
-                <span aria-hidden className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-white/25" />
+                <span aria-hidden className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-black/25" />
                 {d}
               </li>
             ))}
@@ -400,12 +400,12 @@ export default function CommissionPanel() {
           <button
             type="button"
             onClick={() => openForm(p)}
-            className="mt-3 flex w-full items-center justify-between rounded-lg border border-white/[0.1] px-3 py-2.5 text-left transition-colors hover:border-[#E82127]/55 hover:bg-[#E82127]/[0.07]"
+            className="mt-3 flex w-full items-center justify-between rounded-lg border border-black/10 px-3 py-2.5 text-left transition-colors hover:border-[#F35A17]/55 hover:bg-[#F35A17]/[0.07]"
           >
             <span className="font-mono text-[9px] tracking-[0.18em] text-ink/75">
               {lang === 'zh' ? '发起委托' : 'REQUEST'}
             </span>
-            <span aria-hidden className="text-[11px] text-[#E82127]">
+            <span aria-hidden className="text-[11px] text-[#F35A17]">
               →
             </span>
           </button>

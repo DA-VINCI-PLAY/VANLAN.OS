@@ -44,7 +44,7 @@ export const ACTS: Act[] = [
     end: 25,
     startP: S(0),
     endP: S(25),
-    accent: '#E82127',
+    accent: '#F35A17',
   },
   {
     id: 'SOUND',
@@ -55,7 +55,7 @@ export const ACTS: Act[] = [
     end: 50,
     startP: S(25),
     endP: S(50),
-    accent: '#5AC8FA',
+    accent: '#FF8A3D',
   },
   {
     id: 'COMMISSION',
@@ -66,7 +66,7 @@ export const ACTS: Act[] = [
     end: 75,
     startP: S(50),
     endP: S(75),
-    accent: '#E82127',
+    accent: '#F35A17',
   },
   {
     id: 'CREDITS',
@@ -77,7 +77,7 @@ export const ACTS: Act[] = [
     end: 90,
     startP: S(75),
     endP: S(90),
-    accent: '#B9C2CC',
+    accent: '#8A8F98',
   },
 ];
 
@@ -130,7 +130,7 @@ export interface HeadKey {
   camZ: number;
   /** 垂直视场角 */
   fov: number;
-  /** 特斯拉红轮廓光强度 */
+  /** 橙色轮廓光强度 */
   rim: number;
   /** 主光强度 */
   key: number;

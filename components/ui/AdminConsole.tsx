@@ -45,7 +45,7 @@ const CATEGORIES: ServiceCategory[] = [
 ];
 
 const FIELD =
-  'w-full rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-[12px] text-ink placeholder:text-ink/25 outline-none transition-colors duration-200 focus:border-[#E82127]/60';
+  'w-full rounded-lg border border-black/10 bg-black/[0.03] px-3 py-2 text-[12px] text-ink placeholder:text-ink/25 outline-none transition-colors duration-200 focus:border-[#F35A17]/60';
 const LABEL = 'mb-1 block font-mono text-[8px] tracking-[0.2em] text-ink/40';
 
 const EMPTY_DRAFT: ProductDraft = {
@@ -110,10 +110,10 @@ export default function AdminConsole() {
   /* ---------------- 口令闸门 ---------------- */
   if (!unlocked) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5 backdrop-blur-md">
-        <div className="os-sheet-in w-full max-w-[340px] rounded-2xl border border-white/[0.08] bg-[rgba(16,18,22,0.96)] p-6 shadow-[0_32px_80px_rgba(0,0,0,0.7)]">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-5 backdrop-blur-md">
+        <div className="os-sheet-in w-full max-w-[340px] rounded-2xl border border-black/10 bg-[rgba(255,253,249,0.97)] p-6 shadow-[0_32px_80px_rgba(46,36,24,0.28)]">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[9px] tracking-[0.28em] text-[#E82127]">
+            <span className="font-mono text-[9px] tracking-[0.28em] text-[#F35A17]">
               SYS // AUTH
             </span>
             <button
@@ -155,7 +155,7 @@ export default function AdminConsole() {
           />
 
           {authError && (
-            <p className="mt-2 text-center font-mono text-[9px] tracking-[0.1em] text-[#ff8f92]">
+            <p className="mt-2 text-center font-mono text-[9px] tracking-[0.1em] text-[#D94709]">
               {authError}
             </p>
           )}
@@ -218,11 +218,11 @@ export default function AdminConsole() {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[#090A0C]/97 backdrop-blur-lg">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#FAF8F4]/97 backdrop-blur-lg">
       {/* 顶栏 */}
-      <header className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-4 py-3 sm:px-6">
+      <header className="flex shrink-0 items-center justify-between border-b border-black/[0.08] px-4 py-3 sm:px-6">
         <div className="flex items-baseline gap-3">
-          <span className="font-mono text-[10px] font-semibold tracking-[0.28em] text-[#E82127]">
+          <span className="font-mono text-[10px] font-semibold tracking-[0.28em] text-[#F35A17]">
             ADMIN
           </span>
           <span className="font-mono text-[8px] tracking-[0.18em] text-ink/30 max-sm:hidden">
@@ -237,7 +237,7 @@ export default function AdminConsole() {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close admin console"
-            className="rounded-full border border-white/10 px-3 py-1 font-mono text-[9px] tracking-[0.14em] text-ink/55 transition-colors hover:border-white/30 hover:text-ink"
+            className="rounded-full border border-black/10 px-3 py-1 font-mono text-[9px] tracking-[0.14em] text-ink/55 transition-colors hover:border-black/25 hover:text-ink"
           >
             EXIT
           </button>
@@ -245,7 +245,7 @@ export default function AdminConsole() {
       </header>
 
       {/* Tabs */}
-      <div className="flex shrink-0 gap-1 border-b border-white/[0.06] px-4 py-2 sm:px-6">
+      <div className="flex shrink-0 gap-1 border-b border-black/[0.07] px-4 py-2 sm:px-6">
         {(['products', 'orders'] as Tab[]).map((t) => (
           <button
             key={t}
@@ -254,7 +254,7 @@ export default function AdminConsole() {
             aria-pressed={tab === t}
             className={`rounded-full px-3.5 py-1.5 font-mono text-[9px] tracking-[0.18em] transition-colors ${
               tab === t
-                ? 'bg-[#E82127] text-white'
+                ? 'bg-[#F35A17] text-white'
                 : 'text-ink/45 hover:text-ink/80'
             }`}
           >
@@ -268,7 +268,7 @@ export default function AdminConsole() {
         {tab === 'products' ? (
           <div className="mx-auto grid max-w-[1100px] gap-4 lg:grid-cols-[380px_1fr]">
             {/* 编辑表单 */}
-            <section className="h-fit rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+            <section className="h-fit rounded-xl border border-black/[0.08] bg-black/[0.02] p-4">
               <div className="flex items-center justify-between">
                 <span className={LABEL.replace('mb-1', 'mb-0')}>
                   {editingId ? 'EDIT SERVICE' : 'NEW SERVICE'}
@@ -314,7 +314,7 @@ export default function AdminConsole() {
                       }
                     >
                       {CATEGORIES.map((c) => (
-                        <option key={c} value={c} className="bg-[#12141A]">
+                        <option key={c} value={c} className="bg-white">
                           {CATEGORY_LABEL[c]}
                         </option>
                       ))}
@@ -388,7 +388,7 @@ export default function AdminConsole() {
                   />
                 </div>
 
-                <label className="flex items-center justify-between rounded-lg border border-white/[0.08] px-3 py-2">
+                <label className="flex items-center justify-between rounded-lg border border-black/[0.08] px-3 py-2">
                   <span className="text-[10px] text-ink/60">立即上架</span>
                   <input
                     type="checkbox"
@@ -396,7 +396,7 @@ export default function AdminConsole() {
                     onChange={(e) =>
                       setDraft({ ...draft, active: e.target.checked })
                     }
-                    className="h-4 w-4 accent-[#E82127]"
+                    className="h-4 w-4 accent-[#F35A17]"
                   />
                 </label>
 
@@ -413,7 +413,7 @@ export default function AdminConsole() {
             {/* 列表 */}
             <section className="space-y-2">
               {products.length === 0 && (
-                <div className="rounded-xl border border-white/[0.08] py-12 text-center text-[10px] text-ink/30">
+                <div className="rounded-xl border border-black/[0.08] py-12 text-center text-[10px] text-ink/30">
                   暂无服务，先在左侧创建。
                 </div>
               )}
@@ -422,13 +422,13 @@ export default function AdminConsole() {
                   key={p.id}
                   className={`rounded-xl border p-3.5 transition-colors ${
                     p.active
-                      ? 'border-white/[0.08] bg-white/[0.02]'
-                      : 'border-white/[0.04] bg-white/[0.01] opacity-55'
+                      ? 'border-black/[0.08] bg-black/[0.02]'
+                      : 'border-black/[0.05] bg-black/[0.01] opacity-55'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-mono text-[8px] tracking-[0.18em] text-[#E82127]">
+                      <div className="font-mono text-[8px] tracking-[0.18em] text-[#F35A17]">
                         {CATEGORY_EN[p.category]}
                         {!p.active && ' · OFFLINE'}
                       </div>
@@ -446,8 +446,8 @@ export default function AdminConsole() {
                         onClick={() => toggleProduct(p.id)}
                         className={`rounded-md border px-2 py-1 font-mono text-[8px] tracking-[0.12em] transition-colors ${
                           p.active
-                            ? 'border-[#3ddc84]/30 text-[#3ddc84] hover:bg-[#3ddc84]/10'
-                            : 'border-white/15 text-ink/45 hover:text-ink'
+                            ? 'border-[#18A057]/30 text-[#18A057] hover:bg-[#18A057]/10'
+                            : 'border-black/15 text-ink/45 hover:text-ink'
                         }`}
                       >
                         {p.active ? 'ON' : 'OFF'}
@@ -455,14 +455,14 @@ export default function AdminConsole() {
                       <button
                         type="button"
                         onClick={() => startEdit(p.id)}
-                        className="rounded-md border border-white/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/50 hover:border-white/25 hover:text-ink"
+                        className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/50 hover:border-black/25 hover:text-ink"
                       >
                         EDIT
                       </button>
                       <button
                         type="button"
                         onClick={() => removeProduct(p.id)}
-                        className="rounded-md border border-white/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/35 hover:border-[#E82127]/50 hover:text-[#E82127]"
+                        className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/35 hover:border-[#F35A17]/50 hover:text-[#F35A17]"
                       >
                         DEL
                       </button>
@@ -490,7 +490,7 @@ export default function AdminConsole() {
                     'application/json',
                   )
                 }
-                className="rounded-md border border-white/10 px-2.5 py-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/60 transition-colors hover:border-white/30 hover:text-ink disabled:opacity-30"
+                className="rounded-md border border-black/10 px-2.5 py-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/60 transition-colors hover:border-black/25 hover:text-ink disabled:opacity-30"
               >
                 EXPORT JSON
               </button>
@@ -504,7 +504,7 @@ export default function AdminConsole() {
                     'text/csv;charset=utf-8',
                   )
                 }
-                className="rounded-md border border-white/10 px-2.5 py-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/60 transition-colors hover:border-white/30 hover:text-ink disabled:opacity-30"
+                className="rounded-md border border-black/10 px-2.5 py-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/60 transition-colors hover:border-black/25 hover:text-ink disabled:opacity-30"
               >
                 EXPORT CSV
               </button>
@@ -522,8 +522,8 @@ export default function AdminConsole() {
                 }}
                 className={`rounded-md border px-2.5 py-1.5 font-mono text-[8px] tracking-[0.14em] transition-colors disabled:opacity-30 ${
                   confirmClear
-                    ? 'border-[#E82127] bg-[#E82127]/15 text-[#ff8f92]'
-                    : 'border-white/10 text-ink/40 hover:border-[#E82127]/50 hover:text-[#E82127]'
+                    ? 'border-[#F35A17] bg-[#F35A17]/15 text-[#D94709]'
+                    : 'border-black/10 text-ink/40 hover:border-[#F35A17]/50 hover:text-[#F35A17]'
                 }`}
               >
                 {confirmClear ? 'CONFIRM CLEAR?' : 'CLEAR ALL'}
@@ -531,7 +531,7 @@ export default function AdminConsole() {
             </div>
 
             {orders.length === 0 && (
-              <div className="rounded-xl border border-white/[0.08] py-16 text-center">
+              <div className="rounded-xl border border-black/[0.08] py-16 text-center">
                 <div className="font-mono text-[10px] tracking-[0.2em] text-ink/30">
                   NO ORDERS YET
                 </div>
@@ -548,21 +548,21 @@ export default function AdminConsole() {
                 return (
                   <article
                     key={o.id}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5"
+                    className="rounded-xl border border-black/[0.08] bg-black/[0.02] p-3.5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] tracking-[0.12em] text-[#E82127]">
+                          <span className="font-mono text-[11px] tracking-[0.12em] text-[#F35A17]">
                             {o.id}
                           </span>
                           <span
                             className={`rounded-full border px-2 py-[2px] font-mono text-[7.5px] tracking-[0.12em] ${
                               o.status === 'pending'
-                                ? 'border-[#f2c14e]/35 text-[#f2c14e]'
+                                ? 'border-[#E08E00]/35 text-[#E08E00]'
                                 : o.status === 'in_progress'
-                                  ? 'border-[#12B7F5]/35 text-[#12B7F5]'
-                                  : 'border-[#3ddc84]/35 text-[#3ddc84]'
+                                  ? 'border-[#0E8FD5]/35 text-[#0E8FD5]'
+                                  : 'border-[#18A057]/35 text-[#18A057]'
                             }`}
                           >
                             {ORDER_STATUS_EN[o.status]}
@@ -587,7 +587,7 @@ export default function AdminConsole() {
                           type="button"
                           onClick={() => advanceOrder(o.id)}
                           disabled={idx >= ORDER_FLOW.length - 1}
-                          className="rounded-md border border-white/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/55 transition-colors hover:border-white/30 hover:text-ink disabled:opacity-25"
+                          className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/55 transition-colors hover:border-black/25 hover:text-ink disabled:opacity-25"
                         >
                           {idx >= ORDER_FLOW.length - 1
                             ? 'DONE'
@@ -598,7 +598,7 @@ export default function AdminConsole() {
                           onClick={() =>
                             setExpanded(isOpen ? null : o.id)
                           }
-                          className="rounded-md border border-white/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/45 hover:border-white/25 hover:text-ink"
+                          className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] tracking-[0.12em] text-ink/45 hover:border-black/25 hover:text-ink"
                         >
                           {isOpen ? 'HIDE' : 'BRIEF'}
                         </button>
@@ -606,7 +606,7 @@ export default function AdminConsole() {
                           type="button"
                           onClick={() => removeOrder(o.id)}
                           aria-label={`Delete order ${o.id}`}
-                          className="rounded-md border border-white/10 px-2 py-1 font-mono text-[8px] text-ink/30 hover:border-[#E82127]/50 hover:text-[#E82127]"
+                          className="rounded-md border border-black/10 px-2 py-1 font-mono text-[8px] text-ink/30 hover:border-[#F35A17]/50 hover:text-[#F35A17]"
                         >
                           ×
                         </button>
@@ -614,7 +614,7 @@ export default function AdminConsole() {
                     </div>
 
                     {isOpen && (
-                      <div className="mt-3 space-y-2 border-t border-white/[0.06] pt-3">
+                      <div className="mt-3 space-y-2 border-t border-black/[0.07] pt-3">
                         <div>
                           <div className={LABEL}>BRIEF</div>
                           <p className="whitespace-pre-wrap text-[10px] leading-relaxed text-ink/65">

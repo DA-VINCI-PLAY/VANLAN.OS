@@ -10,6 +10,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // 不锁 maximumScale=1：允许用户双指/无障碍缩放
+  themeColor: '#FAF8F4',
 };
 
 export default function RootLayout({
@@ -18,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className="dark">
-      <body className="bg-[#090A0C] text-ink antialiased overflow-hidden">{children}</body>
+    <html lang="zh-CN">
+      <body className="bg-[#FAF8F4] text-ink antialiased overflow-hidden">{children}</body>
     </html>
   );
 }

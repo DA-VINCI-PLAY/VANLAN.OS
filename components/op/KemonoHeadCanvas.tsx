@@ -39,8 +39,8 @@ function KemonoHead() {
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#efece5',
-        roughness: 0.58,
+        color: '#e9e2d5',
+        roughness: 0.62,
         metalness: 0.04,
         envMapIntensity: 0.2,
       }),
@@ -129,7 +129,7 @@ function CameraRig() {
   return null;
 }
 
-/* ---------------- 灯光：主光 + 冷环境 + 特斯拉红轮廓 ---------------- */
+/* ---------------- 灯光：主光 + 暖环境 + 活力橙轮廓（白底靠明暗塑形） ---------------- */
 function ThreePointLights() {
   const rim = useRef<THREE.PointLight>(null);
   const key = useRef<THREE.DirectionalLight>(null);
@@ -146,10 +146,10 @@ function ThreePointLights() {
 
   return (
     <>
-      <ambientLight intensity={0.42} color="#9fb2cc" />
-      <directionalLight ref={key} position={[3.2, 3.0, 3.6]} color="#fff5e8" intensity={1.15} />
-      <directionalLight position={[-3.6, 0.6, 2.2]} color="#7fb0ff" intensity={0.32} />
-      <pointLight ref={rim} position={[-0.6, 1.5, -2.4]} color="#e82127" intensity={2} distance={9} decay={2} />
+      <ambientLight intensity={0.34} color="#f2ead9" />
+      <directionalLight ref={key} position={[3.2, 3.0, 3.6]} color="#fff8ee" intensity={1.55} />
+      <directionalLight position={[-3.6, 0.6, 2.2]} color="#d9e2ec" intensity={0.24} />
+      <pointLight ref={rim} position={[-0.6, 1.5, -2.4]} color="#f35a17" intensity={2.2} distance={9} decay={2} />
     </>
   );
 }
