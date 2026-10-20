@@ -40,7 +40,18 @@ const fmt = (sec: number): string => {
   return `${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 };
 
-/* 社交矩阵：固定 7 项，与内容源解耦 */
+/* 自媒体矩阵：平台 + 内容定位标签（顺序即卡片顺序） */
+const MEDIA_CHANNELS: { id: string; tags: string }[] = [
+  { id: 'douyin', tags: '高燃片段 / 电子音乐' },
+  { id: 'bilibili', tags: '编曲工程 / MV / 混音幕后' },
+  { id: 'xiaohongshu', tags: '3D 建模 / 视觉设定' },
+  { id: 'youtube', tags: '完整作品 / LIVE SET' },
+  { id: 'x', tags: '日常 / 即兴' },
+  { id: 'instagram', tags: '视觉碎片 / 幕后' },
+  { id: 'threads', tags: '随想 / 更新' },
+];
+
+/* 首屏社交矩阵：固定 7 项，与内容源解耦 */
 const CHIP_IDS = [
   'douyin',
   'bilibili',
@@ -67,6 +78,7 @@ export default function StageOverlay() {
         {act === 'INTRO' && <IntroStage />}
         {act === 'SOUND' && <SoundStage />}
         {act === 'COMMISSION' && <CommissionStage />}
+        {act === 'MEDIA' && <MediaStage />}
         {act === 'CREDITS' && <CreditsStage />}
       </div>
     </div>
@@ -372,8 +384,8 @@ function SoundStage() {
 
       <div className="op-card-foot">
         <span>{album.description.slice(0, 34)}…</span>
-        <button type="button" onClick={() => gotoAct('CREDITS')}>
-          片尾 →
+        <button type="button" onClick={() => gotoAct('MEDIA')}>
+          矩阵 →
         </button>
       </div>
 
@@ -420,7 +432,63 @@ function CommissionStage() {
   );
 }
 
-/* ============ ACT 04 · 职员表 / 系统 ============ */
+/* ============ ACT 04 · 自媒体矩阵 ============ */
+function MediaStage() {
+  const lang = useOS((s) => s.lang);
+
+  const channels = MEDIA_CHANNELS.flatMap(({ id, tags }) => {
+    const s = SOCIALS.find((x) => x.id === id);
+    return s ? [{ entry: s, tags }] : [];
+  });
+
+  return (
+    <section className="op-panel op-panel-media" aria-label="自媒体矩阵">
+      <div className="op-store-head">
+        <div>
+          <div className="op-kicker">MEDIA MATRIX // INFO CARD</div>
+          <h2 className="op-store-title">{lang === 'zh' ? '自媒体矩阵' : 'Channels'}</h2>
+        </div>
+        <span className="op-store-badge">{channels.length} CH</span>
+      </div>
+
+      <div className="op-store-body os-scroll" data-scroll>
+        <div className="op-media-grid">
+          {channels.map(({ entry, tags }) => (
+            <a
+              key={entry.id}
+              href={entry.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="op-media-card"
+              title={`${entry.platform} · ${entry.handle}`}
+            >
+              <span className="op-media-ico">
+                <BrandIcon id={entry.id} size={20} />
+              </span>
+              <span className="op-media-body">
+                <b>{entry.platform}</b>
+                <i>{entry.handle}</i>
+                <em>{tags}</em>
+              </span>
+              <span className="op-media-go" aria-hidden>
+                ↗
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="op-card-foot">
+        <span className="op-foot-note">DOUYIN · BILIBILI · RED · YT · X · IG · THREADS</span>
+        <button type="button" onClick={() => gotoAct('CREDITS')}>
+          片尾 →
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/* ============ ACT 05 · 职员表 / 系统 ============ */
 function CreditsStage() {
   const lang = useOS((s) => s.lang);
   const setLang = useOS((s) => s.setLang);

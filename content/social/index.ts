@@ -32,9 +32,9 @@ export const SOCIALS: SocialEntry[] = [
   {
     id: 'email',
     platform: 'EMAIL',
-    handle: 'jason901888@163.com',
+    handle: 'VANLAN0127@gmail.com',
     action: 'copy',
-    value: 'jason901888@163.com',
+    value: 'VANLAN0127@gmail.com',
   },
   {
     id: 'wechat',

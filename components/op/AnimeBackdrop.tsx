@@ -15,17 +15,54 @@ import { useEffect, useRef } from 'react';
 import { ACTS, ACT_COPY, actWeight, scrub } from '@/lib/opTimeline';
 import { SITE } from '@/content/site';
 
+/** 章节切入时的字符解码特效（0.3s，纯 DOM 文本替换，零渲染开销） */
+const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#/·';
+function scrambleIndex(el: HTMLElement) {
+  const nodes = Array.from(
+    el.querySelectorAll<HTMLElement>('.op-act-code, .op-act-en'),
+  );
+  if (!nodes.length) return;
+  const finals = nodes.map((n) => n.textContent ?? '');
+  const total = 10;
+  let frame = 0;
+  const id = window.setInterval(() => {
+    frame += 1;
+    nodes.forEach((n, i) => {
+      const fin = finals[i];
+      const reveal = Math.floor((frame / total) * fin.length);
+      n.textContent = fin
+        .split('')
+        .map((ch, idx) =>
+          ch === ' ' || ch === '_' || idx < reveal
+            ? ch
+            : GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+        )
+        .join('');
+    });
+    if (frame >= total) {
+      window.clearInterval(id);
+      nodes.forEach((n, i) => {
+        n.textContent = finals[i];
+      });
+    }
+  }, 30);
+}
+
 export default function AnimeBackdrop() {
   const rootRef = useRef<HTMLDivElement>(null);
   const actRefs = useRef<Record<string, HTMLElement | null>>({});
+  const scrambledRef = useRef<Record<string, boolean>>({});
+  const bootGateRef = useRef(0);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    bootGateRef.current = performance.now() + 1250;
     let raf = 0;
 
     const tick = () => {
       const p = scrub.progress;
+      const now = performance.now();
       root.style.setProperty('--p', p.toFixed(5));
 
       for (let i = 0; i < ACTS.length; i += 1) {
@@ -39,6 +76,14 @@ export default function AnimeBackdrop() {
         el.style.setProperty('--lp', Math.max(0, Math.min(1, lt)).toFixed(4));
         // 章节切换时整层轻微升降，制造「翻页」错位感
         el.style.transform = `translate3d(0, ${((1 - w) * 26).toFixed(2)}px, 0)`;
+
+        // 切镜瞬间：章节编号做一次字符解码
+        if (w > 0.5 && !scrambledRef.current[act.id] && now > bootGateRef.current) {
+          scrambledRef.current[act.id] = true;
+          scrambleIndex(el);
+        } else if (w < 0.02 && scrambledRef.current[act.id]) {
+          scrambledRef.current[act.id] = false;
+        }
       }
 
       raf = window.requestAnimationFrame(tick);

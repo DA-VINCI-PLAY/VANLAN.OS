@@ -14,12 +14,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  BUDGET_OPTIONS,
   CONTACT_TYPES,
   ORDER_STATUS_LABEL,
   useCommerce,
   type Order,
 } from '@/lib/commerce';
+import { notifyOrder } from '@/lib/notify';
 import {
   CATEGORY_EN,
   CATEGORY_LABEL,
@@ -33,6 +33,19 @@ const FIELD =
   'w-full rounded-lg border border-black/10 bg-black/[0.03] px-3 py-2.5 text-[12px] text-ink placeholder:text-ink/25 outline-none transition-colors duration-200 focus:border-[#F35A17]/60';
 const LABEL =
   'mb-1.5 block font-mono text-[8px] tracking-[0.22em] text-ink/40';
+
+/* ---------------- 预算区间 ---------------- */
+const BUDGET_FLOOR = 500;
+const BUDGET_CEIL = 20000;
+const BUDGET_STEP = 500;
+const money = (n: number) => `¥${n.toLocaleString('zh-CN')}`;
+
+const BUDGET_PRESETS: { label: string; hint: string; range: [number, number] }[] = [
+  { label: '¥500-1.5k', hint: '轻量级', range: [500, 1500] },
+  { label: '¥1.5k-4k', hint: '标准商业', range: [1500, 4000] },
+  { label: '¥4k-10k', hint: '深度定制', range: [4000, 10000] },
+  { label: '¥10k+', hint: '旗舰级', range: [10000, 20000] },
+];
 
 function priceLine(p: ServiceProduct): string {
   if (p.price <= 0) return '面议';
@@ -54,10 +67,13 @@ export default function CommissionPanel() {
   const [contactType, setContactType] =
     useState<(typeof CONTACT_TYPES)[number]>('WeChat');
   const [contact, setContact] = useState('');
-  const [budget, setBudget] = useState(BUDGET_OPTIONS[2]);
+  const [budgetMin, setBudgetMin] = useState(1500);
+  const [budgetMax, setBudgetMax] = useState(4000);
   const [brief, setBrief] = useState('');
   const [demo, setDemo] = useState(false);
   const [error, setError] = useState('');
+  const [pushing, setPushing] = useState<'idle' | 'sending' | 'done'>('idle');
+  const [pushNote, setPushNote] = useState('');
 
   useEffect(() => {
     hydrate();
@@ -69,6 +85,27 @@ export default function CommissionPanel() {
     setPicked(p);
     setError('');
     setView('form');
+  };
+
+  const budgetLabel = `${money(budgetMin)} – ${money(budgetMax)}${
+    budgetMax >= BUDGET_CEIL ? '+' : ''
+  }`;
+  const span = BUDGET_CEIL - BUDGET_FLOOR;
+  const pctMin = ((budgetMin - BUDGET_FLOOR) / span) * 100;
+  const pctMax = ((budgetMax - BUDGET_FLOOR) / span) * 100;
+
+  const setBudget = (which: 'min' | 'max', raw: number) => {
+    const v = Math.min(BUDGET_CEIL, Math.max(BUDGET_FLOOR, Math.round(raw)));
+    if (which === 'min') {
+      setBudgetMin(Math.min(v, budgetMax - BUDGET_STEP < BUDGET_FLOOR ? BUDGET_FLOOR : budgetMax - BUDGET_STEP));
+    } else {
+      setBudgetMax(Math.max(v, budgetMin + BUDGET_STEP > BUDGET_CEIL ? BUDGET_CEIL : budgetMin + BUDGET_STEP));
+    }
+  };
+
+  const applyPreset = (range: [number, number]) => {
+    setBudgetMin(range[0]);
+    setBudgetMax(range[1]);
   };
 
   const submit = () => {
@@ -86,12 +123,36 @@ export default function CommissionPanel() {
       clientName: n,
       contactType,
       contact: c,
-      budget,
+      budget: budgetLabel,
       brief: b,
       demo,
     });
     setOrder(created);
     setView('done');
+
+    // 实时推送（不阻断 UI；失败也不影响订单落库）
+    setPushing('sending');
+    setPushNote('');
+    notifyOrder({
+      orderId: created.id,
+      serviceName: created.serviceName,
+      clientName: created.clientName,
+      contactType: created.contactType,
+      contact: created.contact,
+      budget: created.budget,
+      brief: created.brief,
+      demo: created.demo,
+      createdAt: created.createdAt,
+    })
+      .then((r) => {
+        setPushing('done');
+        if (r.mail === 'ok') setPushNote('通知已推送到邮箱');
+        else if (r.mail === 'fail') setPushNote('邮件通道未激活，请到邮箱点击 Activate');
+        else if (r.push === 'ok') setPushNote('已通过微信推送');
+      })
+      .catch(() => {
+        setPushing('done');
+      });
   };
 
   const resetAll = () => {
@@ -151,6 +212,17 @@ export default function CommissionPanel() {
             </div>
           </div>
         </div>
+
+        {pushing !== 'idle' && (
+          <p className="flex items-center gap-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/35">
+            <i
+              className={`h-1.5 w-1.5 rounded-full ${
+                pushing === 'sending' ? 'animate-pulse bg-[#E08E00]' : 'bg-[#18A057]'
+              }`}
+            />
+            {pushing === 'sending' ? 'PUSHING NOTIFICATION…' : pushNote || 'NOTIFICATION SENT'}
+          </p>
+        )}
 
         <p className="text-[9px] leading-relaxed text-ink/30">
           {lang === 'zh'
@@ -242,21 +314,68 @@ export default function CommissionPanel() {
         </div>
 
         <div>
-          <label className={LABEL} htmlFor="c-budget">
-            {lang === 'zh' ? '预算范围' : 'BUDGET'}
-          </label>
-          <select
-            id="c-budget"
-            className={FIELD}
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-          >
-            {BUDGET_OPTIONS.map((b) => (
-              <option key={b} value={b} className="bg-white">
-                {b}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-baseline justify-between">
+            <span className={`${LABEL} mb-1`}>
+              {lang === 'zh' ? '预算区间' : 'BUDGET RANGE'}
+            </span>
+            <span className="font-mono text-[8px] tracking-[0.18em] text-ink/30">
+              CNY
+            </span>
+          </div>
+
+          {/* 遥测：大号等宽数字随拖动跳动 */}
+          <div className="op-budget-echo" aria-live="polite">
+            <span>{money(budgetMin)}</span>
+            <i>—</i>
+            <span>
+              {money(budgetMax)}
+              {budgetMax >= BUDGET_CEIL ? '+' : ''}
+            </span>
+          </div>
+
+          {/* 双滑块轨道 */}
+          <div className="op-budget">
+            <div className="op-budget-track">
+              <i style={{ left: `${pctMin}%`, right: `${100 - pctMax}%` }} />
+            </div>
+            <input
+              type="range"
+              aria-label="预算下限"
+              min={BUDGET_FLOOR}
+              max={BUDGET_CEIL}
+              step={BUDGET_STEP}
+              value={budgetMin}
+              onChange={(e) => setBudget('min', Number(e.target.value))}
+            />
+            <input
+              type="range"
+              aria-label="预算上限"
+              min={BUDGET_FLOOR}
+              max={BUDGET_CEIL}
+              step={BUDGET_STEP}
+              value={budgetMax}
+              onChange={(e) => setBudget('max', Number(e.target.value))}
+            />
+          </div>
+
+          {/* 快捷档位 */}
+          <div className="op-budget-presets">
+            {BUDGET_PRESETS.map((p) => {
+              const on = budgetMin === p.range[0] && budgetMax === p.range[1];
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => applyPreset(p.range)}
+                  className={on ? 'is-on' : ''}
+                >
+                  <b>{p.label}</b>
+                  <i>{p.hint}</i>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>
@@ -295,17 +414,8 @@ export default function CommissionPanel() {
               {lang === 'zh' ? '先听听方向是否对味' : 'Hear the direction first'}
             </span>
           </span>
-          <span
-            aria-hidden
-            className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-              demo ? 'bg-[#F35A17]' : 'bg-black/15'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                demo ? 'translate-x-[18px]' : 'translate-x-0.5'
-              }`}
-            />
+          <span aria-hidden className={`os-switch${demo ? ' is-on' : ''}`}>
+            <i />
           </span>
         </button>
 

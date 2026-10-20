@@ -34,8 +34,15 @@ import {
   CATEGORY_LABEL,
   type ServiceCategory,
 } from '@/content/services';
+import {
+  DEFAULT_NOTIFY_EMAIL,
+  notifyTest,
+  readNotifySettings,
+  writeNotifySettings,
+  type NotifySettings,
+} from '@/lib/notify';
 
-type Tab = 'products' | 'orders';
+type Tab = 'products' | 'orders' | 'push';
 
 const CATEGORIES: ServiceCategory[] = [
   'COMPOSER',
@@ -83,10 +90,24 @@ export default function AdminConsole() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [notify, setNotify] = useState<NotifySettings>(() => ({
+    enabled: true,
+    primaryEmail: DEFAULT_NOTIFY_EMAIL,
+    backupEmail: '',
+    pushplusToken: '',
+  }));
+  const [testState, setTestState] = useState<'idle' | 'sending' | 'ok' | 'fail'>('idle');
+  const [testNote, setTestNote] = useState('');
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (open) hydrate();
   }, [open, hydrate]);
+
+  // 打开后台时同步推送设置
+  useEffect(() => {
+    if (open) setNotify(readNotifySettings());
+  }, [open]);
 
   // ESC 关闭
   useEffect(() => {
@@ -246,7 +267,7 @@ export default function AdminConsole() {
 
       {/* Tabs */}
       <div className="flex shrink-0 gap-1 border-b border-black/[0.07] px-4 py-2 sm:px-6">
-        {(['products', 'orders'] as Tab[]).map((t) => (
+        {(['products', 'orders', 'push'] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -258,7 +279,11 @@ export default function AdminConsole() {
                 : 'text-ink/45 hover:text-ink/80'
             }`}
           >
-            {t === 'products' ? `SERVICES · ${products.length}` : `ORDERS · ${orders.length}`}
+            {t === 'products'
+              ? `SERVICES · ${products.length}`
+              : t === 'orders'
+                ? `ORDERS · ${orders.length}`
+                : 'PUSH'}
           </button>
         ))}
       </div>
@@ -471,6 +496,136 @@ export default function AdminConsole() {
                 </article>
               ))}
             </section>
+          </div>
+        ) : tab === 'push' ? (
+          /* ---------------- 消息推送设置 ---------------- */
+          <div className="mx-auto max-w-[620px] space-y-4">
+            <section className="rounded-xl border border-black/[0.08] bg-black/[0.02] p-4">
+              <div className="flex items-center justify-between">
+                <span className={LABEL.replace('mb-1', 'mb-0')}>
+                  NOTIFICATION CHANNELS
+                </span>
+                <button
+                  type="button"
+                  aria-pressed={notify.enabled}
+                  onClick={() => {
+                    setNotify({ ...notify, enabled: !notify.enabled });
+                    setSaved(false);
+                  }}
+                  className={`rounded-full px-3 py-1 font-mono text-[8px] tracking-[0.18em] transition-colors ${
+                    notify.enabled
+                      ? 'bg-[#F35A17] text-white'
+                      : 'border border-black/15 text-ink/40'
+                  }`}
+                >
+                  {notify.enabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2.5">
+                <div>
+                  <label className={LABEL} htmlFor="n-primary">
+                    主接收邮箱（Gmail）
+                  </label>
+                  <input
+                    id="n-primary"
+                    className={FIELD}
+                    value={notify.primaryEmail}
+                    onChange={(e) => {
+                      setNotify({ ...notify, primaryEmail: e.target.value });
+                      setSaved(false);
+                    }}
+                    placeholder={DEFAULT_NOTIFY_EMAIL}
+                    autoComplete="off"
+                  />
+                </div>
+                <div>
+                  <label className={LABEL} htmlFor="n-backup">
+                    备用邮箱（QQ / 163，可留空）
+                  </label>
+                  <input
+                    id="n-backup"
+                    className={FIELD}
+                    value={notify.backupEmail}
+                    onChange={(e) => {
+                      setNotify({ ...notify, backupEmail: e.target.value });
+                      setSaved(false);
+                    }}
+                    placeholder="name@qq.com"
+                    autoComplete="off"
+                  />
+                </div>
+                <div>
+                  <label className={LABEL} htmlFor="n-push">
+                    PushPlus Token（微信推送，可留空）
+                  </label>
+                  <input
+                    id="n-push"
+                    className={FIELD}
+                    value={notify.pushplusToken}
+                    onChange={(e) => {
+                      setNotify({ ...notify, pushplusToken: e.target.value });
+                      setSaved(false);
+                    }}
+                    placeholder="32 位 token"
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    writeNotifySettings(notify);
+                    setSaved(true);
+                    setTestState('idle');
+                    setTestNote('');
+                  }}
+                  className="rounded-lg bg-[#F35A17] px-3.5 py-2 font-mono text-[9px] font-semibold tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                >
+                  SAVE
+                </button>
+                <button
+                  type="button"
+                  disabled={testState === 'sending'}
+                  onClick={async () => {
+                    writeNotifySettings(notify);
+                    setSaved(true);
+                    setTestState('sending');
+                    const r = await notifyTest();
+                    const ok = r.mail === 'ok' || r.push === 'ok';
+                    setTestState(ok ? 'ok' : 'fail');
+                    setTestNote(
+                      `MAIL ${r.mail.toUpperCase()} · PUSH ${r.push.toUpperCase()}`,
+                    );
+                  }}
+                  className="rounded-lg border border-black/15 px-3.5 py-2 font-mono text-[9px] tracking-[0.18em] text-ink/65 transition-colors hover:border-[#F35A17]/50 hover:text-ink disabled:opacity-40"
+                >
+                  {testState === 'sending' ? 'SENDING…' : 'SEND TEST'}
+                </button>
+                {saved && testState === 'idle' && (
+                  <span className="font-mono text-[8px] tracking-[0.14em] text-[#18A057]">
+                    SAVED
+                  </span>
+                )}
+                {testNote && (
+                  <span
+                    className={`font-mono text-[8px] tracking-[0.14em] ${
+                      testState === 'ok' ? 'text-[#18A057]' : 'text-[#D94709]'
+                    }`}
+                  >
+                    {testNote}
+                  </span>
+                )}
+              </div>
+            </section>
+
+            <p className="text-[9px] leading-relaxed text-ink/35">
+              首次向某个邮箱推送时，FormSubmit 会给该邮箱发一封激活邮件，
+              点邮件里的 <b className="text-ink/60">Activate Form</b> 之后即可秒收。
+              PushPlus token 在 pushplus.plus 微信扫码登录后获取。
+            </p>
           </div>
         ) : (
           /* ---------------- 订单 ---------------- */

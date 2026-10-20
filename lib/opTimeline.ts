@@ -12,7 +12,12 @@ export const TOTAL_SEC = 90;
 /** 时间码使用 24fps 帧计数（动漫 OP 语感） */
 export const FPS = 24;
 
-export type ActId = 'INTRO' | 'SOUND' | 'COMMISSION' | 'CREDITS';
+export type ActId =
+  | 'INTRO'
+  | 'SOUND'
+  | 'COMMISSION'
+  | 'MEDIA'
+  | 'CREDITS';
 
 export interface Act {
   id: ActId;
@@ -41,9 +46,9 @@ export const ACTS: Act[] = [
     en: 'OP_INTRO',
     zh: '主视觉 · 名片',
     start: 0,
-    end: 25,
+    end: 18,
     startP: S(0),
-    endP: S(25),
+    endP: S(18),
     accent: '#F35A17',
   },
   {
@@ -51,10 +56,10 @@ export const ACTS: Act[] = [
     code: 'ACT 02',
     en: 'COMMISSION_STORE',
     zh: '接单 · 工坊',
-    start: 25,
-    end: 50,
-    startP: S(25),
-    endP: S(50),
+    start: 18,
+    end: 40,
+    startP: S(18),
+    endP: S(40),
     accent: '#F35A17',
   },
   {
@@ -62,15 +67,26 @@ export const ACTS: Act[] = [
     code: 'ACT 03',
     en: 'SOUND_TRACK',
     zh: '原声 · 专辑',
-    start: 50,
+    start: 40,
+    end: 60,
+    startP: S(40),
+    endP: S(60),
+    accent: '#FF8A3D',
+  },
+  {
+    id: 'MEDIA',
+    code: 'ACT 04',
+    en: 'MEDIA_MATRIX',
+    zh: '自媒体 · 矩阵',
+    start: 60,
     end: 75,
-    startP: S(50),
+    startP: S(60),
     endP: S(75),
     accent: '#FF8A3D',
   },
   {
     id: 'CREDITS',
-    code: 'ACT 04',
+    code: 'ACT 05',
     en: 'CREDITS_SYS',
     zh: '职员表 · 终端',
     start: 75,
@@ -143,9 +159,10 @@ export interface HeadKey {
  */
 export const HEAD_KEYS: HeadKey[] = [
   { p: 0.0, yaw: 0.34, pitch: -0.02, x: -0.04, y: 0.0, camZ: 3.25, fov: 38, rim: 0.55, key: 1.0 },
-  { p: 0.278, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
-  { p: 0.556, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
-  { p: 0.833, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },
+  { p: 0.2, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
+  { p: 0.4444, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
+  { p: 0.6667, yaw: 0.92, pitch: -0.03, x: 0.44, y: -0.01, camZ: 3.7, fov: 44, rim: 0.95, key: 1.05 },
+  { p: 0.8333, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },
   { p: 1.0, yaw: 1.5, pitch: 0.0, x: 0.0, y: 0.0, camZ: 4.1, fov: 46, rim: 0.45, key: 0.75 },
 ];
 
@@ -289,6 +306,12 @@ export const ACT_COPY: Record<ActId, ActCopy> = {
     line2: 'TRACK / 03',
     sub: '原创编曲 · 混音 · 音色设计',
     tag: 'OP // THEME SONG',
+  },
+  MEDIA: {
+    line1: 'MEDIA',
+    line2: 'MATRIX // ON AIR',
+    sub: '自媒体矩阵 · 全平台内容生态',
+    tag: 'OP // INFO CARD',
   },
   COMMISSION: {
     line1: 'COMMERCIAL',
