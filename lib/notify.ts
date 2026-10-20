@@ -12,6 +12,12 @@
 export const NOTIFY_KEY = 'vanlan_notify';
 export const DEFAULT_NOTIFY_EMAIL = 'VANLAN0127@gmail.com';
 
+/**
+ * FormSubmit 专属 token（绑定 vanlan.netlify.app + VANLAN0127@gmail.com）
+ * 用 token 代替明文邮箱：既避免地址被抓，也绕开「站点域名变更需重新激活」。
+ */
+export const FORM_TOKEN = '75dbf972af562909ebeca17eef55a9ca';
+
 export interface NotifySettings {
   enabled: boolean;
   /** 主接收邮箱（Gmail） */
@@ -76,12 +82,14 @@ export interface NotifyResult {
 }
 
 const FORM_SUBMIT = (email: string) =>
-  `https://formsubmit.co/ajax/${encodeURIComponent(email)}`;
+  FORM_TOKEN
+    ? `https://formsubmit.co/ajax/${FORM_TOKEN}`
+    : `https://formsubmit.co/ajax/${encodeURIComponent(email)}`;
 
 const PUSHPLUS = 'https://www.pushplus.plus/send';
 
 async function sendMail(email: string, p: NotifyPayload): Promise<ChannelStatus> {
-  if (!email) return 'skip';
+  if (!email && !FORM_TOKEN) return 'skip';
   try {
     const res = await fetch(FORM_SUBMIT(email), {
       method: 'POST',
@@ -90,20 +98,26 @@ async function sendMail(email: string, p: NotifyPayload): Promise<ChannelStatus>
         Accept: 'application/json',
       },
       body: JSON.stringify({
-        _subject: `[VANLAN.OS] 新委托 ${p.orderId} · ${p.serviceName}`,
+        _subject: `【VANLAN.OS 工坊新委托】来自 ${p.clientName}（${p.budget}）`,
         _template: 'table',
         _captcha: 'false',
+        客户称呼: p.clientName,
+        联系方式: `${p.contactType} : ${p.contact}`,
+        预算范围: p.budget,
+        需要试听小样: p.demo ? '是（申请免费试听小样）' : '否',
+        项目需求描述: p.brief,
+        提交时间: new Date(p.createdAt).toLocaleString('zh-CN', { hour12: false }),
         订单号: p.orderId,
         服务项目: p.serviceName,
-        客户称呼: p.clientName,
-        联系方式: `${p.contactType} · ${p.contact}`,
-        预算区间: p.budget,
-        需要试听小样: p.demo ? '是' : '否',
-        需求描述: p.brief,
-        提交时间: new Date(p.createdAt).toLocaleString('zh-CN', { hour12: false }),
       }),
     });
-    return res.ok ? 'ok' : 'fail';
+    if (!res.ok) return 'fail';
+    const json = (await res.json().catch(() => null)) as
+      | { success?: string | boolean }
+      | null;
+    // FormSubmit 成功返回 { success: "true" }；拿不到 JSON 时以 HTTP 状态为准
+    if (!json || json.success === undefined) return 'ok';
+    return String(json.success) === 'true' ? 'ok' : 'fail';
   } catch {
     return 'fail';
   }

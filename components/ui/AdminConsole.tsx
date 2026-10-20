@@ -525,7 +525,7 @@ export default function AdminConsole() {
               <div className="mt-3 space-y-2.5">
                 <div>
                   <label className={LABEL} htmlFor="n-primary">
-                    主接收邮箱（Gmail）
+                    接收邮箱（展示用 · 投递走专属 token）
                   </label>
                   <input
                     id="n-primary"
@@ -596,9 +596,15 @@ export default function AdminConsole() {
                     const r = await notifyTest();
                     const ok = r.mail === 'ok' || r.push === 'ok';
                     setTestState(ok ? 'ok' : 'fail');
-                    setTestNote(
-                      `MAIL ${r.mail.toUpperCase()} · PUSH ${r.push.toUpperCase()}`,
-                    );
+                    if (r.mail === 'ok') {
+                      setTestNote(`✅ 邮件已成功推送至 ${notify.primaryEmail}！`);
+                    } else if (r.push === 'ok') {
+                      setTestNote('✅ 已通过 PushPlus 推送到微信！');
+                    } else {
+                      setTestNote(
+                        `MAIL ${r.mail.toUpperCase()} · PUSH ${r.push.toUpperCase()}`,
+                      );
+                    }
                   }}
                   className="rounded-lg border border-black/15 px-3.5 py-2 font-mono text-[9px] tracking-[0.18em] text-ink/65 transition-colors hover:border-[#F35A17]/50 hover:text-ink disabled:opacity-40"
                 >
@@ -622,8 +628,9 @@ export default function AdminConsole() {
             </section>
 
             <p className="text-[9px] leading-relaxed text-ink/35">
-              首次向某个邮箱推送时，FormSubmit 会给该邮箱发一封激活邮件，
-              点邮件里的 <b className="text-ink/60">Activate Form</b> 之后即可秒收。
+              当前使用专属加密 token 投递（已绑定 vanlan.netlify.app →
+              VANLAN0127@gmail.com），不再暴露明文邮箱。若首次投递失败，
+              请到 Gmail 关闭浏览器翻译后点击 <b className="text-ink/60">Activate Form</b> 激活一次。
               PushPlus token 在 pushplus.plus 微信扫码登录后获取。
             </p>
           </div>
