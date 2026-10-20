@@ -58,55 +58,9 @@ function paintGalaxy(cv: HTMLCanvasElement, W: number, H: number) {
   ctx.clearRect(0, 0, W, H);
 
   const rnd = makeRandom(20261020);
-  const cx = W * 0.52;
-  const cy = H * 0.49;
-  const bandAngle = -0.38;
 
-  /* ---- 1. 银河带：三条斜向冷光雾 ---- */
-  const bands = [
-    { x: 0.52, y: 0.47, len: 1.5, thick: 0.26, a: 0.13, c: '132, 178, 255' },
-    { x: 0.34, y: 0.6, len: 1.02, thick: 0.15, a: 0.075, c: '96, 150, 240' },
-    { x: 0.72, y: 0.33, len: 0.86, thick: 0.13, a: 0.06, c: '186, 220, 255' },
-  ];
-  for (const b of bands) {
-    ctx.save();
-    ctx.translate(W * b.x, H * b.y);
-    ctx.rotate(bandAngle);
-    const rx = W * b.len * 0.5;
-    const ry = H * b.thick * 0.5;
-    ctx.scale(1, Math.max(0.06, ry / rx));
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-    g.addColorStop(0, `rgba(${b.c}, ${b.a})`);
-    g.addColorStop(0.42, `rgba(${b.c}, ${b.a * 0.5})`);
-    g.addColorStop(0.76, `rgba(${b.c}, ${b.a * 0.14})`);
-    g.addColorStop(1, `rgba(${b.c}, 0)`);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(0, 0, rx, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  /* ---- 2. 银河带内的细密星尘（让带子看起来是「星」不是「雾」） ---- */
-  const bandDust = Math.round(Math.min(1400, (W * H) / 1500));
-  for (let i = 0; i < bandDust; i += 1) {
-    const u = (rnd() * 2 - 1) * W * 0.66;
-    // 高斯：三次均匀分布求和近似
-    const v = ((rnd() + rnd() + rnd()) / 3 - 0.5) * H * 0.3;
-    const x = cx + u * Math.cos(bandAngle) - v * Math.sin(bandAngle);
-    const y = cy + u * Math.sin(bandAngle) + v * Math.cos(bandAngle);
-    if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
-    const r = 0.32 + rnd() * 0.62;
-    const a = 0.08 + rnd() * 0.42;
-    ctx.fillStyle =
-      rnd() > 0.86 ? `rgba(196, 224, 255, ${a})` : `rgba(236, 245, 255, ${a})`;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, TAU);
-    ctx.fill();
-  }
-
-  /* ---- 3. 全场面星点：幂律亮度，多数极暗，少数很亮 ---- */
-  const field = Math.round(Math.min(1100, (W * H) / 1900));
+  /* ---- 1. 全场面星点：幂律亮度，多数极暗，少数很亮 ---- */
+  const field = Math.round(Math.min(1500, (W * H) / 1400));
   for (let i = 0; i < field; i += 1) {
     const x = rnd() * W;
     const y = rnd() * H;
@@ -120,8 +74,8 @@ function paintGalaxy(cv: HTMLCanvasElement, W: number, H: number) {
     ctx.fill();
   }
 
-  /* ---- 4. 十几颗带十字芒的亮星：银河的「锚点」 ---- */
-  const bright = 13;
+  /* ---- 2. 十几颗带十字芒的亮星：深空的「锚点」 ---- */
+  const bright = 14;
   for (let i = 0; i < bright; i += 1) {
     const x = W * (0.06 + rnd() * 0.88);
     const y = H * (0.08 + rnd() * 0.84);
@@ -154,6 +108,52 @@ function paintGalaxy(cv: HTMLCanvasElement, W: number, H: number) {
   }
 }
 
+/* ------------------------------------------------------------------
+   闪烁层：一颗「星」= 一张预渲染光斑 + 相位不同的正弦呼吸
+   ------------------------------------------------------------------ */
+
+type Twinkle = { x: number; y: number; r: number; phase: number; speed: number; amp: number };
+
+let sprite: HTMLCanvasElement | null = null;
+
+/** 预渲染一颗星的光斑（只做一次），后面每帧只是 drawImage */
+function starSprite(): HTMLCanvasElement | null {
+  if (sprite) return sprite;
+  const cv = document.createElement('canvas');
+  cv.width = 64;
+  cv.height = 64;
+  const c = cv.getContext('2d');
+  if (!c) return null;
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  g.addColorStop(0.16, 'rgba(228, 242, 255, 0.86)');
+  g.addColorStop(0.42, 'rgba(148, 194, 255, 0.26)');
+  g.addColorStop(1, 'rgba(110, 160, 255, 0)');
+  c.fillStyle = g;
+  c.fillRect(0, 0, 64, 64);
+  sprite = cv;
+  return sprite;
+}
+
+function buildTwinkles(W: number, H: number): Twinkle[] {
+  const rnd = makeRandom(77123);
+  const n = Math.round(Math.min(96, Math.max(44, (W * H) / 16000)));
+  const list: Twinkle[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const t = Math.pow(rnd(), 1.7);
+    list.push({
+      x: rnd() * W,
+      y: rnd() * H,
+      r: 1.1 + t * 3.4,
+      phase: rnd() * TAU,
+      speed: 0.5 + rnd() * 1.5,
+      amp: 0.35 + rnd() * 0.65,
+    });
+  }
+  return list;
+}
+
+
 /* ------------------------------------------------------------------ */
 
 export default function StarField() {
@@ -163,6 +163,8 @@ export default function StarField() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const galaxyRef = useRef<HTMLCanvasElement>(null);
+  const twinkleRef = useRef<HTMLCanvasElement>(null);
+  const twinkles = useRef<Twinkle[]>([]);
   const starRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const reticleRef = useRef<HTMLDivElement>(null);
   const probeCodeRef = useRef<HTMLSpanElement>(null);
@@ -184,18 +186,31 @@ export default function StarField() {
   /** 视角状态：yaw / pitch + 惯性速度 */
   const view = useRef({ yaw: 0.35, pitch: -0.12, vyaw: 0, vpitch: 0, flyYaw: null as number | null });
 
-  /* ---------- 银河：进章节画一次 ---------- */
+  /* ---------- 星空：进章节画一次底图，闪烁层建一次表 ---------- */
   useEffect(() => {
     const cv = galaxyRef.current;
+    const tw = twinkleRef.current;
     if (!cv) return;
-    paintGalaxy(cv, window.innerWidth, window.innerHeight);
+
+    const build = () => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      paintGalaxy(cv, W, H);
+      twinkles.current = buildTwinkles(W, H);
+      if (tw) {
+        const dpr = Math.min(1.25, window.devicePixelRatio || 1);
+        tw.width = Math.max(1, Math.round(W * dpr));
+        tw.height = Math.max(1, Math.round(H * dpr));
+        tw.style.width = `${W}px`;
+        tw.style.height = `${H}px`;
+      }
+    };
+    build();
 
     let timer = 0;
     const onResize = () => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        paintGalaxy(cv, window.innerWidth, window.innerHeight);
-      }, 200);
+      timer = window.setTimeout(build, 200);
     };
     window.addEventListener('resize', onResize);
     return () => {
@@ -238,6 +253,81 @@ export default function StarField() {
     let W = window.innerWidth;
     let H = window.innerHeight;
 
+    /* ---- 闪烁层节拍 ---- */
+    const twCanvas = twinkleRef.current;
+    let twLast = 0;
+    let meteor = { active: false, t0: 0, x: 0, y: 0, vx: 0, vy: 0, life: 1000 };
+    let nextMeteor = performance.now() + 3200 + Math.random() * 4200;
+
+    /** 几十颗星按各自的相位呼吸；每帧只做 drawImage，成本可以忽略 */
+    const drawTwinkle = (now: number) => {
+      if (!twCanvas || now - twLast < 42) return;
+      twLast = now;
+      const ctx = twCanvas.getContext('2d');
+      if (!ctx) return;
+      const dpr = Math.min(1.25, window.devicePixelRatio || 1);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+
+      const sp = starSprite();
+      if (!sp) return;
+      const t = now / 1000;
+      const conv = kpFX.converge;
+      const fieldAlpha = 1 - conv * 0.9;
+
+      for (const s of twinkles.current) {
+        const pulse = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
+        const a = (0.16 + pulse * 0.84) * s.amp * fieldAlpha;
+        if (a <= 0.01) continue;
+        const size = s.r * (2.4 + pulse * 2.1);
+        ctx.globalAlpha = a;
+        ctx.drawImage(sp, s.x - size / 2, s.y - size / 2, size, size);
+      }
+      ctx.globalAlpha = 1;
+
+      /* 偶尔划过的流星：久不久来一颗，提醒你这是活的天空 */
+      if (!meteor.active && now > nextMeteor && conv < 0.05) {
+        const sx = W * (0.42 + Math.random() * 0.5);
+        const sy = H * (0.06 + Math.random() * 0.34);
+        meteor = {
+          active: true,
+          t0: now,
+          x: sx,
+          y: sy,
+          vx: -W * 0.00042,
+          vy: H * 0.00055,
+          life: 820 + Math.random() * 420,
+        };
+        nextMeteor = now + 6800 + Math.random() * 6200;
+      }
+      if (meteor.active) {
+        const k = (now - meteor.t0) / meteor.life;
+        if (k >= 1) {
+          meteor.active = false;
+        } else {
+          const x = meteor.x + meteor.vx * (now - meteor.t0);
+          const y = meteor.y + meteor.vy * (now - meteor.t0);
+          const fade = Math.sin(k * Math.PI);
+          const tail = 120 + fade * 90;
+          const len = Math.hypot(meteor.vx, meteor.vy) || 1;
+          const tx = x - (meteor.vx / len) * tail;
+          const ty = y - (meteor.vy / len) * tail;
+          const g = ctx.createLinearGradient(x, y, tx, ty);
+          g.addColorStop(0, `rgba(232, 244, 255, ${0.85 * fade * fieldAlpha})`);
+          g.addColorStop(0.45, `rgba(160, 200, 255, ${0.28 * fade * fieldAlpha})`);
+          g.addColorStop(1, 'rgba(120, 170, 255, 0)');
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 1.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+        }
+      }
+    };
+
+
     const measure = () => {
       W = window.innerWidth;
       H = window.innerHeight;
@@ -250,6 +340,9 @@ export default function StarField() {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       acc += dt;
+
+      // 闪烁层自己控频（≈24fps），静置时也不停 —— 「星星在动」是这片天的底气
+      drawTwinkle(now);
 
       const v = view.current;
       // 静置且无飞行：降频到 20fps
@@ -466,9 +559,9 @@ export default function StarField() {
 
   return (
     <div className="kp-space" ref={rootRef}>
-      {/* 银河：一块 canvas，画一次 */}
+      {/* 星场：底图一块 canvas 画一次，闪烁层另一块每帧轻量重绘 */}
       <canvas className="kp-galaxy" ref={galaxyRef} aria-hidden />
-      <div className="kp-vignette" aria-hidden />
+      <canvas className="kp-twinkle" ref={twinkleRef} aria-hidden />
 
       {/* 星群 */}
       <div className="kp-stars">

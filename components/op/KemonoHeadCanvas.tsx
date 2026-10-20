@@ -56,6 +56,28 @@ function fitFactor(width: number, height: number) {
   return Math.max(1, 1.02 / Math.max(0.42, aspect));
 }
 
+/**
+ * 右侧面板避让量（R70）。
+ *
+ * 桌面端名片 / 片尾卡固定在右上，兽头若一直居中就会被卡片盖住半个脸。
+ * 这里按「左侧内容区右缘 → 卡片左缘」之间那条真正的空走廊，算出画布
+ * 需要左移多少像素；窗口越矮、卡片相对越宽，位移就越大。
+ * 位移只加在 <canvas> 的 transform 上，容器布局与相机一律不动。
+ */
+function panelClearance(vw: number, vh: number): number {
+  if (vw < 901) return 0;
+  // 与 globals.css 的 ≥1024 规则同源：width min(348, 30vw) / right clamp(104, 8vw, 136)
+  const cardW = Math.min(348, vw * 0.3);
+  const inset = Math.min(136, Math.max(104, vw * 0.08));
+  const cardLeft = vw - inset - cardW;
+  const canvasLeft = vw * 0.34;
+  // 兽头横向半宽：随画布高度走，用小系数保守估计（宁可多让一点）
+  const halfHead = Math.min(vh * 0.2, vw * 0.14);
+  const want = cardLeft - 22 - halfHead;
+  const cur = canvasLeft + (vw - canvasLeft) * 0.5;
+  return Math.max(0, Math.min(vw * 0.17, cur - want));
+}
+
 /* ---------------- 兽头本体 ---------------- */
 function KemonoHead() {
   const { scene } = useGLTF(MODEL_URL, DRACO_DECODER_PATH);
@@ -136,8 +158,13 @@ function CameraRig() {
   useFrame((_, delta) => {
     const s = sampleHead(scrub.progress);
     const prof = stageProfile(size.width);
+    // 矮窗口（笔记本 125% 缩放 / 带浏览器工具栏）：稍微拉远，免得兽头长得比侧栏还宽
+    const shortBias =
+      size.width >= 901 && size.height < 700
+        ? Math.min(1.12, 700 / Math.max(1, size.height))
+        : 1;
     // 容器越窄，相机越远 —— 防止兽头在窄窗口里被横向裁掉、进而压住文字
-    const wantZ = (s.camZ + prof.camZ) * fitFactor(size.width, size.height);
+    const wantZ = (s.camZ + prof.camZ) * fitFactor(size.width, size.height) * shortBias;
     const wantFov = s.fov + prof.fov;
 
     camera.position.z = THREE.MathUtils.damp(camera.position.z, wantZ, 4.2, delta);
@@ -228,8 +255,37 @@ function RenderPump() {
 }
 
 export default function KemonoHeadCanvas() {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  /* 窗口尺寸变化时重算避让量：卡片的宽度/位置跟着 vw 走，兽头必须跟着让 */
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let raf = 0;
+    const apply = () => {
+      const cv = host.querySelector('canvas');
+      if (!cv) return;
+      const shift = panelClearance(window.innerWidth, window.innerHeight);
+      cv.style.transform = shift > 0.5 ? `translate3d(${(-shift).toFixed(1)}px, 0, 0)` : '';
+    };
+    const schedule = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(apply);
+    };
+    schedule();
+    const boot = window.setTimeout(apply, 600);
+    window.addEventListener('resize', schedule);
+    window.addEventListener('orientationchange', schedule);
+    return () => {
+      window.clearTimeout(boot);
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('orientationchange', schedule);
+    };
+  }, []);
+
   return (
-    <div className="op-canvas" aria-hidden>
+    <div className="op-canvas" aria-hidden ref={hostRef}>
       <Canvas
         frameloop="demand"
         dpr={[1, 1.5]}

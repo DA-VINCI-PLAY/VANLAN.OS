@@ -779,10 +779,10 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 /* 桌面布局：为 3D 兽头留出中央 */
 @media (min-width: 901px) {
   .op-panel-intro {
-    right: clamp(96px, 8.5vw, 148px);
+    right: clamp(76px, 7vw, 128px);
     top: 50%;
     translate: 0 -50%;
-    width: 372px;
+    width: min(348px, 30vw);
   }
   .op-panel-sound {
     left: clamp(24px, 4.4vw, 72px);
@@ -796,10 +796,10 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
     width: min(452px, 40vw);
   }
   .op-panel-credits {
-    right: clamp(96px, 8.5vw, 148px);
+    right: clamp(76px, 7vw, 128px);
     top: 50%;
     translate: 0 -50%;
-    width: 392px;
+    width: min(352px, 30.5vw);
   }
 }
 
@@ -1676,11 +1676,11 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   }
   .op-headline-intro::after { width: clamp(56px, 6vw, 96px); margin-top: 14px; }
 
-  /* 右栏名片：固定 384px，距时间轴 48px（26 + 74 + 48 = 148） */
+  /* 右栏名片：跟着视口收窄（R70），给兽头让出中央走廊 */
   .op-panel-intro,
   .op-panel-credits {
-    right: 150px;
-    width: 384px;
+    right: clamp(104px, 8vw, 136px);
+    width: min(348px, 30vw);
     top: 50%;
     translate: 0 -50%;
   }
@@ -4021,21 +4021,7 @@ select:focus-visible {
 }
 .kp-space.is-dragging { cursor: grabbing; }
 
-/* 冷深空渐变：跟随星光变量淡入，墨还没爬上来时保持暖白可见 */
-.kp-space::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: var(--kp-stars, 0);
-  background: radial-gradient(
-    130% 96% at 50% 46%,
-    rgba(16, 28, 52, 1) 0%,
-    rgba(6, 11, 22, 1) 52%,
-    rgba(3, 5, 11, 1) 100%
-  );
-}
-
+/* 冷深空：纯色底，没有任何星云渐变 —— 星星自己会动就够了 */
 .kp-galaxy {
   position: absolute;
   left: -3%;
@@ -4048,13 +4034,15 @@ select:focus-visible {
   contain: strict;
 }
 
-.kp-vignette {
+/* 闪烁层：几十颗亮点由 rAF 直接绘制，成本极低 */
+.kp-twinkle {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
-  background:
-    radial-gradient(120% 90% at 50% 50%, transparent 42%, rgba(0, 0, 0, 0.66) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 18%, transparent 78%, rgba(0, 0, 0, 0.62) 100%);
+  contain: strict;
 }
 
 /* ---------------- 黑墨流体 ---------------- */
@@ -4432,6 +4420,129 @@ select:focus-visible {
 }
 .kp-cbtn-warm { color: rgba(186, 216, 255, 0.86); }
 .kp-cbtn-exit { margin-left: 2px; }
+
+/* ---------------- 星体列表（R70：替掉星座筛选） ---------------- */
+.kp-list {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(66px, 9.5vh, 96px);
+  transform: translateX(-50%);
+  z-index: 11;
+  width: min(452px, calc(100vw - 32px));
+  max-height: min(56vh, 430px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid rgba(186, 216, 255, 0.18);
+  background: rgba(8, 12, 22, 0.88);
+  backdrop-filter: blur(22px) saturate(130%);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: kp-list-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+}
+@keyframes kp-list-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.kp-list-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 15px 11px;
+  border-bottom: 1px solid rgba(186, 216, 255, 0.1);
+}
+.kp-list-kicker {
+  font-size: 8px;
+  letter-spacing: 0.34em;
+  color: rgba(186, 216, 255, 0.45);
+}
+.kp-list-head b {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #dcEaff;
+}
+.kp-list-close {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(186, 216, 255, 0.18);
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(220, 234, 255, 0.6);
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.24s ease, border-color 0.24s ease;
+}
+.kp-list-close:hover { color: #eaf3ff; border-color: rgba(186, 216, 255, 0.42); }
+.kp-list-body {
+  overflow-y: auto;
+  padding: 8px 8px 10px;
+  overscroll-behavior: contain;
+}
+.kp-list-group + .kp-list-group { margin-top: 8px; }
+.kp-list-group h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 8px 5px;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: rgba(186, 216, 255, 0.5);
+}
+.kp-list-group h4 i {
+  font-style: normal;
+  font-size: 8px;
+  color: rgba(186, 216, 255, 0.32);
+}
+.kp-list-group button {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(230, 240, 255, 0.82);
+  font-family: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.24s ease, border-color 0.24s ease, color 0.24s ease;
+}
+.kp-list-group button:hover,
+.kp-list-group button.is-on {
+  background: rgba(186, 216, 255, 0.09);
+  border-color: rgba(186, 216, 255, 0.2);
+  color: #f2f8ff;
+}
+.kp-list-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--star, #dceaff);
+  box-shadow: 0 0 9px var(--star, #dceaff);
+}
+.kp-list-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kp-list-meta {
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: rgba(186, 216, 255, 0.42);
+}
+@media (max-width: 767px) {
+  .kp-list { bottom: clamp(78px, 12vh, 108px); max-height: 52vh; }
+}
 
 .kp-cdrop { position: relative; flex: 0 0 auto; }
 .kp-cmenu {
