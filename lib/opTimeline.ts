@@ -268,3 +268,38 @@ export function actWeight(p: number, act: Act, fade = 0.006): number {
   }
   return w;
 }
+
+/* ---------------- 分镜文案（2D 背景与标题层共用，R56 抽出） ---------------- */
+export interface ActCopy {
+  line1: string;
+  line2: string;
+  sub: string;
+  tag: string;
+}
+
+export const ACT_COPY: Record<ActId, ActCopy> = {
+  INTRO: {
+    line1: 'VANLAN',
+    line2: 'COMPOSER & CREATOR',
+    sub: '交互式个人终端 · INTERACTIVE PORTFOLIO',
+    tag: 'OP // MAIN VISUAL',
+  },
+  SOUND: {
+    line1: 'SOUND',
+    line2: 'TRACK / 03',
+    sub: '原创编曲 · 混音 · 音色设计',
+    tag: 'OP // THEME SONG',
+  },
+  COMMISSION: {
+    line1: 'COMMERCIAL',
+    line2: 'WORKS // OPEN',
+    sub: '编曲 / 混音 / 3D 角色 / 商业定制',
+    tag: 'OP // STORE DESK',
+  },
+  CREDITS: {
+    line1: 'CREDITS',
+    line2: 'STAFF ROLL',
+    sub: '系统状态 · 语言 · 管理员终端',
+    tag: 'OP // END CARD',
+  },
+};

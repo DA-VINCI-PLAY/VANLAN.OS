@@ -130,12 +130,28 @@ function IntroStage() {
         {qq && (
           <button type="button" onClick={() => fire(qq)} className="op-contact-btn">
             <svg viewBox="0 0 24 24" className="op-cicon" aria-hidden>
+              {/* QQ 企鹅：身形 + 白肚 + 橙围巾 */}
               <path
-                d="M12 4.5c-4.5 0-8 3-8 6.8 0 2.2 1.2 4.1 3.1 5.4l-.6 2.8 3.2-1.6c.7.2 1.5.3 2.3.3 4.5 0 8-3 8-6.9s-3.5-6.8-8-6.8Z"
+                d="M12 2.8c-3.4 0-5.7 2.9-5.7 7 0 2.3.4 4.5 1.3 6.3l-1.2 3 2.7-.9c.9.5 1.9.8 2.9.8s2-.3 2.9-.8l2.7.9-1.2-3c.9-1.8 1.3-4 1.3-6.3 0-4.1-2.3-7-5.7-7Z"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.7"
+                strokeWidth="1.6"
                 strokeLinejoin="round"
+              />
+              <path
+                d="M12 8.1c-1.9 0-3.1 2-3.1 4.7 0 2.4 1.2 4 3.1 4s3.1-1.6 3.1-4c0-2.7-1.2-4.7-3.1-4.7Z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              />
+              <circle cx="9.9" cy="6.5" r="0.7" fill="currentColor" stroke="none" />
+              <circle cx="14.1" cy="6.5" r="0.7" fill="currentColor" stroke="none" />
+              <path
+                d="M9.2 9.7c.9.6 1.8 1 2.8 1s1.9-.4 2.8-1"
+                fill="none"
+                stroke="#f35a17"
+                strokeWidth="1.6"
+                strokeLinecap="round"
               />
             </svg>
             <b>{qq.value}</b>

@@ -680,7 +680,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 
 /* 章节构图：为前景面板让位 */
 @media (min-width: 768px) {
-  .op-act-commission .op-headline {
+  .op-headline-commission {
     left: auto;
     right: clamp(20px, 5vw, 84px);
     top: auto;
@@ -690,9 +690,9 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
     align-items: flex-end;
     opacity: 0.9;
   }
-  .op-act-commission .op-line-outline { font-size: clamp(40px, 7.4vw, 108px); }
+  .op-headline-commission .op-line-outline { font-size: clamp(40px, 7.4vw, 108px); }
   .op-act-commission .op-act-foot { display: none; }
-  .op-act-sound .op-headline {
+  .op-headline-sound {
     left: auto;
     right: clamp(20px, 6vw, 96px);
     align-items: flex-end;
@@ -715,7 +715,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-checklist,
   .op-staff { display: none; }
   .op-halo { width: 74vmin; height: 74vmin; top: 40%; }
-  .op-act-commission .op-headline { display: none; }
+  .op-headline-commission { display: none; }
   .op-meta-br { display: none; }
 }
 
@@ -1495,7 +1495,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 .op-ch {
   display: inline-block;
 }
-.op-act.is-enter .op-ch {
+.op-headline.is-enter .op-ch {
   animation: op-char-in 0.58s cubic-bezier(0.18, 0.9, 0.24, 1.14) both;
   animation-delay: calc(var(--i, 0) * 48ms);
 }
@@ -1514,7 +1514,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 }
 
 /* —— 副行：左→右扫入（延迟到逐字近半时） —— */
-.op-act.is-enter .op-line-solid {
+.op-headline.is-enter .op-line-solid {
   clip-path: inset(-10% 102% -10% -2%);
   animation: op-swipe-in 0.52s cubic-bezier(0.72, 0, 0.28, 1) 0.42s both;
 }
@@ -1538,7 +1538,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   transform: scaleX(1);
   transform-origin: left center;
 }
-.op-act.is-enter .op-headline::after {
+.op-headline.is-enter .op-headline::after {
   animation: op-bar-in 0.5s cubic-bezier(0.72, 0, 0.28, 1) 0.6s both;
 }
 @keyframes op-bar-in {
@@ -1551,12 +1551,12 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 }
 
 /* —— VANLAN 专属醒目化：橙 VAN 实心（带墨色投影）+ 加粗描边 LAN —— */
-.op-act-intro .op-line-outline {
+.op-headline-intro .op-line-outline {
   font-size: clamp(62px, 16vw, 224px);
   -webkit-text-stroke-width: 2px;
   -webkit-text-stroke-color: rgba(27, 30, 35, 0.85);
 }
-.op-act-intro .op-ch:nth-child(-n + 3) {
+.op-headline-intro .op-ch:nth-child(-n + 3) {
   color: #f35a17;
   -webkit-text-stroke: 0;
   text-shadow: 0.04em 0.05em 0 rgba(27, 30, 35, 0.92);
@@ -1564,10 +1564,10 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 
 /* 移动端：VANLAN 再醒目一档 */
 @media (max-width: 767px) {
-  .op-act-intro .op-line-outline {
+  .op-headline-intro .op-line-outline {
     font-size: clamp(46px, 18vw, 92px);
   }
-  .op-act-intro .op-headline::after {
+  .op-headline-intro::after {
     height: 5px;
     margin-top: 10px;
   }
@@ -1632,4 +1632,14 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-chips { gap: 6px; }
   .op-chip { width: 38px; height: 38px; border-radius: 11px; }
   .op-chip svg { width: 17px; height: 17px; }
+}
+
+/* ============================================================
+   R56 · 标题独立层（3D 兽头之上、前景面板之下）
+   ============================================================ */
+.op-headline-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
 }

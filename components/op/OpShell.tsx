@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import AnimeBackdrop from './AnimeBackdrop';
 import KemonoHeadCanvas from './KemonoHeadCanvas';
+import OpHeadline from './OpHeadline';
 import TimelineScrubber from './TimelineScrubber';
 import StageOverlay from './StageOverlay';
 import AdminConsole from '@/components/ui/AdminConsole';
@@ -122,6 +123,7 @@ export default function OpShell() {
     <main className="op-root">
       <AnimeBackdrop />
       <KemonoHeadCanvas />
+      <OpHeadline />
       <StageOverlay />
       <TimelineScrubber />
       <AdminConsole />
