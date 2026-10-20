@@ -828,30 +828,9 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   }
   .op-panel-intro,
   .op-panel-credits { top: auto; translate: none; }
-
-  /* --- 减拥挤 --- */
-  /* 名片：隐藏简介行（与 tags 语义重复），只留头 + 联系 + 社交矩阵 */
-  .op-card-line { display: none; }
-  /* 页脚只留跳转按钮，藏掉左侧说明文案 */
-  .op-card-foot { justify-content: flex-end; padding-top: 8px; }
-  .op-card-foot > span { display: none; }
-  /* 名片头部收紧 */
-  .op-name { font-size: 16px; }
-  .op-role { font-size: 7.5px; }
-  .op-avatar { width: 40px; height: 40px; }
-  /* 社交矩阵 3 列：7 项从 4 行压到 3 行 */
-  .op-chips { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .op-chip { padding: 0 8px; font-size: 7.5px; letter-spacing: 0.12em; }
-  .op-contact-btn { font-size: 7.5px; padding: 0 9px; }
-  /* 试听：波形压短、曲目区收窄，给控件留白 */
-  .op-wave { height: 42px; }
-  .op-snd-body { max-height: 22vh; }
-  .op-snd-title { font-size: 15px; }
-  /* 职员表：行距收紧 */
-  .op-sys-rows li,
-  .op-credits-list li { font-size: 8px; padding-bottom: 5px; }
-  .op-credits-title { font-size: 17px; }
 }
+
+/* >>> R53 减拥挤规则在文件末尾（必须晚于基础类定义，否则同优先级被覆盖） */
 
 /* ---------- ACT 01 名片 ---------- */
 .op-card-head {
@@ -1478,4 +1457,31 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   font-size: 7.5px;
   letter-spacing: 0.3em;
   color: rgba(27, 30, 35, 0.25);
+}
+
+/* ============================================================
+   R53 · 移动端减拥挤（放在文件末尾，确保覆盖上方同名基础规则）
+   ============================================================ */
+@media (max-width: 900px) {
+  /* 名片：隐藏简介行（与 tags 语义重复），只留头 + 联系 + 社交矩阵 */
+  .op-card-line { display: none; }
+  /* 页脚只留跳转按钮，藏掉左侧说明文案 */
+  .op-card-foot { justify-content: flex-end; padding-top: 8px; }
+  .op-card-foot > span { display: none; }
+  /* 名片头部收紧 */
+  .op-name { font-size: 16px; }
+  .op-role { font-size: 7.5px; }
+  .op-avatar { width: 40px; height: 40px; }
+  /* 社交矩阵 3 列：7 项从 4 行压到 3 行 */
+  .op-chips { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .op-chip { padding: 0 8px; font-size: 7.5px; letter-spacing: 0.12em; }
+  .op-contact-btn { font-size: 7.5px; padding: 0 9px; }
+  /* 试听：波形压短、曲目区收窄，给控件留白 */
+  .op-wave { height: 42px; }
+  .op-snd-body { max-height: 22vh; }
+  .op-snd-title { font-size: 15px; }
+  /* 职员表：行距收紧 */
+  .op-sys-rows li,
+  .op-credits-list li { font-size: 8px; padding-bottom: 5px; }
+  .op-credits-title { font-size: 17px; }
 }
