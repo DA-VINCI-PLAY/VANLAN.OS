@@ -40,12 +40,108 @@ const BUDGET_CEIL = 20000;
 const BUDGET_STEP = 500;
 const money = (n: number) => `¥${n.toLocaleString('zh-CN')}`;
 
-const BUDGET_PRESETS: { label: string; hint: string; range: [number, number] }[] = [
-  { label: '¥500 - 1.5k', hint: '轻量级 · Demo或单项协助', range: [500, 1500] },
-  { label: '¥1.5k - 4k', hint: '标准商业 · 完整编曲/混音/模型', range: [1500, 4000] },
-  { label: '¥4k - 10k', hint: '深度定制 · 词曲编混全案/高精3D', range: [4000, 10000] },
-  { label: '¥10k+', hint: '旗舰级 · 专辑制作/大型商业项目', range: [10000, 20000] },
+type TierArtKind = 'wave' | 'console' | 'rig' | 'cockpit';
+
+const BUDGET_PRESETS: {
+  label: string;
+  hint: string;
+  range: [number, number];
+  art: TierArtKind;
+}[] = [
+  { label: '¥500 - 1.5k', hint: '轻量 · Demo/单项', range: [500, 1500], art: 'wave' },
+  { label: '¥1.5k - 4k', hint: '标准 · 完整编混', range: [1500, 4000], art: 'console' },
+  { label: '¥4k - 10k', hint: '深度 · 全案/3D', range: [4000, 10000], art: 'rig' },
+  { label: '¥10k+', hint: '旗舰 · 专辑企划', range: [10000, 20000], art: 'cockpit' },
 ];
+
+/** 档位缩略图：手绘工业风线稿（矢量在 44px 下远比位图清晰，且可随主题着色） */
+function TierArt({ kind }: { kind: TierArtKind }) {
+  return (
+    <svg className="op-tier-svg" viewBox="0 0 48 48" aria-hidden focusable="false">
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {kind === 'wave' && (
+          <>
+            <path d="M6 30h36" stroke="rgba(243,90,23,.3)" strokeWidth="1" />
+            <path
+              d="M8 30l3-10 3 16 4-22 4 26 4-17 3 8 3-5 3 3 3-2"
+              stroke="#e8641f"
+              strokeWidth="1.7"
+            />
+            <circle cx="38" cy="14" r="2.2" stroke="rgba(27,30,35,.35)" strokeWidth="1" />
+            <path
+              d="M8 38h32"
+              stroke="rgba(27,30,35,.16)"
+              strokeWidth="1"
+              strokeDasharray="3 3"
+            />
+          </>
+        )}
+        {kind === 'console' && (
+          <>
+            {([10, 19, 28, 37] as const).map((x, i) => (
+              <g key={x}>
+                <path d={`M${x} 9v31`} stroke="rgba(27,30,35,.24)" strokeWidth="1.4" />
+                <rect
+                  x={x - 3.4}
+                  y={[15, 25, 12, 30][i]}
+                  width="6.8"
+                  height="4.6"
+                  rx="1.4"
+                  fill="#e8641f"
+                  stroke="none"
+                />
+              </g>
+            ))}
+            <path d="M6 43h36" stroke="rgba(243,90,23,.45)" strokeWidth="1.2" />
+            <circle cx="24" cy="5" r="1.7" fill="#f3702e" stroke="none" />
+          </>
+        )}
+        {kind === 'rig' && (
+          <>
+            <path d="M24 6L40 18 34 40 14 40 8 18Z" stroke="#e8641f" strokeWidth="1.5" />
+            <path
+              d="M24 6L24 40M8 18L34 40M40 18L14 40"
+              stroke="rgba(232,100,31,.45)"
+              strokeWidth="1"
+              strokeDasharray="3 2.4"
+            />
+            {(
+              [
+                [24, 6],
+                [40, 18],
+                [34, 40],
+                [14, 40],
+                [8, 18],
+                [24, 23],
+              ] as const
+            ).map(([x, y]) => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="1.8" fill="#f3702e" stroke="none" />
+            ))}
+          </>
+        )}
+        {kind === 'cockpit' && (
+          <>
+            <path d="M8 34a17 17 0 0 1 32 0" stroke="#e8641f" strokeWidth="1.7" />
+            <path d="M14 34a11 11 0 0 1 20 0" stroke="rgba(232,100,31,.5)" strokeWidth="1.2" />
+            <path d="M24 34V22" stroke="rgba(27,30,35,.32)" strokeWidth="1.2" />
+            <circle cx="24" cy="34" r="2.4" fill="#f3702e" stroke="none" />
+            <path
+              d="M6 40h36"
+              stroke="rgba(27,30,35,.16)"
+              strokeWidth="1"
+              strokeDasharray="4 3"
+            />
+            <path
+              d="M12 14l2.4 2.4M36 14l-2.4 2.4"
+              stroke="rgba(243,90,23,.5)"
+              strokeWidth="1.2"
+            />
+          </>
+        )}
+      </g>
+    </svg>
+  );
+}
 
 function priceLine(p: ServiceProduct): string {
   if (p.price <= 0) return '面议';
@@ -248,201 +344,225 @@ export default function CommissionPanel() {
     );
   }
 
-  /* ---------------- 委托表单 ---------------- */
+  /* ---------------- 委托表单（R63：双列网格 · 一屏到底） ---------------- */
   if (view === 'form' && picked) {
     return (
-      <div className="os-sheet-in space-y-3.5">
-        <button
-          type="button"
-          onClick={() => setView('list')}
-          className="font-mono text-[9px] tracking-[0.16em] text-ink/40 transition-colors hover:text-ink"
-        >
-          ← 返回服务列表
-        </button>
-
-        <div className="rounded-lg border border-[#E85D2A]/25 bg-[#E85D2A]/[0.06] px-3 py-2.5">
-          <div className="font-mono text-[9px] tracking-[0.16em] text-[#D94E1F]">
-            {CATEGORY_EN[picked.category]}
-          </div>
-          <div className="mt-0.5 text-[12px] font-semibold text-ink">
-            {picked.name}
-          </div>
-          <div className="mt-1 font-mono text-[9px] text-ink/40">
-            <span className="op-num">{priceLine(picked)}</span> · {picked.turnaround}
+      <div className="os-sheet-in op-form">
+        {/* 顶部：返回 + 服务摘要条 */}
+        <div className="op-form-head">
+          <button
+            type="button"
+            onClick={() => setView('list')}
+            className="op-form-back"
+          >
+            ← 返回服务列表
+          </button>
+          <div className="op-form-svc">
+            <span className="op-form-svc-cat">{CATEGORY_EN[picked.category]}</span>
+            <b>{picked.name}</b>
+            <i className="op-num">
+              {priceLine(picked)} · {picked.turnaround}
+            </i>
           </div>
         </div>
 
-        <div>
-          <label className={LABEL} htmlFor="c-name">
-            您的称呼 *
-          </label>
-          <input
-            id="c-name"
-            className={FIELD}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="怎么称呼您？如：陈先生 / 工作室名称"
-            maxLength={32}
-          />
-        </div>
-
-        <div>
-          <span className={LABEL}>联系方式 *</span>
-          <div className="mb-1.5 grid grid-cols-3 gap-1">
-            {CONTACT_TYPES.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setContactType(t)}
-                aria-pressed={contactType === t}
-                className={`op-tab${contactType === t ? ' is-on' : ''}`}
-              >
-                {t === 'WeChat' ? '微信 WeChat' : t === 'Email' ? '邮箱 Email' : 'QQ'}
-              </button>
-            ))}
-          </div>
-          <input
-            className={FIELD}
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder={
-              contactType === 'Email'
-                ? '请输入您的常用邮箱地址'
-                : contactType === 'QQ'
-                  ? '请输入您的 QQ 号码'
-                  : '请输入您的微信号（方便添加好友沟通）'
-            }
-            maxLength={64}
-          />
-        </div>
-
-        <div>
-          <div className="flex items-baseline justify-between">
-            <span className={`${LABEL} mb-1`}>预算范围 / BUDGET</span>
-            <span className="font-mono text-[8px] tracking-[0.14em] text-ink/30">
-              CNY（人民币）
-            </span>
-          </div>
-
-          {/* 遥测：大号等宽数字随拖动跳动 */}
-          <div className="op-budget-echo" aria-live="polite">
-            <span className="op-num">{money(budgetMin)}</span>
-            <i>—</i>
-            <span className="op-num">
-              {money(budgetMax)}
-              {budgetMax >= BUDGET_CEIL ? '+' : ''}
-            </span>
-          </div>
-
-          {/* 双滑块轨道 */}
-          <div className="op-budget">
-            <div className="op-budget-track">
-              <i
-                style={
-                  {
-                    '--lo': pctMin,
-                    '--hi': pctMax,
-                  } as CSSProperties
-                }
+        <div className="op-form-grid">
+          {/* —— 左列：称呼 / 联系方式 / 预算档位 —— */}
+          <div className="op-form-col">
+            <div>
+              <label className={LABEL} htmlFor="c-name">
+                您的称呼 *
+              </label>
+              <input
+                id="c-name"
+                className={FIELD}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="怎么称呼您？如：陈先生 / 工作室名称"
+                maxLength={32}
               />
             </div>
-            <input
-              type="range"
-              aria-label="预算下限"
-              min={BUDGET_FLOOR}
-              max={BUDGET_CEIL}
-              step={BUDGET_STEP}
-              value={budgetMin}
-              onChange={(e) => setBudget('min', Number(e.target.value))}
-            />
-            <input
-              type="range"
-              aria-label="预算上限"
-              min={BUDGET_FLOOR}
-              max={BUDGET_CEIL}
-              step={BUDGET_STEP}
-              value={budgetMax}
-              onChange={(e) => setBudget('max', Number(e.target.value))}
-            />
+
+            <div>
+              <span className={LABEL}>联系方式 *</span>
+              <div className="mb-1.5 grid grid-cols-3 gap-1">
+                {CONTACT_TYPES.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setContactType(t)}
+                    aria-pressed={contactType === t}
+                    className={`op-tab${contactType === t ? ' is-on' : ''}`}
+                  >
+                    {t === 'WeChat' ? '微信 WeChat' : t === 'Email' ? '邮箱 Email' : 'QQ'}
+                  </button>
+                ))}
+              </div>
+              <input
+                className={FIELD}
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder={
+                  contactType === 'Email'
+                    ? '请输入您的常用邮箱地址'
+                    : contactType === 'QQ'
+                      ? '请输入您的 QQ 号码'
+                      : '请输入您的微信号（方便添加好友沟通）'
+                }
+                maxLength={64}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className={`${LABEL} mb-1`}>预算档位 / TIER</span>
+                <span className="font-mono text-[8px] tracking-[0.14em] text-ink/30">
+                  CNY
+                </span>
+              </div>
+              <div className="op-budget-presets">
+                {BUDGET_PRESETS.map((p) => {
+                  const on = budgetMin === p.range[0] && budgetMax === p.range[1];
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => applyPreset(p.range)}
+                      className={`op-tier${on ? ' is-on' : ''}`}
+                    >
+                      <span className="op-tier-art" aria-hidden>
+                        <TierArt kind={p.art} />
+                      </span>
+                      <span className="op-tier-txt">
+                        <b className="op-num">{p.label}</b>
+                        <i>{p.hint}</i>
+                      </span>
+                      {on && (
+                        <span aria-hidden className="op-tier-check">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* 快捷档位 */}
-          <div className="op-budget-presets">
-            {BUDGET_PRESETS.map((p) => {
-              const on = budgetMin === p.range[0] && budgetMax === p.range[1];
-              return (
-                <button
-                  key={p.label}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => applyPreset(p.range)}
-                  className={on ? 'is-on' : ''}
-                >
-                  <b className="op-num">{p.label}</b>
-                  <i>{p.hint}</i>
-                </button>
-              );
-            })}
+          {/* —— 右列：预算微调 / 需求描述 / 试听小样 —— */}
+          <div className="op-form-col">
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className={`${LABEL} mb-1`}>预算区间 / BUDGET RANGE</span>
+                <span className="font-mono text-[8px] tracking-[0.14em] text-ink/30">
+                  CNY（人民币）
+                </span>
+              </div>
+
+              <div className="op-budget-echo op-budget-echo-sm" aria-live="polite">
+                <span className="op-num">{money(budgetMin)}</span>
+                <i>—</i>
+                <span className="op-num">
+                  {money(budgetMax)}
+                  {budgetMax >= BUDGET_CEIL ? '+' : ''}
+                </span>
+              </div>
+
+              <div className="op-budget">
+                <div className="op-budget-track">
+                  <i
+                    style={
+                      {
+                        '--lo': pctMin,
+                        '--hi': pctMax,
+                      } as CSSProperties
+                    }
+                  />
+                </div>
+                <input
+                  type="range"
+                  aria-label="预算下限"
+                  min={BUDGET_FLOOR}
+                  max={BUDGET_CEIL}
+                  step={BUDGET_STEP}
+                  value={budgetMin}
+                  onChange={(e) => setBudget('min', Number(e.target.value))}
+                />
+                <input
+                  type="range"
+                  aria-label="预算上限"
+                  min={BUDGET_FLOOR}
+                  max={BUDGET_CEIL}
+                  step={BUDGET_STEP}
+                  value={budgetMax}
+                  onChange={(e) => setBudget('max', Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={LABEL} htmlFor="c-brief">
+                需求描述 / PROJECT BRIEF *
+              </label>
+              <textarea
+                id="c-brief"
+                className={`${FIELD} op-form-brief`}
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
+                placeholder="请简述您的项目用途、参考风格（Reference）、预计时长、交付周期要求等..."
+                maxLength={800}
+              />
+              <div className="mt-1 flex items-center justify-between font-mono text-[7.5px] tracking-[0.1em] text-ink/25">
+                <span>用途 · 参考 · 时长 · 交付周期</span>
+                <span className="op-num">{brief.length}/800</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setDemo((v) => !v)}
+              aria-pressed={demo}
+              className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 transition-colors ${
+                demo
+                  ? 'border-[#E85D2A]/50 bg-[#E85D2A]/10'
+                  : 'border-black/[0.08] hover:border-black/20'
+              }`}
+            >
+              <span className="text-left">
+                <span className="block text-[10.5px] text-ink/80">
+                  申请免费试听小样（Demo Preview）
+                </span>
+                <span className="mt-0.5 block text-[8px] text-ink/30">
+                  先试听方向小样，满意后再推进正式合作
+                </span>
+              </span>
+              <span aria-hidden className={`os-switch${demo ? ' is-on' : ''}`}>
+                <i />
+              </span>
+            </button>
           </div>
         </div>
 
-        <div>
-          <label className={LABEL} htmlFor="c-brief">
-            需求描述 / PROJECT BRIEF *
-          </label>
-          <textarea
-            id="c-brief"
-            className={`${FIELD} min-h-[84px] resize-none leading-relaxed`}
-            value={brief}
-            onChange={(e) => setBrief(e.target.value)}
-            placeholder="请简述您的项目用途、参考风格（Reference）、预计时长、交付周期要求等..."
-            maxLength={800}
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setDemo((v) => !v)}
-          aria-pressed={demo}
-          className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${
-            demo
-              ? 'border-[#E85D2A]/50 bg-[#E85D2A]/10'
-              : 'border-black/[0.08] hover:border-black/20'
-          }`}
-        >
-          <span className="text-left">
-            <span className="block text-[11px] text-ink/80">
-              申请免费试听小样（Demo Preview）
-            </span>
-            <span className="mt-0.5 block text-[8px] text-ink/30">
-              先试听一段方向小样，满意后再推进正式合作
-            </span>
-          </span>
-          <span aria-hidden className={`os-switch${demo ? ' is-on' : ''}`}>
-            <i />
-          </span>
-        </button>
-
-        {error && (
-          <p className="rounded-md border border-[#E85D2A]/30 bg-[#E85D2A]/10 px-3 py-2 text-[10px] text-[#D94E1F]">
-            {error}
+        {/* 吸底提交条：无论滚到哪，提交按钮永不离屏 */}
+        <div className="op-form-foot">
+          {error && (
+            <p className="op-form-error">
+              {error}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={sending}
+            className="os-btn-accent op-form-submit"
+          >
+            {sending ? '正在发送需求...' : '提交定制需求 · SUBMIT'}
+          </button>
+          <p className="op-form-note">
+            48 小时内极速响应 · 确认合作前无需支付任何定金
           </p>
-        )}
-
-        <button
-          type="button"
-          onClick={submit}
-          disabled={sending}
-          className="os-btn-accent w-full rounded-lg py-3 font-mono text-[10px] font-semibold tracking-[0.16em] disabled:opacity-70"
-        >
-          {sending ? '正在发送需求...' : '提交定制需求 · SUBMIT'}
-        </button>
-        <p className="text-center text-[8.5px] leading-relaxed text-ink/30">
-          48 小时内极速响应 · 确认合作前无需支付任何定金
-        </p>
-        <p className="text-center font-mono text-[7.5px] tracking-[0.14em] text-ink/20">
-          编曲制作 · 混音母带 · 3D 建模 · 商业定制
-        </p>
+        </div>
       </div>
     );
   }
