@@ -28,6 +28,7 @@ import { qqAdd } from '@/lib/qq';
 import BrandIcon from '@/components/op/BrandIcon';
 import CommissionPanel from '@/components/ui/CommissionPanel';
 import { WorksPill } from '@/components/op/MobileWorksDrawer';
+import { openKepler } from '@/lib/kepler';
 
 /** 跳到指定幕的起始位置 */
 const gotoAct = (id: ActId) =>
@@ -555,6 +556,15 @@ function CreditsStage() {
           <i>{unlocked ? 'UNLOCKED' : 'LOCKED'}</i>
         </button>
       </div>
+
+      <button
+        type="button"
+        className="op-kepler-entry"
+        onClick={() => openKepler()}
+      >
+        <b>✦</b> 潜入克卜勒星图
+        <i>CHAPTER 06 / KEPLER STARFIELD ↓</i>
+      </button>
 
       <ul className="op-credits-list">
         <li>

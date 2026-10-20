@@ -26,6 +26,7 @@ import {
   settleProgress,
   subscribeFrame,
 } from '@/lib/opTimeline';
+import { openKepler } from '@/lib/kepler';
 
 const TICK_STEP = 5; // 每 5 秒一条刻度
 
@@ -158,6 +159,16 @@ export default function TimelineScrubber() {
           </button>
         ))}
       </div>
+
+      {/* 克卜勒入口：时间轴的第六个章节，不在 90 秒里 */}
+      <button
+        type="button"
+        className="op-tl-kp"
+        onClick={() => openKepler()}
+        aria-label="进入克卜勒星图音乐故事集"
+      >
+        ✦ KEPLER
+      </button>
 
       {/* 底部参数 */}
       <div className="op-tl-meta">

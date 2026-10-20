@@ -49,8 +49,10 @@ import {
   useFeatured,
   type WorkDraft,
 } from '@/lib/featured';
+import { KeplerInboxPanel, KeplerStarsPanel } from '@/components/ui/KeplerAdmin';
+import { useKeplerStars, useSubmissions } from '@/lib/kepler';
 
-type Tab = 'products' | 'orders' | 'featured' | 'push';
+type Tab = 'products' | 'orders' | 'featured' | 'kepler' | 'stardust' | 'push';
 
 const EMPTY_WORK: WorkDraft = {
   title: '',
@@ -115,6 +117,11 @@ export default function AdminConsole() {
   const removeWork = useFeatured((s) => s.removeWork);
   const resetWorks = useFeatured((s) => s.resetWorks);
 
+  const hydrateStars = useKeplerStars((s) => s.hydrate);
+  const starCount = useKeplerStars((s) => s.stars.length);
+  const hydrateSubs = useSubmissions((s) => s.hydrate);
+  const subCount = useSubmissions((s) => s.list.length);
+
   const [pass, setPass] = useState('');
   const [authError, setAuthError] = useState('');
   const [tab, setTab] = useState<Tab>('products');
@@ -141,6 +148,12 @@ export default function AdminConsole() {
   useEffect(() => {
     if (open) hydrateFeatured();
   }, [open, hydrateFeatured]);
+
+  useEffect(() => {
+    if (!open) return;
+    hydrateStars();
+    hydrateSubs();
+  }, [open, hydrateStars, hydrateSubs]);
 
   // 打开后台时同步推送设置
   useEffect(() => {
@@ -309,7 +322,7 @@ export default function AdminConsole() {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[#FAF8F4]/97 backdrop-blur-lg">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[rgba(250,248,244,0.97)] backdrop-blur-lg">
       {/* 顶栏 */}
       <header className="flex shrink-0 items-center justify-between border-b border-black/[0.08] px-4 py-3 sm:px-6">
         <div className="flex items-baseline gap-3">
@@ -337,7 +350,7 @@ export default function AdminConsole() {
 
       {/* Tabs */}
       <div className="flex shrink-0 gap-1 border-b border-black/[0.07] px-4 py-2 sm:px-6">
-        {(['products', 'orders', 'featured', 'push'] as Tab[]).map((t) => (
+        {(['products', 'orders', 'featured', 'kepler', 'stardust', 'push'] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -355,7 +368,11 @@ export default function AdminConsole() {
                 ? `ORDERS · ${orders.length}`
                 : t === 'featured'
                   ? `FEATURED · ${works.length}`
-                  : 'PUSH'}
+                  : t === 'kepler'
+                    ? `KEPLER · ${starCount}`
+                    : t === 'stardust'
+                      ? `INBOX · ${subCount}`
+                      : 'PUSH'}
           </button>
         ))}
       </div>
@@ -748,6 +765,10 @@ export default function AdminConsole() {
               </p>
             </section>
           </div>
+        ) : tab === 'kepler' ? (
+          <KeplerStarsPanel />
+        ) : tab === 'stardust' ? (
+          <KeplerInboxPanel />
         ) : tab === 'push' ? (
           /* ---------------- 消息推送设置 ---------------- */
           <div className="mx-auto max-w-[620px] space-y-4">

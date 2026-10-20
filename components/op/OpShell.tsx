@@ -20,6 +20,8 @@ import IntroSequence from './IntroSequence';
 import TimelineScrubber from './TimelineScrubber';
 import StageOverlay from './StageOverlay';
 import AdminConsole from '@/components/ui/AdminConsole';
+import KeplerPortal from '@/components/kepler/KeplerPortal';
+import { openKepler, useKeplerUI } from '@/lib/kepler';
 import {
   actFocus,
   cancelSettle,
@@ -68,7 +70,14 @@ export default function OpShell() {
       if (insideScrollable(e.target)) return;
       const st = useOS.getState();
       if (st.adminOpen || st.qrPlatform) return;
+      // 星空章节打开时，滚轮归它自己（墨/缩放/谢幕）
+      if (useKeplerUI.getState().open) return;
       e.preventDefault();
+      // 片尾再往下滚 = 潜入克卜勒星图
+      if (scrub.progress > 0.994 && e.deltaY > 4) {
+        openKepler();
+        return;
+      }
       cancelSettle();
       // 统一方向：向下滚 = 往后播；统一灵敏度（触控板 / 鼠标分别标定）
       const unit = e.deltaMode === 1 ? 18 : e.deltaMode === 2 ? 400 : 1;
@@ -86,6 +95,7 @@ export default function OpShell() {
     let travel = 0;
 
     const onStart = (e: TouchEvent) => {
+      if (useKeplerUI.getState().open) return;
       cancelSettle();
       blocked = insideScrollable(e.target);
       travel = 0;
@@ -94,6 +104,7 @@ export default function OpShell() {
       tracking = true;
     };
     const onMove = (e: TouchEvent) => {
+      if (useKeplerUI.getState().open) return;
       if (!tracking || blocked) return;
       if ((e.target as HTMLElement)?.closest?.('.op-timeline')) return;
       const dy = startY - e.touches[0].clientY;
@@ -107,6 +118,11 @@ export default function OpShell() {
     const onEnd = () => {
       const wasTracking = tracking && !blocked;
       tracking = false;
+      // 片尾继续上滑 = 潜入克卜勒星图
+      if (wasTracking && scrub.progress > 0.99 && travel > 60) {
+        openKepler();
+        return;
+      }
       // 回退保护：手机端松手后吸附到最近幕起点，绝不卡在两幕之间
       if (wasTracking && isNarrow() && Math.abs(travel) > 12) {
         settleProgress(nearestActStart(scrub.progress));
@@ -142,12 +158,17 @@ export default function OpShell() {
   // 键盘
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (useKeplerUI.getState().open) return;
       const tag = (e.target as HTMLElement)?.tagName;
       const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
       if (typing) return;
 
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
+        if (scrub.progress > 0.99) {
+          openKepler();
+          return;
+        }
         setProgress(scrub.progress + 0.02);
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
@@ -177,6 +198,7 @@ export default function OpShell() {
       <TimelineScrubber />
       <MobileChrome />
       <AdminConsole />
+      <KeplerPortal />
 
       {/* 动漫 OP 开场引导 + 首次交互提示 */}
       <IntroSequence ready={ready} />
