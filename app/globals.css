@@ -2130,3 +2130,20 @@ select:focus-visible {
   .op-budget-presets button i { font-size: 7px; letter-spacing: 0.08em; }
   .op-budget-echo .op-num { font-size: 18px; }
 }
+
+/* R59b · 工坊面板：只让内容区滚动，头部与页脚常驻 */
+.op-panel-store {
+  overflow: hidden;
+}
+.op-panel-store .op-store-head {
+  flex-shrink: 0;
+}
+.op-panel-store .op-store-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.op-panel-store .op-card-foot {
+  flex-shrink: 0;
+}
