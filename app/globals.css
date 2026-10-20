@@ -1037,7 +1037,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   min-width: 1px;
   background: rgba(22, 24, 28, 0.11);
   border-radius: 1px;
-  transition: background 0.15s, height 0.2s;
+  transition: background 0.15s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .op-wave i.is-on {
   background: linear-gradient(180deg, #ff8a3d, rgba(255, 138, 61, 0.28));
@@ -1825,12 +1825,19 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 }
 .op-budget-track > i {
   position: absolute;
+  left: 0;
   top: 0;
   bottom: 0;
+  width: 100%;
   border-radius: 2px;
   background: linear-gradient(90deg, #ff8a3d, #f35a17);
-  transition: left 0.18s cubic-bezier(0.16, 1, 0.3, 1),
-    right 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: 0 50%;
+  /* 只走合成层：不再过渡 left / right */
+  transform: translate3d(calc(var(--lo, 0) * 1%), 0, 0)
+    scaleX(calc((var(--hi, 100) - var(--lo, 0)) / 100));
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 .op-budget input[type='range'] {
   position: absolute;
@@ -2282,19 +2289,20 @@ select:focus-visible {
   content: '';
   position: absolute;
   inset: 0;
+  /* 微暗角：只压边缘，不再把整卡熏黑 */
   background: radial-gradient(
       120% 90% at 50% 40%,
-      transparent 30%,
-      rgba(20, 14, 10, 0.45) 100%
+      transparent 34%,
+      rgba(20, 14, 10, 0.24) 100%
     ),
-    linear-gradient(0deg, rgba(16, 11, 8, 0.75) 0%, transparent 52%);
+    linear-gradient(0deg, rgba(16, 11, 8, 0.42) 0%, transparent 46%);
 }
 /* 程序化封面：五种暖橙 / 墨色渐变，像 OP 分镜帧 */
-.fc-cover-g1 { background-image: linear-gradient(135deg, #ffb27a 0%, #e85d2a 48%, #7a2b12 100%); }
-.fc-cover-g2 { background-image: linear-gradient(135deg, #f7e7d3 0%, #d9b48c 42%, #4a3a2c 100%); }
-.fc-cover-g3 { background-image: linear-gradient(135deg, #ffd0a8 0%, #f35a17 55%, #241a14 100%); }
-.fc-cover-g4 { background-image: linear-gradient(135deg, #2c2118 0%, #8c4a24 55%, #ff9b57 100%); }
-.fc-cover-g5 { background-image: linear-gradient(135deg, #fff3e6 0%, #ffad70 40%, #b23d12 100%); }
+.fc-cover-g1 { background-image: linear-gradient(135deg, #ffd2a6 0%, #f0813f 48%, #d94e1f 100%); }
+.fc-cover-g2 { background-image: linear-gradient(135deg, #fdf1de 0%, #ecc9a0 42%, #cf9c6b 100%); }
+.fc-cover-g3 { background-image: linear-gradient(135deg, #ffe3c4 0%, #f8822f 55%, #e05a1a 100%); }
+.fc-cover-g4 { background-image: linear-gradient(135deg, #f6bd8d 0%, #e0803c 55%, #c2551f 100%); }
+.fc-cover-g5 { background-image: linear-gradient(135deg, #fff6ea 0%, #ffc287 40%, #ef7c2c 100%); }
 .fc-cover > b {
   position: absolute;
   right: 8px;
@@ -2490,4 +2498,242 @@ select:focus-visible {
   }
   .fc-meta b { font-size: 8px; }
   .fc-play { width: 28px; height: 28px; font-size: 9px; }
+}
+
+/* ============================================================
+   R62 · 动效 GPU 化：位移只用 transform / opacity，缓动统一阻尼曲线
+   —— 严禁在动效里过渡 top / left / margin / width / height
+   ============================================================ */
+
+:root {
+  /* 高级阻尼曲线：出场缓慢收束 / 回弹略有超调 / 离场干脆 */
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-rebound: cubic-bezier(0.34, 1.42, 0.64, 1);
+  --ease-in-quint: cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* 悬停抬起节奏：进入慢一点显得贵，离开快一点显得跟手 */
+  --dur-lift: 0.52s;
+  --dur-drop: 0.34s;
+  --lift-card: -6px;
+  --lift-chip: -2px;
+}
+
+/* —— 合成层底座：只给真正会动的元素，避免 will-change 滥用 —— */
+.fc-card,
+.op-media-card,
+.op-chip,
+.op-albums button,
+.op-lang button,
+.op-admin-entry,
+.fc-arrow,
+.os-card,
+.os-btn-accent,
+.op-tab,
+.os-switch > i {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* —— 卡片级：悬停抬起（离开快速回弹）—— */
+.fc-card {
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--dur-drop) var(--ease-rebound),
+    box-shadow var(--dur-drop) var(--ease-soft),
+    border-color 0.3s var(--ease-soft);
+  will-change: transform;
+}
+.fc-card:hover {
+  transform: translate3d(0, var(--lift-card), 0) scale(1.01);
+  transition:
+    transform var(--dur-lift) var(--ease-soft),
+    box-shadow var(--dur-lift) var(--ease-soft),
+    border-color 0.3s var(--ease-soft);
+}
+.fc-card:active {
+  transform: translate3d(0, -2px, 0) scale(0.995);
+  transition-duration: 0.14s;
+}
+
+.op-media-card {
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--dur-drop) var(--ease-rebound),
+    border-color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft),
+    box-shadow var(--dur-drop) var(--ease-soft);
+  will-change: transform;
+}
+.op-media-card:hover {
+  transform: translate3d(0, var(--lift-card), 0) scale(1.012);
+  box-shadow: 0 16px 34px rgba(46, 36, 24, 0.14);
+  transition:
+    transform var(--dur-lift) var(--ease-soft),
+    border-color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft),
+    box-shadow var(--dur-lift) var(--ease-soft);
+}
+.op-media-card:active {
+  transform: translate3d(0, -2px, 0) scale(0.996);
+  transition-duration: 0.14s;
+}
+
+/* 悬停时图标与箭头轻抬，制造层次 */
+.op-media-ico,
+.op-media-go {
+  transition: transform 0.42s var(--ease-soft);
+  will-change: transform;
+}
+.op-media-card:hover .op-media-ico {
+  transform: translate3d(0, -2px, 0) scale(1.06);
+}
+.op-media-card:hover .op-media-go {
+  transform: translate3d(3px, -3px, 0);
+}
+
+/* —— 小元素：抬一点点就够，别抢戏 —— */
+.op-chip {
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform var(--dur-drop) var(--ease-rebound),
+    border-color 0.3s var(--ease-soft),
+    color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft);
+  will-change: transform;
+}
+.op-chip:hover {
+  transform: translate3d(0, var(--lift-chip), 0);
+  transition:
+    transform 0.4s var(--ease-soft),
+    border-color 0.3s var(--ease-soft),
+    color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft);
+}
+.op-chip:active {
+  transform: translate3d(0, 0, 0) scale(0.96);
+  transition-duration: 0.12s;
+}
+
+.os-card {
+  transition:
+    transform var(--dur-drop) var(--ease-rebound),
+    border-color 0.32s var(--ease-soft),
+    background-color 0.32s var(--ease-soft),
+    box-shadow var(--dur-drop) var(--ease-soft);
+  will-change: transform;
+}
+.os-card:hover {
+  transform: translate3d(0, var(--lift-chip), 0);
+  transition:
+    transform var(--dur-lift) var(--ease-soft),
+    border-color 0.32s var(--ease-soft),
+    background-color 0.32s var(--ease-soft),
+    box-shadow var(--dur-lift) var(--ease-soft);
+}
+
+.os-btn-accent {
+  transition:
+    transform 0.2s var(--ease-out-quint),
+    opacity 0.2s var(--ease-soft),
+    box-shadow 0.3s var(--ease-soft);
+  will-change: transform;
+}
+.os-btn-accent:hover {
+  transform: translate3d(0, -1px, 0);
+}
+.os-btn-accent:active {
+  transform: translate3d(0, 0, 0) scale(0.985);
+  transition-duration: 0.1s;
+}
+
+/* —— 替换生硬的 transition: all / linear —— */
+.op-albums button {
+  transition:
+    border-color 0.3s var(--ease-soft),
+    color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft),
+    transform var(--dur-drop) var(--ease-rebound);
+}
+.op-albums button:hover {
+  transform: translate3d(2px, 0, 0);
+}
+.op-lang button {
+  transition:
+    color 0.28s var(--ease-soft),
+    background-color 0.28s var(--ease-soft),
+    border-color 0.28s var(--ease-soft);
+}
+.op-admin-entry {
+  transition:
+    border-color 0.3s var(--ease-soft),
+    color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft);
+}
+
+.fc-arrow {
+  transition:
+    border-color 0.3s var(--ease-soft),
+    color 0.3s var(--ease-soft),
+    background-color 0.3s var(--ease-soft),
+    transform 0.36s var(--ease-rebound);
+  will-change: transform;
+}
+.fc-arrow:hover {
+  transform: translate3d(0, -1px, 0) scale(1.06);
+}
+.fc-arrow:active {
+  transform: scale(0.94);
+  transition-duration: 0.1s;
+}
+
+/* 播放键：只动 transform / 颜色，不碰宽高 */
+.fc-play {
+  transition:
+    background-color 0.3s var(--ease-soft),
+    border-color 0.3s var(--ease-soft),
+    transform 0.42s var(--ease-out-quint);
+  will-change: transform;
+}
+
+.os-switch > i {
+  transition: transform 0.36s var(--ease-out-quint),
+    background-color 0.28s var(--ease-soft);
+  will-change: transform;
+}
+
+/* 入场仍走合成层，避免与 hover transform 打架 */
+.op-stage > *,
+.op-panel {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* —— 尊重系统「减少动态效果」—— */
+@media (prefers-reduced-motion: reduce) {
+  .fc-card,
+  .op-media-card,
+  .op-chip,
+  .os-card,
+  .os-btn-accent,
+  .fc-arrow,
+  .op-albums button {
+    transition-duration: 0.01ms !important;
+    will-change: auto;
+  }
+  .fc-card:hover,
+  .op-media-card:hover,
+  .op-chip:hover,
+  .os-card:hover,
+  .os-btn-accent:hover,
+  .fc-arrow:hover {
+    transform: none;
+  }
+}
+
+/* 3D 画布彻底退出命中测试：轮播带/按钮才能穿透过去被点到 */
+.op-canvas,
+.op-canvas > div,
+.op-canvas canvas {
+  pointer-events: none !important;
 }

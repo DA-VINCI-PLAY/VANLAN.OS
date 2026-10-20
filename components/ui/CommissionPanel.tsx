@@ -12,7 +12,7 @@
  * 订单写入 vanlan_orders，管理员在控制台查看与流转状态。
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   CONTACT_TYPES,
   ORDER_STATUS_LABEL,
@@ -337,7 +337,14 @@ export default function CommissionPanel() {
           {/* 双滑块轨道 */}
           <div className="op-budget">
             <div className="op-budget-track">
-              <i style={{ left: `${pctMin}%`, right: `${100 - pctMax}%` }} />
+              <i
+                style={
+                  {
+                    '--lo': pctMin,
+                    '--hi': pctMax,
+                  } as CSSProperties
+                }
+              />
             </div>
             <input
               type="range"

@@ -87,9 +87,14 @@ function KemonoHead() {
     }
     const b = bob.current;
     if (b) {
-      // 待机呼吸（幅度极小，静置时才明显）
-      b.position.y = Math.sin(t * 0.9) * 0.018;
+      // 待机呼吸：双谐波正弦，慢波为主 + 极轻的次级波，避免机械感
+      // 纯数学驱动，不依赖任何 DOM 属性，跑在 requestAnimationFrame 内
+      const breath = Math.sin(t * 0.9) * 0.018 + Math.sin(t * 1.7 + 1.2) * 0.004;
+      b.position.y = breath;
       b.rotation.z = Math.sin(t * 0.55) * 0.008;
+      // 轻微的呼吸缩放，让「活着」但不抢视线
+      const swell = 1 + Math.sin(t * 0.9 + 0.6) * 0.0035;
+      b.scale.setScalar(swell);
     }
   });
 
@@ -154,7 +159,7 @@ function ThreePointLights() {
   );
 }
 
-/* ---------------- 渲染节拍器：交互提速、静置降频 ---------------- */
+/* ---------------- 渲染节拍器：交互提速、静置降频、后台停摆 ---------------- */
 function RenderPump() {
   const invalidate = useThree((s) => s.invalidate);
 
@@ -168,6 +173,11 @@ function RenderPump() {
     });
 
     const loop = (t: number) => {
+      // 标签页不可见时彻底停摆，不白烧 GPU
+      if (document.hidden) {
+        raf = window.requestAnimationFrame(loop);
+        return;
+      }
       const idle = t - lastTouch;
       // 交互中 30fps，缓动尾巴 15fps，静置呼吸 6fps
       const fps = idle < 500 ? 30 : idle < 4000 ? 15 : 6;
@@ -178,8 +188,19 @@ function RenderPump() {
       raf = window.requestAnimationFrame(loop);
     };
     raf = window.requestAnimationFrame(loop);
+
+    // 回到前台立刻补一帧，避免画布停在旧姿态
+    const onVisible = () => {
+      if (!document.hidden) {
+        lastTouch = performance.now();
+        invalidate();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       window.cancelAnimationFrame(raf);
+      document.removeEventListener('visibilitychange', onVisible);
       off();
     };
   }, [invalidate]);

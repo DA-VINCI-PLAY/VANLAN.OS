@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFeatured, type Work } from '@/lib/featured';
 import { type ActId, scrub, subscribeAct } from '@/lib/opTimeline';
 
@@ -219,41 +220,44 @@ export default function FeaturedCarousel() {
         </div>
       </div>
 
-      {preview && (
-        <div
-          className="fc-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={preview.title}
-          onClick={() => setPreview(null)}
-        >
-          <div className="fc-box" onClick={(e) => e.stopPropagation()}>
-            <div className="fc-box-cover">
-              <CoverArt work={preview} index={0} />
-              <span className="fc-play is-large" aria-hidden>
-                ▶
-              </span>
-            </div>
-            <div className="fc-box-foot">
-              <div>
-                <div className="fc-kicker">{preview.tag}</div>
-                <div className="fc-box-title">{preview.title}</div>
+      {/* portal 到 body：逃出 .fc-root（z15）的层叠上下文，否则会被 3D 画布（z20）盖住 */}
+      {preview &&
+        createPortal(
+          <div
+            className="fc-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label={preview.title}
+            onClick={() => setPreview(null)}
+          >
+            <div className="fc-box" onClick={(e) => e.stopPropagation()}>
+              <div className="fc-box-cover">
+                <CoverArt work={preview} index={0} />
+                <span className="fc-play is-large" aria-hidden>
+                  ▶
+                </span>
               </div>
-              <button
-                type="button"
-                className="fc-close"
-                aria-label="关闭预览"
-                onClick={() => setPreview(null)}
-              >
-                ✕
-              </button>
+              <div className="fc-box-foot">
+                <div>
+                  <div className="fc-kicker">{preview.tag}</div>
+                  <div className="fc-box-title">{preview.title}</div>
+                </div>
+                <button
+                  type="button"
+                  className="fc-close"
+                  aria-label="关闭预览"
+                  onClick={() => setPreview(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="fc-box-note">
+                该作品尚未配置外链。可在管理员后台「首屏轮播」里补上视频地址。
+              </p>
             </div>
-            <p className="fc-box-note">
-              该作品尚未配置外链。可在管理员后台「首屏轮播」里补上视频地址。
-            </p>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }
