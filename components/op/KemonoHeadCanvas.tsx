@@ -29,20 +29,31 @@ const TARGET_H = 1.75;
 useGLTF.preload(MODEL_URL, DRACO_DECODER_PATH);
 
 /**
- * 断点档案（R66）—— 与 CSS 断点同源：<768 手机 / 768~1023 平板 / ≥1024 桌面。
- * 判据用「画布容器宽度」而不是 aspect：手机竖屏的舞台已被压到 35vh，
- * 宽高比不再能代表设备形态。
+ * 断点档案（R69）—— 与 CSS 断点同源：<768 手机 / 768~1023 平板 / ≥1024 桌面。
+ *
+ * 结构前提：CSS 已把 3D 画布限制在「右侧主体区」（手机是顶部 35vh 舞台），
+ * 兽头在容器内居中即可，不再需要世界坐标偏移去躲大字 —— 那个偏移量在
+ * 窗口缩放时会被放大，正是排版崩坏的来源。
  */
 function stageProfile(width: number) {
   if (width < 768) {
-    // 手机：独占 35vh 舞台，略右移让出左侧大字
-    return { k: 0.9, x: 0.12, y: 0.02, camZ: 0.3, fov: 2, eyeY: 0.06, lookY: 0.02 };
+    // 手机：35vh 舞台，稍拉远一点避免兽头贴边
+    return { camZ: 0.32, fov: 2, eyeY: 0.06, lookY: 0.02 };
   }
   if (width < 1024) {
-    // 平板：缩到 85%，向右让出左侧大字与轮播带
-    return { k: 0.85, x: 0.26, y: 0.04, camZ: 0.35, fov: 2, eyeY: 0.08, lookY: 0.04 };
+    return { camZ: 0.22, fov: 1, eyeY: 0.08, lookY: 0.04 };
   }
-  return { k: 1, x: 0, y: 0, camZ: 0, fov: 0, eyeY: 0.05, lookY: 0.02 };
+  return { camZ: 0, fov: 0, eyeY: 0.05, lookY: 0.02 };
+}
+
+/**
+ * 容器宽高比 → 相机拉远系数。
+ * 画布被裁到右侧后容器可能变窄，垂直 FOV 固定会让兽头横向溢出；
+ * 窄容器按比例拉远相机，保证任何窗口尺寸下模型都完整可见（contain）。
+ */
+function fitFactor(width: number, height: number) {
+  const aspect = width / Math.max(1, height);
+  return Math.max(1, 1.02 / Math.max(0.42, aspect));
 }
 
 /* ---------------- 兽头本体 ---------------- */
@@ -84,20 +95,14 @@ function KemonoHead() {
   useFrame((state, delta) => {
     const s = sampleHead(scrub.progress);
     const t = state.clock.elapsedTime;
-    const prof = stageProfile(size.width);
 
     const g = root.current;
     if (g) {
       // 阻尼跟随：拖动快时也不会瞬移，保持「镜头在跟」的物理感
       g.rotation.y = THREE.MathUtils.damp(g.rotation.y, BASE_YAW + s.yaw, 6, delta);
       g.rotation.x = THREE.MathUtils.damp(g.rotation.x, s.pitch, 6, delta);
-      g.position.x = THREE.MathUtils.damp(
-        g.position.x,
-        s.x * prof.k + prof.x,
-        6,
-        delta,
-      );
-      g.position.y = THREE.MathUtils.damp(g.position.y, s.y + prof.y, 6, delta);
+      g.position.x = THREE.MathUtils.damp(g.position.x, s.x * 0.8, 6, delta);
+      g.position.y = THREE.MathUtils.damp(g.position.y, s.y + 0.02, 6, delta);
     }
     const b = bob.current;
     if (b) {
@@ -131,7 +136,8 @@ function CameraRig() {
   useFrame((_, delta) => {
     const s = sampleHead(scrub.progress);
     const prof = stageProfile(size.width);
-    const wantZ = s.camZ + prof.camZ;
+    // 容器越窄，相机越远 —— 防止兽头在窄窗口里被横向裁掉、进而压住文字
+    const wantZ = (s.camZ + prof.camZ) * fitFactor(size.width, size.height);
     const wantFov = s.fov + prof.fov;
 
     camera.position.z = THREE.MathUtils.damp(camera.position.z, wantZ, 4.2, delta);

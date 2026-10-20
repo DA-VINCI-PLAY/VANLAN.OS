@@ -3,8 +3,9 @@
 /**
  * InkLayer —— 黑墨流体转场（R67）
  *
- * 一层全屏 Canvas：用多波峰三次贝塞尔画出不规则的墨面，
- * 外挂 SVG feTurbulence + feDisplacementMap 让边缘持续蠕动、像真实颜料。
+ * 一层全屏 Canvas：用多波峰三次贝塞尔画出不规则的墨面。
+ * 边缘的有机感来自三组不同频率的正弦叠加（低频大起伏 + 中频褶皱 + 高频墨齿），
+ * 不挂 SVG feTurbulence —— 那个滤镜每帧重建噪声，是整页最贵的一笔。
  *
  * 动画只在 0 → 1 / 1 → 0 的 1 秒出头里跑；两端静止时直接停帧，
  * 稳态不产生任何绘制调用，滚到底也不会白烧 GPU。
@@ -75,7 +76,7 @@ export default function InkLayer() {
     let last = performance.now();
 
     const resize = () => {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+      dpr = Math.min(1.5, window.devicePixelRatio || 1);
       W = window.innerWidth;
       H = window.innerHeight;
       canvas.width = Math.floor(W * dpr);
@@ -86,13 +87,17 @@ export default function InkLayer() {
     };
     resize();
 
-    /** 墨面上沿：7 个采样点，用中点二次曲线连成平滑曲线 */
+    /** 墨面上沿：三频叠加，低频定形、中频起浪、高频做墨齿 */
     const edgeY = (i: number, ink: number, tt: number) => {
       const amp = 0.35 + 0.65 * Math.sin(Math.PI * Math.min(1, ink * 1.06));
       const base = H - H * ink * 1.04;
       return (
         base +
-        (24 * Math.sin(i * 1.31 + tt * 0.9) + 12 * Math.sin(i * 2.73 - tt * 1.37)) * amp
+        (30 * Math.sin(i * 0.72 + tt * 0.55) +
+          18 * Math.sin(i * 1.31 + tt * 0.9) +
+          9 * Math.sin(i * 2.73 - tt * 1.37) +
+          5 * Math.sin(i * 5.1 + tt * 1.9)) *
+          amp
       );
     };
 
@@ -100,7 +105,7 @@ export default function InkLayer() {
       ctx.clearRect(0, 0, W, H);
       if (ink <= 0.001) return;
 
-      const N = 7;
+      const N = 16;
       const pts: { x: number; y: number }[] = [];
       for (let i = 0; i <= N; i += 1) {
         pts.push({ x: (i / N) * (W + 40) - 20, y: edgeY(i, ink, tt) });
@@ -122,13 +127,13 @@ export default function InkLayer() {
       ctx.closePath();
 
       const grad = ctx.createLinearGradient(0, H - H * ink * 1.04, 0, H);
-      grad.addColorStop(0, '#0a0b10');
-      grad.addColorStop(0.35, '#05060a');
-      grad.addColorStop(1, '#020305');
+      grad.addColorStop(0, '#0d1528');
+      grad.addColorStop(0.35, '#060b18');
+      grad.addColorStop(1, '#02040c');
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // 墨缘：暗金细线 + 微弱外发光
+      // 墨缘：冷蓝细线 + 微弱外发光
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
@@ -137,14 +142,14 @@ export default function InkLayer() {
         const c = pts[i];
         ctx.quadraticCurveTo(p.x, p.y, (p.x + c.x) / 2, (p.y + c.y) / 2);
       }
-      ctx.strokeStyle = 'rgba(255, 216, 155, 0.30)';
-      ctx.lineWidth = 1.4;
-      ctx.shadowColor = 'rgba(255, 216, 155, 0.55)';
-      ctx.shadowBlur = 26;
+      ctx.strokeStyle = 'rgba(150, 190, 255, 0.26)';
+      ctx.lineWidth = 1.2;
+      ctx.shadowColor = 'rgba(120, 168, 255, 0.5)';
+      ctx.shadowBlur = 22;
       ctx.stroke();
       ctx.restore();
 
-      // 墨滴：从边缘往上飘的金色尘埃
+      // 墨滴：从边缘往上飘的冷星尘
       const arr = dust.current;
       if (ink < 0.995 && Math.random() < 0.55) {
         const idx = Math.floor(Math.random() * (N + 1));
@@ -169,10 +174,10 @@ export default function InkLayer() {
         }
         ctx.beginPath();
         ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 216, 155, ${0.5 * d.life})`;
+        ctx.fillStyle = `rgba(196, 222, 255, ${0.45 * d.life})`;
         ctx.fill();
       }
-      if (arr.length > 90) arr.splice(0, arr.length - 90);
+      if (arr.length > 64) arr.splice(0, arr.length - 64);
     };
 
     const loop = (now: number) => {
@@ -218,36 +223,6 @@ export default function InkLayer() {
   }, []);
 
   return (
-    <>
-      {/* 湍流置换：让墨缘像真颜料一样蠕动 */}
-      <svg className="kp-ink-defs" aria-hidden focusable="false">
-        <defs>
-          <filter id="kp-ink-warp" x="-12%" y="-12%" width="124%" height="124%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.009 0.021"
-              numOctaves={3}
-              seed={9}
-              result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur="9s"
-                values="0.009 0.021;0.013 0.017;0.009 0.021"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale={24}
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
-      <canvas ref={ref} className="kp-ink" aria-hidden />
-    </>
+    <canvas ref={ref} className="kp-ink" aria-hidden />
   );
 }

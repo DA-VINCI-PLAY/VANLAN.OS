@@ -1,18 +1,21 @@
 'use client';
 
 /**
- * StarField —— 2.5D 克卜勒星盘（R67）
+ * StarField —— 纯银河星场（R68）
  *
- * 三层结构：
- *   1. SVG 天文星盘：外/中/内三环按不同角速度逆向旋转，模拟机械天体仪
- *   2. 3D 球面星群：每颗星有真实 (theta, phi, radius)，透视投影到屏幕
- *   3. 星座连线：同专辑的星按经度串成呼吸虚线
+ * 设计取向：不做星盘、不做黄道刻度、不做星座连线。只有一片冷的银河，
+ * 和散落在里面的十颗可交互星体。层级越少，越像深空。
  *
- * 全部由单条 rAF 直写 transform / opacity / path d，拖动和自转都不进 React。
- * 稳态时若既没拖动也没有自转需求（reduced-motion），循环自动降频到 20fps。
+ * 结构：
+ *   1. 银河层：一块离屏 canvas，进章节时绘制一次（星云带 + 微星 + 亮星）。
+ *      拖拽时只改整层的 translate3d 做视差，永不重绘。
+ *   2. 星体层：10 颗星按球面 (theta, phi, radius) 透视投影，单条 rAF 直写
+ *      transform / opacity，拖动与自转都不进 React。
+ *
+ * 性能：DPR 封顶 1.5，静态层零重绘，rAF 在静置且无交互时降频到 20fps。
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   KIND_COLOR,
   KIND_SIZE,
@@ -25,12 +28,133 @@ import { chime } from '@/lib/keplerAudio';
 
 const TAU = Math.PI * 2;
 
-/** 12 星座符号（黄道刻度环用） */
-const ZODIAC = ['白羊', '金牛', '双子', '巨蟹', '狮子', '室女', '天秤', '天蝎', '人马', '摩羯', '宝瓶', '双鱼'];
-
 function colorOf(s: KeplerStar): string {
   return s.color || KIND_COLOR[s.kind] || KIND_COLOR.planet;
 }
+
+/* ------------------------------------------------------------------
+   银河绘制：一次成型，之后只做 transform
+   ------------------------------------------------------------------ */
+
+/** 确定性随机：同一个种子每次刷新星图一致，不会「换一片天」 */
+function makeRandom(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function paintGalaxy(cv: HTMLCanvasElement, W: number, H: number) {
+  const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+  cv.width = Math.max(1, Math.round(W * dpr));
+  cv.height = Math.max(1, Math.round(H * dpr));
+  cv.style.width = `${W}px`;
+  cv.style.height = `${H}px`;
+
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const rnd = makeRandom(20261020);
+  const cx = W * 0.52;
+  const cy = H * 0.49;
+  const bandAngle = -0.38;
+
+  /* ---- 1. 银河带：三条斜向冷光雾 ---- */
+  const bands = [
+    { x: 0.52, y: 0.47, len: 1.5, thick: 0.26, a: 0.13, c: '132, 178, 255' },
+    { x: 0.34, y: 0.6, len: 1.02, thick: 0.15, a: 0.075, c: '96, 150, 240' },
+    { x: 0.72, y: 0.33, len: 0.86, thick: 0.13, a: 0.06, c: '186, 220, 255' },
+  ];
+  for (const b of bands) {
+    ctx.save();
+    ctx.translate(W * b.x, H * b.y);
+    ctx.rotate(bandAngle);
+    const rx = W * b.len * 0.5;
+    const ry = H * b.thick * 0.5;
+    ctx.scale(1, Math.max(0.06, ry / rx));
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, `rgba(${b.c}, ${b.a})`);
+    g.addColorStop(0.42, `rgba(${b.c}, ${b.a * 0.5})`);
+    g.addColorStop(0.76, `rgba(${b.c}, ${b.a * 0.14})`);
+    g.addColorStop(1, `rgba(${b.c}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, rx, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ---- 2. 银河带内的细密星尘（让带子看起来是「星」不是「雾」） ---- */
+  const bandDust = Math.round(Math.min(1400, (W * H) / 1500));
+  for (let i = 0; i < bandDust; i += 1) {
+    const u = (rnd() * 2 - 1) * W * 0.66;
+    // 高斯：三次均匀分布求和近似
+    const v = ((rnd() + rnd() + rnd()) / 3 - 0.5) * H * 0.3;
+    const x = cx + u * Math.cos(bandAngle) - v * Math.sin(bandAngle);
+    const y = cy + u * Math.sin(bandAngle) + v * Math.cos(bandAngle);
+    if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
+    const r = 0.32 + rnd() * 0.62;
+    const a = 0.08 + rnd() * 0.42;
+    ctx.fillStyle =
+      rnd() > 0.86 ? `rgba(196, 224, 255, ${a})` : `rgba(236, 245, 255, ${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fill();
+  }
+
+  /* ---- 3. 全场面星点：幂律亮度，多数极暗，少数很亮 ---- */
+  const field = Math.round(Math.min(1100, (W * H) / 1900));
+  for (let i = 0; i < field; i += 1) {
+    const x = rnd() * W;
+    const y = rnd() * H;
+    const t = Math.pow(rnd(), 2.6);
+    const r = 0.24 + t * 1.05;
+    const a = 0.1 + t * 0.72;
+    ctx.fillStyle =
+      rnd() > 0.8 ? `rgba(178, 208, 255, ${a})` : `rgba(242, 248, 255, ${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fill();
+  }
+
+  /* ---- 4. 十几颗带十字芒的亮星：银河的「锚点」 ---- */
+  const bright = 13;
+  for (let i = 0; i < bright; i += 1) {
+    const x = W * (0.06 + rnd() * 0.88);
+    const y = H * (0.08 + rnd() * 0.84);
+    const size = 0.9 + rnd() * 0.9;
+    const halo = ctx.createRadialGradient(x, y, 0, x, y, size * 16);
+    halo.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+    halo.addColorStop(0.22, 'rgba(206, 230, 255, 0.34)');
+    halo.addColorStop(0.6, 'rgba(132, 178, 255, 0.1)');
+    halo.addColorStop(1, 'rgba(132, 178, 255, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 16, 0, TAU);
+    ctx.fill();
+
+    // 十字芒：两条极细的线性渐变
+    const len = size * (16 + rnd() * 14);
+    const spikeH = ctx.createLinearGradient(x - len, y, x + len, y);
+    spikeH.addColorStop(0, 'rgba(200, 226, 255, 0)');
+    spikeH.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+    spikeH.addColorStop(1, 'rgba(200, 226, 255, 0)');
+    ctx.fillStyle = spikeH;
+    ctx.fillRect(x - len, y - 0.35, len * 2, 0.7);
+
+    const spikeV = ctx.createLinearGradient(x, y - len, x, y + len);
+    spikeV.addColorStop(0, 'rgba(200, 226, 255, 0)');
+    spikeV.addColorStop(0.5, 'rgba(255, 255, 255, 0.42)');
+    spikeV.addColorStop(1, 'rgba(200, 226, 255, 0)');
+    ctx.fillStyle = spikeV;
+    ctx.fillRect(x - 0.35, y - len, 0.7, len * 2);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 
 export default function StarField() {
   const stars = useKeplerStars((s) => s.stars);
@@ -38,11 +162,9 @@ export default function StarField() {
   const filter = useKeplerUI((s) => s.filter);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const galaxyRef = useRef<HTMLCanvasElement>(null);
   const starRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const linkRefs = useRef<Map<string, SVGPathElement[]>>(new Map());
-  const ringRefs = useRef<(SVGGElement | null)[]>([]);
   const reticleRef = useRef<HTMLDivElement>(null);
-  const sweepRef = useRef<SVGGElement>(null);
   const probeCodeRef = useRef<HTMLSpanElement>(null);
   const probeNameRef = useRef<HTMLElement>(null);
   const probeMetaRef = useRef<HTMLSpanElement>(null);
@@ -62,19 +184,25 @@ export default function StarField() {
   /** 视角状态：yaw / pitch + 惯性速度 */
   const view = useRef({ yaw: 0.35, pitch: -0.12, vyaw: 0, vpitch: 0, flyYaw: null as number | null });
 
-  /* ---------- 星座分组（按 album） ---------- */
-  const groups = useMemo(() => {
-    const map = new Map<string, KeplerStar[]>();
-    for (const s of stars) {
-      const arr = map.get(s.album) ?? [];
-      arr.push(s);
-      map.set(s.album, arr);
-    }
-    return Array.from(map, ([album, list]) => ({
-      album,
-      list: [...list].sort((a, b) => a.theta - b.theta),
-    }));
-  }, [stars]);
+  /* ---------- 银河：进章节画一次 ---------- */
+  useEffect(() => {
+    const cv = galaxyRef.current;
+    if (!cv) return;
+    paintGalaxy(cv, window.innerWidth, window.innerHeight);
+
+    let timer = 0;
+    const onResize = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        paintGalaxy(cv, window.innerWidth, window.innerHeight);
+      }, 200);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
 
   /* ---------- 选中：把星星转到黄金分割位 ---------- */
   useEffect(() => {
@@ -90,7 +218,6 @@ export default function StarField() {
     // 目标方位角 -0.62rad ≈ 屏幕左侧 38% 处
     let target = -0.62 - az;
     const cur = view.current.yaw;
-    // 取最短路径
     target = cur + ((((target - cur) % TAU) + TAU * 1.5) % TAU) - Math.PI;
     view.current.flyYaw = target;
     chime(star.kind === 'star' ? 523.25 : 659.25, 0.16);
@@ -99,8 +226,10 @@ export default function StarField() {
   /* ---------- 主循环 ---------- */
   useEffect(() => {
     const root = rootRef.current;
+    const galaxy = galaxyRef.current;
     if (!root) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const small = window.matchMedia('(max-width: 767px)').matches;
 
     let raf = 0;
     let dragging = false;
@@ -114,30 +243,18 @@ export default function StarField() {
       H = window.innerHeight;
     };
     measure();
-
-    const focusPoint = (id: string | null) => {
-      if (!id) return null;
-      const el = starRefs.current.get(id);
-      if (!el) return null;
-      const x = Number(el.dataset.x || 0);
-      const y = Number(el.dataset.y || 0);
-      return { x, y };
-    };
+    window.addEventListener('resize', measure);
 
     const loop = (now: number) => {
       raf = window.requestAnimationFrame(loop);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       acc += dt;
-      // 静态画面（没有拖动 / 惯性 / 飞行 / 自转需求）降到 20fps
+
       const v = view.current;
-      const idle =
-        reduce &&
-        !v.vyaw &&
-        !v.vpitch &&
-        v.flyYaw === null &&
-        kpFX.converge === 0;
-      if (idle && acc < 0.05) return;
+      // 静置且无飞行：降频到 20fps
+      const still = !v.vyaw && !v.vpitch && v.flyYaw === null && kpFX.converge === 0 && !dragging;
+      if (still && acc < 0.05) return;
 
       // ---- 视角积分 ----
       if (v.flyYaw !== null) {
@@ -154,9 +271,17 @@ export default function StarField() {
         v.vpitch *= Math.exp(-3.2 * dt);
         if (Math.abs(v.vyaw) < 0.004) v.vyaw = 0;
         if (Math.abs(v.vpitch) < 0.004) v.vpitch = 0;
-        if (!reduce && !dragging && !targetRef.current) v.yaw += dt * 0.035;
+        if (!reduce && !dragging && !targetRef.current) v.yaw += dt * 0.028;
       }
       v.pitch = Math.max(-1.15, Math.min(1.15, v.pitch));
+
+      // ---- 银河视差：只动整层，绝不重绘 ----
+      if (galaxy) {
+        const gx = -v.yaw * 34;
+        const gy = v.pitch * 26;
+        galaxy.style.transform = `translate3d(${gx.toFixed(1)}px, ${gy.toFixed(1)}px, 0) scale(1.05)`;
+        galaxy.style.opacity = String(1 - kpFX.converge * 0.92);
+      }
 
       const zoom = Math.max(1, Math.min(2.2, kpFX.zoom));
       const camZ = (5.35 / zoom) * (1 - kpFX.focus * 0.16);
@@ -170,17 +295,7 @@ export default function StarField() {
       const sp = Math.sin(v.pitch);
       const conv = kpFX.converge;
 
-      // ---- 星盘三环视差 ----
-      const deg = (v.yaw * 180) / Math.PI;
-      const setRing = (i: number, d: number) => {
-        const g = ringRefs.current[i];
-        if (g) g.setAttribute('transform', `rotate(${d.toFixed(2)} 500 500)`);
-      };
-      setRing(0, -deg * 0.22);
-      setRing(1, deg * 0.4);
-      setRing(2, -deg * 0.62 + 12);
-
-      const pts = new Map<string, { x: number; y: number; z: number; r: number }>();
+      const pts = new Map<string, { x: number; y: number; z: number }>();
 
       for (const s of starsRef.current) {
         const el = starRefs.current.get(s.id);
@@ -226,40 +341,22 @@ export default function StarField() {
           Math.min(1, (W / 2 + 140 - Math.abs(sx - cx)) / 140, (H / 2 + 140 - Math.abs(sy - cy)) / 140),
         );
         const op =
-          (1 - depth * 0.66) *
-          edgeFade *
-          (dimmed ? 0.22 : 1) *
-          (1 - conv * 0.9);
+          (1 - depth * 0.62) * edgeFade * (dimmed ? 0.2 : 1) * (1 - conv * 0.9);
 
         el.dataset.x = String(sx);
         el.dataset.y = String(sy);
         el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
         el.style.opacity = op.toFixed(3);
         el.style.zIndex = String(1000 - Math.round(zc * 100));
-        // 远景模糊（景深）
-        const blur = depth > 0.55 ? (depth - 0.55) * 3.2 : 0;
-        if (Math.abs(Number(el.dataset.blur || 0) - blur) > 0.12) {
-          el.dataset.blur = blur.toFixed(2);
-          el.style.filter = blur > 0.12 ? `blur(${blur.toFixed(2)}px)` : '';
+        // 远景模糊（景深）—— 小屏关掉，省一次 raster
+        if (!small) {
+          const blur = depth > 0.55 ? (depth - 0.55) * 3.2 : 0;
+          if (Math.abs(Number(el.dataset.blur || 0) - blur) > 0.12) {
+            el.dataset.blur = blur.toFixed(2);
+            el.style.filter = blur > 0.12 ? `blur(${blur.toFixed(2)}px)` : '';
+          }
         }
-        pts.set(s.id, { x: sx, y: sy, z: zc, r: s.radius });
-      }
-
-      // ---- 星座连线 ----
-      for (const g of groups) {
-        const paths = linkRefs.current.get(g.album);
-        if (!paths) continue;
-        let d = '';
-        const list = g.list;
-        for (let i = 0; i < list.length - 1; i += 1) {
-          const a = pts.get(list[i].id);
-          const b = pts.get(list[i + 1].id);
-          if (!a || !b) continue;
-          d += `M${a.x.toFixed(1)} ${a.y.toFixed(1)}L${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-        }
-        for (const p of paths) p.setAttribute('d', d);
-        const dim = filterRef.current && filterRef.current !== g.album;
-        for (const p of paths) p.style.opacity = String((dim ? 0.06 : 0.5) * (1 - conv));
+        pts.set(s.id, { x: sx, y: sy, z: zc });
       }
 
       // ---- 准星 / 读数 ----
@@ -276,9 +373,8 @@ export default function StarField() {
       }
       const probeStar = locked ? starsRef.current.find((x) => x.id === locked) : null;
       if (probeStar) {
-        const orbit = ((((probeStar.theta * 180) / Math.PI) % 360) + 360) % 360;
-        const code = `STAR ID: ${probeStar.id.toUpperCase()} // ${probeStar.year || '——'}`;
-        const meta = `ORBIT ${orbit.toFixed(1)}° · ${probeStar.album} · ${probeStar.kind === 'star' ? 'PRIMARY' : 'SATELLITE'}`;
+        const code = `STAR ${probeStar.id.toUpperCase()} · ${probeStar.year || '——'}`;
+        const meta = `${probeStar.album} · ${probeStar.kind === 'star' ? 'PRIMARY' : 'SATELLITE'}`;
         if (probeCodeRef.current && probeCodeRef.current.textContent !== code) {
           probeCodeRef.current.textContent = code;
         }
@@ -288,15 +384,12 @@ export default function StarField() {
         if (probeMetaRef.current && probeMetaRef.current.textContent !== meta) {
           probeMetaRef.current.textContent = meta;
         }
-      } else if (probeNameRef.current && probeNameRef.current.textContent !== '自由漫游 · DRAG TO ORBIT') {
-        probeCodeRef.current!.textContent = 'KEPLER STARFIELD';
-        probeNameRef.current.textContent = '自由漫游 · DRAG TO ORBIT';
-        probeMetaRef.current!.textContent = '共 ' + starsRef.current.length + ' 颗星体 · 选中任意一颗开始';
-      }
-
-      // 扫描极线
-      if (sweepRef.current) {
-        sweepRef.current.setAttribute('transform', `rotate(${(now * 0.006) % 360} 500 500)`);
+      } else if (probeNameRef.current && probeNameRef.current.textContent !== '自由漫游') {
+        if (probeCodeRef.current) probeCodeRef.current.textContent = 'KEPLER';
+        probeNameRef.current.textContent = '自由漫游';
+        if (probeMetaRef.current) {
+          probeMetaRef.current.textContent = `${starsRef.current.length} 颗星 · 拖动 / 选中任意一颗`;
+        }
       }
       acc = 0;
     };
@@ -360,7 +453,6 @@ export default function StarField() {
     root.addEventListener('pointermove', onMove);
     root.addEventListener('pointerup', onUp);
     root.addEventListener('pointercancel', onUp);
-    window.addEventListener('resize', measure);
 
     return () => {
       window.cancelAnimationFrame(raf);
@@ -370,128 +462,13 @@ export default function StarField() {
       root.removeEventListener('pointercancel', onUp);
       window.removeEventListener('resize', measure);
     };
-  }, [groups]);
+  }, []);
 
   return (
     <div className="kp-space" ref={rootRef}>
-      <div className="kp-nebula" aria-hidden />
+      {/* 银河：一块 canvas，画一次 */}
+      <canvas className="kp-galaxy" ref={galaxyRef} aria-hidden />
       <div className="kp-vignette" aria-hidden />
-
-      {/* 2D 精密星盘 */}
-      <svg className="kp-astrolabe" viewBox="0 0 1000 1000" aria-hidden>
-        <defs>
-          <radialGradient id="kp-plate" cx="50%" cy="50%" r="50%">
-            <stop offset="55%" stopColor="rgba(255,216,155,0.05)" />
-            <stop offset="100%" stopColor="rgba(255,216,155,0)" />
-          </radialGradient>
-          <linearGradient id="kp-sweep" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,216,155,0.12)" />
-            <stop offset="100%" stopColor="rgba(255,216,155,0)" />
-          </linearGradient>
-        </defs>
-
-        <circle cx="500" cy="500" r="470" fill="url(#kp-plate)" />
-
-        <g ref={(el) => { ringRefs.current[0] = el; }}>
-          <circle cx="500" cy="500" r="470" className="kp-ring kp-ring-outer" />
-          <circle cx="500" cy="500" r="452" className="kp-ring kp-ring-dim" />
-          {Array.from({ length: 120 }).map((_, i) => {
-            const major = i % 10 === 0;
-            const a = (i / 120) * TAU;
-            const r1 = 470;
-            const r2 = 470 - (major ? 22 : 10);
-            return (
-              <line
-                key={i}
-                x1={500 + Math.cos(a) * r1}
-                y1={500 + Math.sin(a) * r1}
-                x2={500 + Math.cos(a) * r2}
-                y2={500 + Math.sin(a) * r2}
-                className={major ? 'kp-tick is-major' : 'kp-tick'}
-              />
-            );
-          })}
-          {ZODIAC.map((z, i) => {
-            const a = (i / 12) * TAU - Math.PI / 2;
-            return (
-              <g key={z + i} transform={`rotate(${i * 30} 500 500)`}>
-                <text x={500} y={72} className="kp-zodiac" textAnchor="middle">
-                  {z}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-
-        <g ref={(el) => { ringRefs.current[1] = el; }}>
-          <circle cx="500" cy="500" r="352" className="kp-ring kp-ring-mid" />
-          <circle cx="500" cy="500" r="344" className="kp-ring kp-ring-dim" strokeDasharray="2 9" />
-          {Array.from({ length: 24 }).map((_, i) => {
-            const a = (i / 24) * TAU;
-            return (
-              <line
-                key={i}
-                x1={500 + Math.cos(a) * 352}
-                y1={500 + Math.sin(a) * 352}
-                x2={500 + Math.cos(a) * 330}
-                y2={500 + Math.sin(a) * 330}
-                className="kp-tick"
-              />
-            );
-          })}
-        </g>
-
-        {/* 赤经赤纬网格 */}
-        <g ref={(el) => { ringRefs.current[2] = el; }} className="kp-grid">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <line
-              key={`v${i}`}
-              x1="500"
-              y1="150"
-              x2="500"
-              y2="850"
-              transform={`rotate(${(i / 12) * 180} 500 500)`}
-            />
-          ))}
-          {[110, 220, 300].map((r) => (
-            <circle key={r} cx="500" cy="500" r={r} />
-          ))}
-        </g>
-
-        <circle cx="500" cy="500" r="300" className="kp-ring kp-ring-inner" />
-        <g ref={sweepRef}>
-          <path d="M500 500 L500 120 A380 380 0 0 1 640 138 Z" fill="url(#kp-sweep)" opacity="0.35" />
-          <line x1="500" y1="500" x2="500" y2="120" className="kp-sweep-line" />
-        </g>
-        <circle cx="500" cy="500" r="3" className="kp-center-dot" />
-        <circle cx="500" cy="500" r="18" className="kp-ring kp-ring-dim" />
-      </svg>
-
-      {/* 星座连线 */}
-      <svg className="kp-links" aria-hidden>
-        {groups.map((g) => (
-          <g key={g.album}>
-            <path
-              className="kp-link-glow"
-              ref={(el) => {
-                if (!el) return;
-                const arr = linkRefs.current.get(g.album) ?? [];
-                if (!arr.includes(el)) arr.push(el);
-                linkRefs.current.set(g.album, arr);
-              }}
-            />
-            <path
-              className="kp-link"
-              ref={(el) => {
-                if (!el) return;
-                const arr = linkRefs.current.get(g.album) ?? [];
-                if (!arr.includes(el)) arr.push(el);
-                linkRefs.current.set(g.album, arr);
-              }}
-            />
-          </g>
-        ))}
-      </svg>
 
       {/* 星群 */}
       <div className="kp-stars">
@@ -522,7 +499,6 @@ export default function StarField() {
             <span className="kp-star-glow" />
             <span className="kp-star-rays" />
             <span className="kp-star-core" />
-            {s.kind === 'star' && <span className="kp-star-orbit" />}
             {s.lyric && <span className="kp-star-lyric">{s.lyric}</span>}
           </button>
         ))}
@@ -537,13 +513,13 @@ export default function StarField() {
       {/* 天体读数 */}
       <div className="kp-probe" aria-live="polite">
         <span className="kp-probe-code" ref={probeCodeRef}>
-          KEPLER STARFIELD
+          KEPLER
         </span>
         <b className="kp-probe-name" ref={probeNameRef}>
-          自由漫游 · DRAG TO ORBIT
+          自由漫游
         </b>
         <span className="kp-probe-meta" ref={probeMetaRef}>
-          共 {stars.length} 颗星体 · 选中任意一颗开始
+          共 {stars.length} 颗星 · 拖动 / 选中任意一颗
         </span>
       </div>
     </div>
