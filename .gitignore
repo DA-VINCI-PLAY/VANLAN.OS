@@ -67,3 +67,7 @@ export-out/
 run-export.cjs
 PHASE_01_VISUAL_POLISH_REPORT.md
 CLEANUP_REPORT.md
+
+# local build artifacts
+.next-bak/
+.nextbuild/
