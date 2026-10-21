@@ -35,9 +35,9 @@ const LABEL =
   'mb-1.5 block font-mono text-[8px] tracking-[0.22em] text-ink/40';
 
 /* ---------------- 预算区间 ---------------- */
-const BUDGET_FLOOR = 500;
-const BUDGET_CEIL = 20000;
-const BUDGET_STEP = 500;
+const BUDGET_FLOOR = 50;
+const BUDGET_CEIL = 2000;
+const BUDGET_STEP = 50;
 const money = (n: number) => `¥${n.toLocaleString('zh-CN')}`;
 
 type TierArtKind = 'wave' | 'console' | 'rig' | 'cockpit';
@@ -48,10 +48,10 @@ const BUDGET_PRESETS: {
   range: [number, number];
   art: TierArtKind;
 }[] = [
-  { label: '¥500 - 1.5k', hint: '轻量 · Demo/单项', range: [500, 1500], art: 'wave' },
-  { label: '¥1.5k - 4k', hint: '标准 · 完整编混', range: [1500, 4000], art: 'console' },
-  { label: '¥4k - 10k', hint: '深度 · 全案/3D', range: [4000, 10000], art: 'rig' },
-  { label: '¥10k+', hint: '旗舰 · 专辑企划', range: [10000, 20000], art: 'cockpit' },
+  { label: '¥50 - 200', hint: '轻量 · Demo/单项', range: [50, 200], art: 'wave' },
+  { label: '¥200 - 600', hint: '标准 · 完整编混', range: [200, 600], art: 'console' },
+  { label: '¥600 - 1.2k', hint: '深度 · 全案/3D', range: [600, 1200], art: 'rig' },
+  { label: '¥1.2k - 2k', hint: '旗舰 · 专辑企划', range: [1200, 2000], art: 'cockpit' },
 ];
 
 /** 档位缩略图：手绘工业风线稿（矢量在 44px 下远比位图清晰，且可随主题着色） */
@@ -163,8 +163,8 @@ export default function CommissionPanel() {
   const [contactType, setContactType] =
     useState<(typeof CONTACT_TYPES)[number]>('WeChat');
   const [contact, setContact] = useState('');
-  const [budgetMin, setBudgetMin] = useState(1500);
-  const [budgetMax, setBudgetMax] = useState(4000);
+  const [budgetMin, setBudgetMin] = useState(200);
+  const [budgetMax, setBudgetMax] = useState(600);
   const [brief, setBrief] = useState('');
   const [demo, setDemo] = useState(false);
   const [error, setError] = useState('');
@@ -184,9 +184,7 @@ export default function CommissionPanel() {
     setView('form');
   };
 
-  const budgetLabel = `${money(budgetMin)} – ${money(budgetMax)}${
-    budgetMax >= BUDGET_CEIL ? '+' : ''
-  }`;
+  const budgetLabel = `${money(budgetMin)} – ${money(budgetMax)}`;
   const span = BUDGET_CEIL - BUDGET_FLOOR;
   const pctMin = ((budgetMin - BUDGET_FLOOR) / span) * 100;
   const pctMax = ((budgetMax - BUDGET_FLOOR) / span) * 100;
@@ -465,7 +463,6 @@ export default function CommissionPanel() {
                 <i>—</i>
                 <span className="op-num">
                   {money(budgetMax)}
-                  {budgetMax >= BUDGET_CEIL ? '+' : ''}
                 </span>
               </div>
 
