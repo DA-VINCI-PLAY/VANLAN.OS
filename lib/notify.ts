@@ -70,6 +70,10 @@ export interface NotifyPayload {
   budget: string;
   brief: string;
   demo: boolean;
+  /** 客户勾选的具体细分服务（R74） */
+  serviceItem?: string;
+  /** 是否已勾选同意《合作须知与 AI 免责条款》（R74） */
+  consent?: boolean;
   createdAt: string;
 }
 
@@ -104,6 +108,8 @@ async function sendMail(email: string, p: NotifyPayload): Promise<ChannelStatus>
         客户称呼: p.clientName,
         联系方式: `${p.contactType} : ${p.contact}`,
         预算范围: p.budget,
+        具体服务项目: p.serviceItem || p.serviceName,
+        已同意免责条款: p.consent ? '✅ 已勾选同意（50% 定金 / 免费微调2次）' : '❌ 未勾选',
         需要试听小样: p.demo ? '是（申请免费试听小样）' : '否',
         项目需求描述: p.brief,
         提交时间: new Date(p.createdAt).toLocaleString('zh-CN', { hour12: false }),
@@ -138,6 +144,8 @@ async function sendPush(p: NotifyPayload, token: string): Promise<ChannelStatus>
           `<p><b>客户：</b>${p.clientName}</p>`,
           `<p><b>联系：</b>${p.contactType} · ${p.contact}</p>`,
           `<p><b>预算：</b>${p.budget}</p>`,
+          `<p><b>具体服务：</b>${p.serviceItem || p.serviceName}</p>`,
+          `<p><b>免责条款：</b>${p.consent ? '已勾选同意（50% 定金 / 微调2次）' : '未勾选'}</p>`,
           `<p><b>试听小样：</b>${p.demo ? '需要' : '不需要'}</p>`,
           `<p><b>需求：</b>${p.brief}</p>`,
           `<p style="color:#888">${p.orderId} · ${new Date(p.createdAt).toLocaleString('zh-CN', { hour12: false })}</p>`,

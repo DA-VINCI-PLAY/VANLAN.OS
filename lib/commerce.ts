@@ -21,6 +21,12 @@ import {
 
 export const PRODUCTS_KEY = 'vanlan_products';
 export const ORDERS_KEY = 'vanlan_orders';
+/**
+ * 商品目录版本：+1 时旧浏览器本地存储会被新出厂目录覆盖（R74 价目表改版）。
+ * 管理员后续手动编辑的增量仍会保留，直到下一次版本再提升。
+ */
+export const PRODUCTS_VER = 2;
+const PRODUCTS_VER_KEY = 'vanlan_products_ver';
 
 export type OrderStatus = 'pending' | 'in_progress' | 'delivered';
 
@@ -57,6 +63,8 @@ export interface Order {
   brief: string;
   /** 是否需要试听小样 */
   demo: boolean;
+  /** 是否已勾选同意《合作须知与 AI 免责条款》（R74） */
+  consent?: boolean;
   status: OrderStatus;
   createdAt: string;
 }
@@ -70,6 +78,7 @@ export interface NewOrderInput {
   budget: string;
   brief: string;
   demo: boolean;
+  consent?: boolean;
 }
 
 export type ProductDraft = Omit<ServiceProduct, 'id' | 'createdAt'> & {
@@ -143,14 +152,29 @@ export const useCommerce = create<CommerceState>((set, get) => ({
 
   hydrate: () => {
     if (get().hydrated) return;
+    const storedVer = Number(window.localStorage.getItem(PRODUCTS_VER_KEY) || '0');
     const storedProducts = readJSON<ServiceProduct[] | null>(PRODUCTS_KEY, null);
-    const products =
-      storedProducts && storedProducts.length > 0
-        ? storedProducts
-        : DEFAULT_SERVICES;
+    let products: ServiceProduct[];
+    let reseed = false;
+    if (!storedProducts || storedProducts.length === 0) {
+      products = DEFAULT_SERVICES;
+      reseed = true;
+    } else if (storedVer !== PRODUCTS_VER) {
+      // 目录版本升级：用新出厂价目表覆盖旧数据（R74：AI 增效版价目表）
+      products = DEFAULT_SERVICES;
+      reseed = true;
+    } else {
+      products = storedProducts;
+    }
+    if (reseed) {
+      writeJSON(PRODUCTS_KEY, products);
+      try {
+        window.localStorage.setItem(PRODUCTS_VER_KEY, String(PRODUCTS_VER));
+      } catch {
+        /* noop */
+      }
+    }
     const orders = readJSON<Order[]>(ORDERS_KEY, []);
-    // 首次访问播种：让后台有东西可管理
-    if (!storedProducts) writeJSON(PRODUCTS_KEY, products);
     set({ products, orders, hydrated: true });
   },
 
@@ -271,6 +295,7 @@ export function ordersToCSV(orders: Order[]): string {
     'contact',
     'budget',
     'demo',
+    'consent',
     'status',
     'brief',
   ];
@@ -285,6 +310,7 @@ export function ordersToCSV(orders: Order[]): string {
       o.contact,
       o.budget,
       o.demo ? 'yes' : 'no',
+      o.consent ? 'yes' : 'no',
       ORDER_STATUS_EN[o.status],
       o.brief,
     ]

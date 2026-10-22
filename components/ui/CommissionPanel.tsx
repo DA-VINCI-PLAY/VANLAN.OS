@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * CommissionPanel —— 接单 / 定制合作（R51）
+ * CommissionPanel —— 接单 / 定制合作（R51 → R74「AI 辅助增效版」）
  *
  * 视图机（单面板内切换，不弹全局 Modal —— 移动端抽屉内更好操作）：
- *   list  : 服务卡列表（分类 / 起步价 / 交付周期 / 包含项）
- *   form  : 选中服务后的委托表单（称呼 / 联系方式 / 预算 / 需求 / demo）
+ *   list  : 品类筛选卡 + 细分服务卡列表
+ *   form  : 委托表单（称呼 / 联系方式 / 品类卡联动滑块 / 细分服务点选 / 免责条款确认）
  *   done  : 提交回执（订单号 + 状态 + 下一步）
  *
  * 数据：products 来自 useCommerce（localStorage 持久化，管理员可上下架）；
@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CONTACT_TYPES,
   ORDER_STATUS_LABEL,
@@ -21,8 +22,11 @@ import {
 } from '@/lib/commerce';
 import { notifyOrder } from '@/lib/notify';
 import {
+  CATEGORY_CARDS,
   CATEGORY_EN,
   CATEGORY_LABEL,
+  TERMS_SECTIONS,
+  type ServiceCategory,
   type ServiceProduct,
 } from '@/content/services';
 import { useOS } from '@/lib/store';
@@ -34,25 +38,21 @@ const FIELD =
 const LABEL =
   'mb-1.5 block font-mono text-[8px] tracking-[0.22em] text-ink/40';
 
-/* ---------------- 预算区间 ---------------- */
+/* ---------------- 预算区间（R74：AI 增效版 ¥50 – ¥600+） ---------------- */
 const BUDGET_FLOOR = 50;
-const BUDGET_CEIL = 2000;
-const BUDGET_STEP = 50;
+const BUDGET_CEIL = 600;
+const BUDGET_STEP = 10;
 const money = (n: number) => `¥${n.toLocaleString('zh-CN')}`;
 
-type TierArtKind = 'wave' | 'console' | 'rig' | 'cockpit';
+type TierArtKind = 'wave' | 'timeline' | 'rig' | 'code';
 
-const BUDGET_PRESETS: {
-  label: string;
-  hint: string;
-  range: [number, number];
-  art: TierArtKind;
-}[] = [
-  { label: '¥50 - 200', hint: '轻量 · Demo/单项', range: [50, 200], art: 'wave' },
-  { label: '¥200 - 600', hint: '标准 · 完整编混', range: [200, 600], art: 'console' },
-  { label: '¥600 - 1.2k', hint: '深度 · 全案/3D', range: [600, 1200], art: 'rig' },
-  { label: '¥1.2k - 2k', hint: '旗舰 · 专辑企划', range: [1200, 2000], art: 'cockpit' },
-];
+const TIER_ART: Record<ServiceCategory, TierArtKind> = {
+  AUDIO: 'wave',
+  VIDEO: 'timeline',
+  MODELING: 'rig',
+  WEB: 'code',
+  CUSTOM: 'rig',
+};
 
 /** 档位缩略图：手绘工业风线稿（矢量在 44px 下远比位图清晰，且可随主题着色） */
 function TierArt({ kind }: { kind: TierArtKind }) {
@@ -76,24 +76,23 @@ function TierArt({ kind }: { kind: TierArtKind }) {
             />
           </>
         )}
-        {kind === 'console' && (
+        {kind === 'timeline' && (
           <>
-            {([10, 19, 28, 37] as const).map((x, i) => (
-              <g key={x}>
-                <path d={`M${x} 9v31`} stroke="rgba(27,30,35,.24)" strokeWidth="1.4" />
-                <rect
-                  x={x - 3.4}
-                  y={[15, 25, 12, 30][i]}
-                  width="6.8"
-                  height="4.6"
-                  rx="1.4"
-                  fill="#e8641f"
-                  stroke="none"
-                />
-              </g>
+            {/* 时间轴轨道 + 关键帧菱形 + 播放头 */}
+            <path d="M6 15h36" stroke="rgba(27,30,35,.24)" strokeWidth="1.4" />
+            <path d="M6 30h36" stroke="rgba(27,30,35,.14)" strokeWidth="1.2" />
+            <path d="M6 38h36" stroke="rgba(27,30,35,.14)" strokeWidth="1.2" />
+            {([12, 22, 32] as const).map((x, i) => (
+              <path
+                key={x}
+                d={`M${x} ${[15, 30, 38][i]}l3-3 3 3-3 3Z`}
+                fill="#e8641f"
+                stroke="none"
+              />
             ))}
-            <path d="M6 43h36" stroke="rgba(243,90,23,.45)" strokeWidth="1.2" />
-            <circle cx="24" cy="5" r="1.7" fill="#f3702e" stroke="none" />
+            <path d="M39 6v20" stroke="rgba(243,90,23,.8)" strokeWidth="1.6" />
+            <path d="M36.5 6h5" stroke="#f3702e" strokeWidth="1.6" />
+            <circle cx="39" cy="26" r="1.8" fill="#f3702e" stroke="none" />
           </>
         )}
         {kind === 'rig' && (
@@ -119,23 +118,21 @@ function TierArt({ kind }: { kind: TierArtKind }) {
             ))}
           </>
         )}
-        {kind === 'cockpit' && (
+        {kind === 'code' && (
           <>
-            <path d="M8 34a17 17 0 0 1 32 0" stroke="#e8641f" strokeWidth="1.7" />
-            <path d="M14 34a11 11 0 0 1 20 0" stroke="rgba(232,100,31,.5)" strokeWidth="1.2" />
-            <path d="M24 34V22" stroke="rgba(27,30,35,.32)" strokeWidth="1.2" />
-            <circle cx="24" cy="34" r="2.4" fill="#f3702e" stroke="none" />
+            {/* 终端窗口 + </> + 响应式两端 */}
+            <rect x="6" y="9" width="36" height="27" rx="3" stroke="#e8641f" strokeWidth="1.5" />
+            <path d="M6 16h36" stroke="rgba(27,30,35,.22)" strokeWidth="1.2" />
+            <circle cx="10.5" cy="12.5" r="1.1" fill="#f3702e" stroke="none" />
+            <circle cx="14.5" cy="12.5" r="1.1" fill="rgba(232,100,31,.5)" stroke="none" />
             <path
-              d="M6 40h36"
-              stroke="rgba(27,30,35,.16)"
-              strokeWidth="1"
-              strokeDasharray="4 3"
+              d="M17 22l-4 4.5L17 31M27 22l4 4.5L27 31"
+              stroke="#e8641f"
+              strokeWidth="1.6"
             />
-            <path
-              d="M12 14l2.4 2.4M36 14l-2.4 2.4"
-              stroke="rgba(243,90,23,.5)"
-              strokeWidth="1.2"
-            />
+            <path d="M23.5 20.5l-3 12" stroke="rgba(243,90,23,.55)" strokeWidth="1.4" />
+            <rect x="12" y="39" width="10" height="4.5" rx="1.4" fill="rgba(232,100,31,.55)" stroke="none" />
+            <rect x="27" y="39" width="10" height="4.5" rx="1.4" stroke="rgba(27,30,35,.3)" strokeWidth="1" />
           </>
         )}
       </g>
@@ -163,10 +160,14 @@ export default function CommissionPanel() {
   const [contactType, setContactType] =
     useState<(typeof CONTACT_TYPES)[number]>('WeChat');
   const [contact, setContact] = useState('');
-  const [budgetMin, setBudgetMin] = useState(200);
-  const [budgetMax, setBudgetMax] = useState(600);
+  const [budgetMin, setBudgetMin] = useState(50);
+  const [budgetMax, setBudgetMax] = useState(200);
   const [brief, setBrief] = useState('');
   const [demo, setDemo] = useState(false);
+  const [agree, setAgree] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+  /** 品类卡筛选：null = 全部 */
+  const [focusCat, setFocusCat] = useState<ServiceCategory | null>(null);
   const [error, setError] = useState('');
   const [pushing, setPushing] = useState<'idle' | 'sending' | 'done'>('idle');
   const [pushNote, setPushNote] = useState('');
@@ -177,6 +178,10 @@ export default function CommissionPanel() {
   }, [hydrate]);
 
   const active = useMemo(() => products.filter((p) => p.active), [products]);
+  const shown = useMemo(
+    () => (focusCat ? active.filter((p) => p.category === focusCat) : active),
+    [active, focusCat],
+  );
 
   const openForm = (p: ServiceProduct) => {
     setPicked(p);
@@ -184,7 +189,9 @@ export default function CommissionPanel() {
     setView('form');
   };
 
-  const budgetLabel = `${money(budgetMin)} – ${money(budgetMax)}`;
+  const budgetLabel = `${money(budgetMin)} – ${money(budgetMax)}${
+    budgetMax >= BUDGET_CEIL ? '+' : ''
+  }`;
   const span = BUDGET_CEIL - BUDGET_FLOOR;
   const pctMin = ((budgetMin - BUDGET_FLOOR) / span) * 100;
   const pctMax = ((budgetMax - BUDGET_FLOOR) / span) * 100;
@@ -198,9 +205,26 @@ export default function CommissionPanel() {
     }
   };
 
-  const applyPreset = (range: [number, number]) => {
-    setBudgetMin(range[0]);
-    setBudgetMax(range[1]);
+  /** 品类卡：联动滑块数值 + 筛选细分服务 */
+  const applyCard = (card: (typeof CATEGORY_CARDS)[number]) => {
+    setBudgetMin(card.range[0]);
+    setBudgetMax(card.range[1]);
+    setFocusCat(card.cat);
+  };
+
+  /** 点选细分服务：带入预算与描述 */
+  const pickItem = (p: ServiceProduct) => {
+    setPicked(p);
+    setError('');
+    const lo = Math.max(BUDGET_FLOOR, Math.min(p.price, BUDGET_CEIL));
+    const hi = Math.min(BUDGET_CEIL, Math.max(lo + BUDGET_STEP, lo * 2));
+    setBudgetMin(lo);
+    setBudgetMax(hi);
+    setBrief((cur) =>
+      cur.trim()
+        ? cur
+        : `${p.name}：${p.description}`,
+    );
   };
 
   const submit = () => {
@@ -211,6 +235,8 @@ export default function CommissionPanel() {
     if (!n) return setError('请填写你的称呼');
     if (!c) return setError('请留下可联系到你的账号');
     if (b.length < 6) return setError('需求描述至少 6 个字，方便准确报价');
+    if (!agree)
+      return setError('请先阅读并勾选同意《工作室合作须知与 AI 作业免责条款》');
 
     setSending(true);
     const created = addOrder({
@@ -222,6 +248,7 @@ export default function CommissionPanel() {
       budget: budgetLabel,
       brief: b,
       demo,
+      consent: true,
     });
     setOrder(created);
     // 留一点「正在发送需求…」的可感知反馈，再切回执
@@ -236,12 +263,14 @@ export default function CommissionPanel() {
     notifyOrder({
       orderId: created.id,
       serviceName: created.serviceName,
+      serviceItem: picked.name,
       clientName: created.clientName,
       contactType: created.contactType,
       contact: created.contact,
       budget: created.budget,
       brief: created.brief,
       demo: created.demo,
+      consent: true,
       createdAt: created.createdAt,
     })
       .then((r) => {
@@ -265,12 +294,76 @@ export default function CommissionPanel() {
     setContact('');
     setBrief('');
     setDemo(false);
+    setAgree(false);
+    setFocusCat(null);
   };
+
+  /* ---------------- 《合作须知与免责条款》毛玻璃阅读抽屉 ---------------- */
+  const termsDrawer =
+    typeof document !== 'undefined' && termsOpen
+      ? createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="工作室合作须知与 AI 作业免责条款"
+            className="fixed inset-0 z-[95] flex items-end justify-center bg-black/35 backdrop-blur-[3px] sm:items-center"
+            onClick={() => setTermsOpen(false)}
+          >
+            <div
+              className="os-sheet-in max-h-[82dvh] w-full max-w-[520px] overflow-y-auto rounded-t-2xl border border-white/40 bg-white/75 p-5 shadow-[0_-18px_60px_rgba(46,36,24,0.25)] backdrop-blur-xl sm:rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div className={LABEL}>COMMISSION TERMS</div>
+                  <div className="text-[13px] font-semibold tracking-[0.04em] text-ink">
+                    工作室合作须知与 AI 作业免责条款
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(false)}
+                  className="rounded-full border border-black/10 px-3 py-1.5 font-mono text-[9px] tracking-[0.18em] text-ink/55 transition-colors hover:border-black/25 hover:text-ink"
+                >
+                  关闭 ✕
+                </button>
+              </div>
+              <ol className="space-y-3">
+                {TERMS_SECTIONS.map((s) => (
+                  <li
+                    key={s.title}
+                    className="rounded-xl border border-black/[0.07] bg-white/60 p-3.5"
+                  >
+                    <div className="font-mono text-[9px] font-semibold tracking-[0.1em] text-[#F35A17]">
+                      {s.title}
+                    </div>
+                    <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink/65">
+                      {s.body}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+              <button
+                type="button"
+                onClick={() => {
+                  setAgree(true);
+                  setTermsOpen(false);
+                }}
+                className="os-btn-accent mt-4 w-full rounded-lg py-2.5 font-mono text-[10px] tracking-[0.2em]"
+              >
+                已阅读，同意以上条款 ✓
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   /* ---------------- 提交回执 ---------------- */
   if (view === 'done' && order) {
     return (
       <div className="os-sheet-in space-y-4">
+        {termsDrawer}
         <div className="flex items-start gap-3">
           <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#18A057]/30 bg-[#18A057]/10 text-[13px] text-[#18A057]">
             ✓
@@ -297,6 +390,12 @@ export default function CommissionPanel() {
               <span className="text-ink/30">SERVICE</span>
               <span className="truncate text-right text-ink/85">
                 {order.serviceName}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-ink/30">BUDGET</span>
+              <span className="truncate text-right text-ink/85">
+                {order.budget}
               </span>
             </div>
             <div className="flex justify-between gap-3">
@@ -346,6 +445,7 @@ export default function CommissionPanel() {
   if (view === 'form' && picked) {
     return (
       <div className="os-sheet-in op-form">
+        {termsDrawer}
         {/* 顶部：返回 + 服务摘要条 */}
         <div className="op-form-head">
           <button
@@ -363,6 +463,14 @@ export default function CommissionPanel() {
             </i>
           </div>
         </div>
+
+        {/* AI 辅助增效透明化声明 */}
+        <p className="flex items-start gap-1.5 rounded-lg border border-[#E08E00]/25 bg-[#E08E00]/[0.07] px-3 py-2 text-[9px] leading-relaxed text-ink/55">
+          <span aria-hidden className="shrink-0">⚡</span>
+          <span>
+            作业模式：AI 尖端工具提效生成 + 人工专业工程精修/排障/落地，极速高性价比交付。
+          </span>
+        </p>
 
         <div className="op-form-grid">
           {/* —— 左列：称呼 / 联系方式 / 预算档位 —— */}
@@ -419,22 +527,26 @@ export default function CommissionPanel() {
                 </span>
               </div>
               <div className="op-budget-presets">
-                {BUDGET_PRESETS.map((p) => {
-                  const on = budgetMin === p.range[0] && budgetMax === p.range[1];
+                {CATEGORY_CARDS.map((card) => {
+                  const on =
+                    budgetMin === card.range[0] && budgetMax === card.range[1];
+                  const label = `¥${card.range[0]} - ${card.range[1]}${card.plus ? '+' : ''}`;
                   return (
                     <button
-                      key={p.label}
+                      key={card.cat}
                       type="button"
                       aria-pressed={on}
-                      onClick={() => applyPreset(p.range)}
+                      onClick={() => applyCard(card)}
                       className={`op-tier${on ? ' is-on' : ''}`}
                     >
                       <span className="op-tier-art" aria-hidden>
-                        <TierArt kind={p.art} />
+                        <TierArt kind={TIER_ART[card.cat]} />
                       </span>
                       <span className="op-tier-txt">
-                        <b className="op-num">{p.label}</b>
-                        <i>{p.hint}</i>
+                        <b className="op-num">
+                          {card.emoji} {label}
+                        </b>
+                        <i>{card.name}</i>
                       </span>
                       {on && (
                         <span aria-hidden className="op-tier-check">
@@ -448,13 +560,13 @@ export default function CommissionPanel() {
             </div>
           </div>
 
-          {/* —— 右列：预算微调 / 需求描述 / 试听小样 —— */}
+          {/* —— 右列：预算微调 / 细分服务 / 需求描述 / 试听小样 —— */}
           <div className="op-form-col">
             <div>
               <div className="flex items-baseline justify-between">
                 <span className={`${LABEL} mb-1`}>预算区间 / BUDGET RANGE</span>
                 <span className="font-mono text-[8px] tracking-[0.14em] text-ink/30">
-                  CNY（人民币）
+                  CNY（人民币）· ¥50 起
                 </span>
               </div>
 
@@ -463,6 +575,7 @@ export default function CommissionPanel() {
                 <i>—</i>
                 <span className="op-num">
                   {money(budgetMax)}
+                  {budgetMax >= BUDGET_CEIL ? '+' : ''}
                 </span>
               </div>
 
@@ -495,6 +608,50 @@ export default function CommissionPanel() {
                   value={budgetMax}
                   onChange={(e) => setBudget('max', Number(e.target.value))}
                 />
+              </div>
+            </div>
+
+            {/* 细分服务价目表：点选带入预算与描述 */}
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className={`${LABEL} mb-1`}>
+                  细分服务 / SERVICE ITEM（点选带入）
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFocusCat(null)}
+                  className={`font-mono text-[8px] tracking-[0.14em] transition-colors ${
+                    focusCat
+                      ? 'text-[#F35A17] hover:text-[#d94e1f]'
+                      : 'text-ink/25'
+                  }`}
+                >
+                  {focusCat ? `筛选：${CATEGORY_LABEL[focusCat]} ✕` : '全部类别'}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {active
+                  .filter((p) => !focusCat || p.category === focusCat)
+                  .map((p) => {
+                    const on = picked.id === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => pickItem(p)}
+                        aria-pressed={on}
+                        className={`rounded-full border px-2.5 py-1 text-[9.5px] leading-tight transition-colors ${
+                          on
+                            ? 'border-[#E85D2A]/60 bg-[#E85D2A]/12 text-[#c8481c]'
+                            : 'border-black/[0.09] text-ink/55 hover:border-black/25 hover:text-ink'
+                        }`}
+                      >
+                        <span className="op-num">{money(p.price)}起</span>
+                        <span className="mx-1 text-ink/20">·</span>
+                        {p.name}
+                      </button>
+                    );
+                  })}
               </div>
             </div>
 
@@ -541,13 +698,45 @@ export default function CommissionPanel() {
           </div>
         </div>
 
-        {/* 吸底提交条：无论滚到哪，提交按钮永不离屏 */}
+        {/* 吸底提交条：免责确认 + 提交按钮永不离屏 */}
         <div className="op-form-foot">
           {error && (
             <p className="op-form-error">
               {error}
             </p>
           )}
+          <div
+            className={`mb-2 flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
+              agree
+                ? 'border-[#18A057]/45 bg-[#18A057]/[0.08]'
+                : 'border-black/[0.1] hover:border-black/25'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setAgree((v) => !v)}
+              aria-pressed={agree}
+              aria-label="同意合作须知与免责条款"
+              className={`mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[9px] transition-colors ${
+                agree
+                  ? 'border-[#18A057] bg-[#18A057] text-white'
+                  : 'border-black/25 bg-white text-transparent'
+              }`}
+            >
+              ✓
+            </button>
+            <span className="text-[9.5px] leading-relaxed text-ink/70">
+              我已阅读并同意
+              <button
+                type="button"
+                onClick={() => setTermsOpen(true)}
+                className="mx-0.5 font-semibold text-[#F35A17] underline decoration-[#F35A17]/40 underline-offset-2 hover:decoration-[#F35A17]"
+              >
+                《工作室合作须知与 AI 作业免责条款》
+              </button>
+              （50%定金排期 / 免费微调2次）*
+            </span>
+          </div>
           <button
             type="button"
             onClick={submit}
@@ -557,7 +746,7 @@ export default function CommissionPanel() {
             {sending ? '正在发送需求...' : '提交定制需求 · SUBMIT'}
           </button>
           <p className="op-form-note">
-            48 小时内极速响应 · 确认合作前无需支付任何定金
+            50% 定金排期 · 需求范围内含 2 次免费微调 · 48 小时内响应
           </p>
         </div>
       </div>
@@ -567,15 +756,54 @@ export default function CommissionPanel() {
   /* ---------------- 服务列表 ---------------- */
   return (
     <div className="space-y-3">
+      {termsDrawer}
       <div>
         <div className="text-[13px] font-semibold tracking-[0.06em] text-ink">
           {lang === 'zh' ? '定制合作' : 'COMMISSION'}
         </div>
         <p className="mt-1 text-[10px] leading-relaxed text-ink/40">
           {lang === 'zh'
-            ? '编曲、混音、3D 角色与商业定制。选一项，填表即可。'
-            : 'Composition, mixing, 3D character & custom work. Pick one and fill the brief.'}
+            ? '音频、视频、3D 皮套与网站开发，¥50 起接。选一项，填表即可。'
+            : 'Audio, video, 3D models & web dev from ¥50. Pick one and fill the brief.'}
         </p>
+        {/* AI 辅助增效透明化声明横幅 */}
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#E08E00]/25 bg-[#E08E00]/[0.07] px-3 py-2 text-[9px] leading-relaxed text-ink/55">
+          <span aria-hidden className="shrink-0">⚡</span>
+          <span>
+            作业模式：AI 尖端工具提效生成 + 人工专业工程精修/排障/落地，极速高性价比交付。
+          </span>
+        </p>
+      </div>
+
+      {/* 品类筛选卡：点按联动预算滑块 + 筛选服务 */}
+      <div className="grid grid-cols-2 gap-1.5">
+        {CATEGORY_CARDS.map((card) => {
+          const on = focusCat === card.cat;
+          return (
+            <button
+              key={card.cat}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setFocusCat(on ? null : card.cat)}
+              className={`rounded-xl border p-2.5 text-left transition-colors ${
+                on
+                  ? 'border-[#E85D2A]/60 bg-[#E85D2A]/[0.08]'
+                  : 'border-black/[0.08] bg-black/[0.015] hover:border-black/25'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="text-[13px]">{card.emoji}</span>
+                <b className="truncate text-[10.5px] font-semibold text-ink">
+                  {card.name}
+                </b>
+              </div>
+              <div className="mt-1 font-mono text-[9px] text-[#F35A17]">
+                ¥{card.range[0]} - {card.range[1]}
+                {card.plus ? '+' : ''}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {!hydrated && (
@@ -584,13 +812,13 @@ export default function CommissionPanel() {
         </div>
       )}
 
-      {hydrated && active.length === 0 && (
+      {hydrated && shown.length === 0 && (
         <div className="rounded-lg border border-black/[0.08] py-8 text-center text-[10px] text-ink/35">
-          {lang === 'zh' ? '服务整理中，稍后再来。' : 'Services are being updated.'}
+          {lang === 'zh' ? '该品类暂无服务，看看其它。' : 'No services in this category.'}
         </div>
       )}
 
-      {active.map((p) => (
+      {shown.map((p) => (
         <article
           key={p.id}
           className="os-card rounded-xl p-3.5"
@@ -647,8 +875,8 @@ export default function CommissionPanel() {
 
       <p className="pt-1 text-center text-[8px] leading-relaxed text-ink/25">
         {lang === 'zh'
-          ? '所有委托均含 1–2 次修改 · 商用授权可另议'
-          : 'All commissions include 1–2 revisions · Commercial licensing available'}
+          ? '50% 定金排期 · 需求范围内包 2 次免费微调 · 超限 ¥20/次'
+          : '50% deposit to schedule · 2 free revisions · ¥20 per extra revision'}
       </p>
     </div>
   );

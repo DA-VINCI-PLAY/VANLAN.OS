@@ -72,9 +72,10 @@ const TAG_PRESETS = [
 ];
 
 const CATEGORIES: ServiceCategory[] = [
-  'COMPOSER',
-  'MIXING',
+  'AUDIO',
+  'VIDEO',
   'MODELING',
+  'WEB',
   'CUSTOM',
 ];
 
@@ -84,7 +85,7 @@ const LABEL = 'mb-1 block font-mono text-[8px] tracking-[0.2em] text-ink/40';
 
 const EMPTY_DRAFT: ProductDraft = {
   name: '',
-  category: 'COMPOSER',
+  category: 'AUDIO',
   price: 0,
   turnaround: '',
   description: '',
