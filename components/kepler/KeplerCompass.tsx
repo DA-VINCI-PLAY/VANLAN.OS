@@ -7,13 +7,14 @@
  * 星座筛选那套已经拆掉 —— 星星就十来颗，与其筛选不如直接列出来。
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KIND_COLOR,
   groupStars,
   kpFX,
   useKeplerStars,
   useKeplerUI,
+  useSubmissions,
   type KeplerStar,
 } from '@/lib/kepler';
 import { chime, unlockAudio } from '@/lib/keplerAudio';
@@ -29,9 +30,9 @@ export default function KeplerCompass() {
   const phase = useKeplerUI((s) => s.phase);
 
   const groups = groupStars(stars);
+  const subs = useSubmissions((s) => s.list);
   const [zoom, setZoom] = useState(1);
   const [listOpen, setListOpen] = useState(false);
-  const wrapRef = useRef<HTMLElement>(null);
 
   // 捏合缩放也会改 kpFX.zoom，这里慢速回读，保持滑块真实
   useEffect(() => {
@@ -63,6 +64,37 @@ export default function KeplerCompass() {
             </button>
           </header>
           <div className="kp-list-body">
+            {/* 我的投稿：本地记录，点亮后可直接跳到自己的星星 */}
+            {subs.length > 0 && (
+              <section className="kp-list-group kp-list-mine">
+                <h4>
+                  我的投稿
+                  <i>{subs.length}</i>
+                </h4>
+                {subs.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    className={sub.litStarId && selectedId === sub.litStarId ? 'is-on' : ''}
+                    style={{ '--star': '#DCE9FF' } as React.CSSProperties}
+                    onClick={() => {
+                      if (sub.litStarId) {
+                        unlockAudio();
+                        select(sub.litStarId);
+                        setListOpen(false);
+                        chime(659.25, 0.12);
+                      }
+                    }}
+                  >
+                    <span className="kp-list-dot" />
+                    <span className="kp-list-name">{sub.lyric}</span>
+                    <span className="kp-list-meta">
+                      {sub.litStarId ? '已点亮 · 点击查看' : '待点亮 · 审核中'}
+                    </span>
+                  </button>
+                ))}
+              </section>
+            )}
             {groups.map((g) => (
               <section key={g.album} className="kp-list-group">
                 <h4>
@@ -97,7 +129,7 @@ export default function KeplerCompass() {
         </div>
       )}
 
-      <nav className="kp-compass" aria-label="星图罗盘" ref={wrapRef}>
+      <nav className="kp-compass" aria-label="星图罗盘">
         {/* R73：手机底部只留三颗胶囊，随机摘星顶掉「列表」的位置 */}
         <button
           type="button"

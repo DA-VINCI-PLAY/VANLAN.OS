@@ -36,6 +36,8 @@ export default function SubmissionModal() {
   const [status, setStatus] = useState<Status>('idle');
   const [meteor, setMeteor] = useState(false);
   const [err, setErr] = useState('');
+  /** 回执里展示的投稿编号（短码，方便对后台） */
+  const [ticket, setTicket] = useState('');
 
   if (!open) return null;
 
@@ -48,6 +50,7 @@ export default function SubmissionModal() {
     setStatus('idle');
     setErr('');
     setMeteor(false);
+    setTicket('');
   };
 
   const close = () => {
@@ -76,6 +79,7 @@ export default function SubmissionModal() {
       story: story.trim(),
       contact: contact.trim(),
     });
+    setTicket(sub.id.replace(/^sub-/, '').toUpperCase().slice(0, 6));
 
     setMeteor(true);
     const [res] = await Promise.all([
@@ -111,7 +115,7 @@ export default function SubmissionModal() {
             </p>
             <p className="kp-sub-done-sub">
               {status === 'done'
-                ? '等我读完，会亲手把它点亮成一颗公开的星星。'
+                ? `投稿编号 ${ticket} · 我读完会把它点亮成公开的星星；在星图列表的「我的投稿」里可以看到进度。`
                 : '不用担心，投稿已经保存；你也可以直接写信给 VANLAN0127@gmail.com。'}
             </p>
             <div className="kp-sub-done-actions">

@@ -159,7 +159,6 @@ function buildTwinkles(W: number, H: number): Twinkle[] {
 export default function StarField() {
   const stars = useKeplerStars((s) => s.stars);
   const selectedId = useKeplerUI((s) => s.selectedId);
-  const filter = useKeplerUI((s) => s.filter);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const galaxyRef = useRef<HTMLCanvasElement>(null);
@@ -173,8 +172,6 @@ export default function StarField() {
 
   const starsRef = useRef(stars);
   starsRef.current = stars;
-  const filterRef = useRef(filter);
-  filterRef.current = filter;
 
   const [hoverId, setHoverId] = useState<string | null>(null);
   const hoverRef = useRef<string | null>(null);
@@ -425,9 +422,7 @@ export default function StarField() {
         }
 
         const depth = Math.max(0, Math.min(1, (zc - 2.4) / 5.4));
-        const dimmed =
-          (filterRef.current && s.album !== filterRef.current) ||
-          (targetRef.current && targetRef.current !== s.id);
+        const dimmed = Boolean(targetRef.current && targetRef.current !== s.id);
 
         const base = Math.max(0.55, Math.min(2.5, sc / 230));
         const scale = base * KIND_SIZE[s.kind] * (1 - conv * 0.7);

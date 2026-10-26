@@ -4489,6 +4489,14 @@ select:focus-visible {
   overscroll-behavior: contain;
 }
 .kp-list-group + .kp-list-group { margin-top: 8px; }
+/* 「我的投稿」分组：虚线框 + 暖色标记，跟官方专辑分组区分开 */
+.kp-list-mine {
+  padding: 4px;
+  border: 1px dashed rgba(243, 138, 61, 0.35);
+  border-radius: 12px;
+}
+.kp-list-mine h4 { color: rgba(255, 176, 120, 0.9); }
+.kp-list-mine .kp-list-meta { color: rgba(255, 176, 120, 0.55); }
 .kp-list-group h4 {
   display: flex;
   align-items: center;
@@ -4548,45 +4556,6 @@ select:focus-visible {
 @media (max-width: 767px) {
   .kp-list { bottom: clamp(78px, 12vh, 108px); max-height: 52vh; }
 }
-
-.kp-cdrop { position: relative; flex: 0 0 auto; }
-.kp-cmenu {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 10px);
-  transform: translate(-50%, 8px);
-  min-width: 176px;
-  padding: 6px;
-  border-radius: 14px;
-  border: 1px solid rgba(186, 216, 255, 0.18);
-  background: rgba(8, 11, 20, 0.94);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.26s ease, transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.26s;
-}
-.kp-cdrop.is-open .kp-cmenu { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-.kp-cmenu button {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: rgba(232, 240, 255, 0.68);
-  padding: 8px 10px;
-  font-family: inherit;
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.24s ease, color 0.24s ease;
-}
-.kp-cmenu button:hover { background: rgba(186, 216, 255, 0.1); color: #eaf3ff; }
-.kp-cmenu i { font-style: normal; font-size: 8px; color: rgba(186, 216, 255, 0.5); }
 
 .kp-zoom {
   flex: 0 0 auto;
@@ -5283,6 +5252,11 @@ select:focus-visible {
   from { opacity: 0; transform: translateY(22px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+/* 手机端投稿舱贴底滑入 */
+@keyframes kp-sub-sheet {
+  from { opacity: 0; transform: translateY(9%); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .kp-sub-card.is-launching { animation: kp-sub-launch 0.9s cubic-bezier(0.4, 0, 0.5, 1) forwards; }
 @keyframes kp-sub-launch {
   0% { opacity: 1; filter: brightness(1); }
@@ -5697,9 +5671,26 @@ select:focus-visible {
    桌面端（≥768）一条不改：本块所有规则都关在 media query 里。
    =============================================================== */
 
-/* 桌面端默认：手机专属元素一律不渲染 */
-.op-foot-kp { display: none; }
+/* 桌面端：短文案隐藏；克卜勒按钮两端都显示（R76 起不再是手机专属） */
 .op-foot-long { display: none; }
+.op-card-foot .op-foot-kp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid rgba(20, 22, 28, 0.85);
+  border-radius: 999px;
+  background: #14161c;
+  color: #d8e6ff;
+  letter-spacing: 0.14em;
+  transition: opacity 0.2s, box-shadow 0.25s var(--ease-soft);
+}
+.op-card-foot .op-foot-kp b { color: #9fc3ff; font-weight: 400; }
+.op-card-foot .op-foot-kp:hover {
+  opacity: 1;
+  box-shadow: 0 6px 18px rgba(11, 13, 20, 0.3);
+}
 
 @media (max-width: 767px) {
   /* ---------------- 0. 视口锁高 ---------------- */
@@ -6119,6 +6110,26 @@ select:focus-visible {
   .kp-track-sub { display: block; }
   .kp-spotify-link { margin-top: 6px; }
   .kp-card-body p { font-size: 11.5px; line-height: 1.85; }
+
+  /* 投稿舱：手机端改成贴底抽屉，拇指够得着提交键 */
+  .kp-sub { place-items: end center; padding: 0; }
+  .kp-sub-card {
+    width: 100%;
+    max-height: 86dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    animation: kp-sub-sheet 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .kp-sub-grid { gap: 10px; }
+  .kp-sub-foot {
+    position: sticky;
+    bottom: 0;
+    padding: 10px 0 2px;
+    background: linear-gradient(180deg, rgba(8, 12, 21, 0) 0%, rgba(8, 12, 21, 0.92) 34%);
+  }
+  .kp-sub-submit { width: 100%; padding: 13px; font-size: 11px; }
+  .kp-sub-done { padding-top: 10px; }
 
   .kp-compass {
     left: 10px;

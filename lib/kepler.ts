@@ -619,14 +619,11 @@ interface KeplerUI {
   phase: KeplerPhase;
   /** 当前聚焦星体 */
   selectedId: string | null;
-  /** 星座筛选（album 名，null = 全部） */
-  filter: string | null;
   /** 投稿舱 */
   submitOpen: boolean;
   openKepler: (id?: string | null) => void;
   setPhase: (p: KeplerPhase) => void;
   select: (id: string | null) => void;
-  setFilter: (album: string | null) => void;
   setSubmitOpen: (v: boolean) => void;
   close: () => void;
 }
@@ -635,7 +632,6 @@ export const useKeplerUI = create<KeplerUI>((set) => ({
   open: false,
   phase: 'idle',
   selectedId: null,
-  filter: null,
   submitOpen: false,
 
   openKepler: (id = null) =>
@@ -643,7 +639,6 @@ export const useKeplerUI = create<KeplerUI>((set) => ({
 
   setPhase: (phase) => set({ phase }),
   select: (selectedId) => set({ selectedId }),
-  setFilter: (filter) => set({ filter }),
   setSubmitOpen: (submitOpen) => set({ submitOpen }),
 
   close: () =>
@@ -652,7 +647,6 @@ export const useKeplerUI = create<KeplerUI>((set) => ({
       phase: 'idle',
       selectedId: null,
       submitOpen: false,
-      filter: null,
     }),
 }));
 
