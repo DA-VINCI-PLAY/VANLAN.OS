@@ -626,7 +626,7 @@ function CreditsStage() {
     <section className="op-panel op-panel-credits" data-scroll aria-label="系统与职员表">
       <div className="op-kicker">END CARD // SYSTEM</div>
       <h2 className="op-credits-title">
-        {lang === 'zh' ? '到这里，先谢幕。' : 'That’s a wrap.'}
+        {lang === 'zh' ? '终章 · 幕后与系统终端' : 'Finale · Behind the Curtain'}
       </h2>
 
       <ul className="op-sys-rows">

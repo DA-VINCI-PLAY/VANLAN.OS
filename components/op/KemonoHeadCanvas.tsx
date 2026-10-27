@@ -19,6 +19,7 @@ import { useGLTF } from '@react-three/drei';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { sampleHead, scrub, subscribeFrame } from '@/lib/opTimeline';
+import { useKeplerUI } from '@/lib/kepler';
 
 const MODEL_URL = '/models/vanlan.glb';
 const DRACO_DECODER_PATH = '/draco/';
@@ -207,10 +208,11 @@ function ThreePointLights() {
 }
 
 /* ---------------- 渲染节拍器：交互提速、静置降频、后台停摆 ---------------- */
-function RenderPump() {
+function RenderPump({ paused }: { paused: boolean }) {
   const invalidate = useThree((s) => s.invalidate);
 
   useEffect(() => {
+    if (paused) return;
     let raf = 0;
     let last = 0;
     let lastTouch = performance.now();
@@ -250,13 +252,15 @@ function RenderPump() {
       document.removeEventListener('visibilitychange', onVisible);
       off();
     };
-  }, [invalidate]);
+  }, [invalidate, paused]);
 
   return null;
 }
 
 export default function KemonoHeadCanvas() {
   const hostRef = useRef<HTMLDivElement>(null);
+  /** R80：克卜勒全屏接管时兽头完全被遮住，WebGL 直接停摆省电 */
+  const asleep = useKeplerUI((s) => s.open);
 
   /* 窗口尺寸变化时重算避让量：卡片的宽度/位置跟着 vw 走，兽头必须跟着让 */
   useEffect(() => {
@@ -288,7 +292,7 @@ export default function KemonoHeadCanvas() {
   return (
     <div className="op-canvas" aria-hidden ref={hostRef}>
       <Canvas
-        frameloop="demand"
+        frameloop={asleep ? 'never' : 'demand'}
         dpr={[1, 1.5]}
         shadows={false}
         onCreated={(state) => {
@@ -306,7 +310,7 @@ export default function KemonoHeadCanvas() {
       >
         <CameraRig />
         <ThreePointLights />
-        <RenderPump />
+        <RenderPump paused={asleep} />
         <KemonoHead />
       </Canvas>
     </div>

@@ -102,6 +102,10 @@ export default function StoryCard() {
     }
     chime(784, 0.1);
     if (hasAudio && audioRef.current) {
+      // R80：真实音源接管，先掐掉合成八音盒，避免两层声音叠在一起
+      ambientRef.current?.stop();
+      ambientRef.current = null;
+      window.clearInterval(fakeTimer.current);
       void audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
       return;
     }
@@ -245,6 +249,12 @@ export default function StoryCard() {
               onEnded={() => {
                 setPlaying(false);
                 setProgress(0);
+              }}
+              onPlay={() => {
+                // R80：任何真实音频起播都收掉合成层
+                ambientRef.current?.stop();
+                ambientRef.current = null;
+                window.clearInterval(fakeTimer.current);
               }}
               onError={() => {
                 setBroken(true);

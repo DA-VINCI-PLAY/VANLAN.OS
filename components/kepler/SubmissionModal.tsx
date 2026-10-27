@@ -36,6 +36,8 @@ export default function SubmissionModal() {
   const [status, setStatus] = useState<Status>('idle');
   const [meteor, setMeteor] = useState(false);
   const [err, setErr] = useState('');
+  /** R80：必填项校验失败时抖一下（值保留 420ms 后自动清除） */
+  const [shake, setShake] = useState<'' | 'lyric' | 'contact'>('');
   /** 回执里展示的投稿编号（短码，方便对后台） */
   const [ticket, setTicket] = useState('');
 
@@ -49,6 +51,7 @@ export default function SubmissionModal() {
     setContact('');
     setStatus('idle');
     setErr('');
+    setShake('');
     setMeteor(false);
     setTicket('');
   };
@@ -61,10 +64,14 @@ export default function SubmissionModal() {
   const submit = async () => {
     if (lyric.trim().length < 2) {
       setErr('至少留一句歌词 / 金句，它会成为星星旁的那行字。');
+      setShake('lyric');
+      window.setTimeout(() => setShake(''), 460);
       return;
     }
     if (!contact.trim()) {
       setErr('留个联系方式吧，我想亲自回你。');
+      setShake('contact');
+      window.setTimeout(() => setShake(''), 460);
       return;
     }
     setErr('');
@@ -153,15 +160,21 @@ export default function SubmissionModal() {
                 </div>
               </div>
 
-              <label className="kp-field kp-field-wide">
+              <label
+                className={`kp-field kp-field-wide${shake === 'lyric' ? ' is-shake' : ''}`}
+              >
                 <span>
                   核心金句 / 一句歌词 <i>必填 · {lyric.length}/30</i>
                 </span>
                 <input
                   value={lyric}
-                  onChange={(e) => setLyric(e.target.value)}
+                  onChange={(e) => {
+                    setLyric(e.target.value);
+                    if (shake === 'lyric') setShake('');
+                  }}
                   placeholder="它会浮在这颗星星旁边"
                   maxLength={30}
+                  aria-invalid={shake === 'lyric'}
                 />
               </label>
 
@@ -176,13 +189,19 @@ export default function SubmissionModal() {
                 />
               </label>
 
-              <label className="kp-field kp-field-wide">
+              <label
+                className={`kp-field kp-field-wide${shake === 'contact' ? ' is-shake' : ''}`}
+              >
                 <span>联系方式 <i>微信 / 邮箱 / QQ</i></span>
                 <input
                   value={contact}
-                  onChange={(e) => setContact(e.target.value)}
+                  onChange={(e) => {
+                    setContact(e.target.value);
+                    if (shake === 'contact') setShake('');
+                  }}
                   placeholder="方便我回信"
                   maxLength={60}
+                  aria-invalid={shake === 'contact'}
                 />
               </label>
             </div>

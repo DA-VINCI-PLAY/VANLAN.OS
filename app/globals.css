@@ -578,59 +578,9 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 }
 
 /* SOUND：频谱条 */
-.op-equalizer {
-  position: absolute;
-  right: clamp(70px, 9vw, 150px);
-  bottom: 16vh;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 26vh;
-  opacity: 0.5;
-}
-.op-equalizer i {
-  display: block;
-  width: 3px;
-  height: calc(12% + (var(--i) * 3.1%));
-  background: linear-gradient(180deg, var(--acc), rgba(255, 138, 61, 0.05));
-  animation: op-eq 1.4s ease-in-out infinite alternate;
-  animation-delay: calc(var(--i) * -0.06s);
-}
-@keyframes op-eq {
-  from { transform: scaleY(0.35); opacity: 0.4; }
-  to   { transform: scaleY(1); opacity: 0.95; }
-}
+/* R80：ACT02/03 右下角幽灵装饰已删，样式一并移除 */
 
-/* COMMISSION：工业清单 */
-.op-checklist {
-  position: absolute;
-  right: clamp(20px, 5vw, 84px);
-  bottom: 14vh;
-  width: min(42vw, 520px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid rgba(22, 24, 28, 0.1);
-}
-.op-checklist li {
-  display: grid;
-  grid-template-columns: 34px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 2px;
-  border-bottom: 1px solid rgba(22, 24, 28, 0.07);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  color: rgba(27, 30, 35, 0.5);
-}
-.op-checklist li span { color: rgba(27, 30, 35, 0.24); }
-.op-checklist li b {
-  font-weight: 500;
-  color: var(--acc);
-  font-size: 8.5px;
-  letter-spacing: 0.24em;
-}
+/* COMMISSION：工业清单（已删） */
 
 /* CREDITS：职员表 */
 .op-staff {
@@ -678,11 +628,11 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   box-shadow: 0 0 0 4px rgba(243, 90, 23, 0.16);
 }
 
-/* 章节构图：为前景面板让位 */
+/* 章节构图：为前景面板让位（R80：右侧大字统一右移到 clamp(56px,5vw,96px)） */
 @media (min-width: 768px) {
   .op-headline-commission {
     left: auto;
-    right: clamp(20px, 5vw, 84px);
+    right: clamp(56px, 5vw, 96px);
     top: auto;
     bottom: 16vh;
     translate: none;
@@ -694,7 +644,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-act-commission .op-act-foot { display: none; }
   .op-headline-sound {
     left: auto;
-    right: clamp(20px, 6vw, 96px);
+    right: clamp(56px, 5vw, 96px);
     align-items: flex-end;
     text-align: right;
   }
@@ -711,8 +661,6 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-line-solid { font-size: clamp(14px, 5vw, 20px); margin-top: 6px; }
   .op-act-index { top: 8vh; left: 16px; }
   .op-act-foot { left: 16px; bottom: auto; top: 30vh; max-width: 78vw; }
-  .op-equalizer,
-  .op-checklist,
   .op-staff { display: none; }
   .op-halo { width: 74vmin; height: 74vmin; top: 40%; }
   .op-headline-commission { display: none; }
@@ -785,15 +733,20 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
     width: min(348px, 30vw);
   }
   .op-panel-sound {
-    left: clamp(24px, 4.4vw, 72px);
-    bottom: clamp(32px, 8vh, 96px);
-    width: min(452px, 40vw);
+    left: clamp(40px, 4.5vw, 72px);
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+    width: clamp(460px, 40vw, 540px);
+    max-height: 78vh;
   }
   .op-panel-store {
-    left: clamp(20px, 4vw, 64px);
-    top: 12vh;
-    bottom: 9vh;
-    width: min(452px, 40vw);
+    left: clamp(40px, 4.5vw, 72px);
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+    width: clamp(460px, 40vw, 540px);
+    max-height: 78vh;
   }
   .op-panel-credits {
     right: clamp(76px, 7vw, 128px);
@@ -1295,7 +1248,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 /* ---------- 时间轴 ---------- */
 .op-timeline {
   position: fixed;
-  right: clamp(10px, 2.2vw, 26px);
+  right: 28px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 30;
@@ -1653,7 +1606,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
    R57 · 排版总修：安全边距网格 / 三栏比例 / 穿模治理 / 移动端三段式
    ============================================================ */
 :root {
-  --pad-x: clamp(40px, 5vw, 80px);
+  --pad-x: clamp(40px, 4.5vw, 72px);
 }
 
 /* —— 1. 统一左基准线 ——
@@ -1661,8 +1614,8 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 .op-meta-tl { left: var(--pad-x); top: 36px; }
 .op-act-index { left: var(--pad-x); top: 72px; }
 .op-act-foot { left: var(--pad-x); bottom: 36px; max-width: min(42vw, 420px); }
-/* 右下状态让开第三方角标（Netlify badge），与左下信息同底 */
-.op-meta-br { right: 190px; bottom: 36px; }
+/* 右下状态栏：R80 右基准线统一 28px */
+.op-meta-br { right: 28px; bottom: 36px; }
 
 /* —— 2. 三明治层级：背景 + 大字(9) < 兽头(10) < 面板/时间轴(20/30) —— */
 .op-headline-layer { z-index: 9; }
@@ -1930,13 +1883,13 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 
 @media (min-width: 901px) {
   .op-panel-media {
-    left: clamp(20px, 4vw, 64px);
+    left: clamp(40px, 4.5vw, 72px);
     top: 50%;
     bottom: auto;
     translate: 0 -50%;
-    width: clamp(460px, 42vw, 620px);
+    width: clamp(460px, 40vw, 540px);
     min-height: 520px;
-    max-height: 88vh;
+    max-height: 78vh;
     padding: 28px;
     justify-content: space-between;
   }
@@ -1955,7 +1908,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
     justify-content: space-between;
     gap: 14px;
   }
-  .op-panel-media .op-mx-demos { gap: 14px; }
+  .op-panel-media .op-mx-demos { gap: 12px; }
   .op-panel-media .op-mx-demo { padding: 14px 16px; }
   .op-panel-media .op-mx-demo b { font-size: 11.5px; }
   .op-panel-media .op-mx-demo em { font-size: 7.5px; }
@@ -1965,7 +1918,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 @media (min-width: 768px) {
   .op-headline-media {
     left: auto;
-    right: clamp(20px, 6vw, 96px);
+    right: clamp(56px, 5vw, 96px);
     align-items: flex-end;
     text-align: right;
     top: 42%;
@@ -2003,7 +1956,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   box-shadow: 0 5px 14px rgba(20, 22, 25, 0.3);
 }
 
-/* ---------- R79 · 第三层：底部 Dock 平台切换钮 ---------- */
+/* ---------- R79 · 第三层：底部 Dock 平台切换钮（R80：46px / 未选 #4A4D52 / 选中上浮柔光） ---------- */
 .op-mx-dock {
   display: flex;
   justify-content: center;
@@ -2012,32 +1965,32 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   flex-shrink: 0;
 }
 .op-mx-dock-btn {
-  width: 52px;
-  height: 52px;
-  border-radius: 17px; /* 超椭圆 */
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   background: #ffffff;
   border: 1.5px solid rgba(0, 0, 0, 0.1);
-  color: rgba(27, 30, 35, 0.6);
+  color: #4a4d52;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.op-mx-dock-btn svg { width: 22px; height: 22px; }
+.op-mx-dock-btn svg { width: 20px; height: 20px; }
 .op-mx-dock-btn:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: var(--dock-bg);
   color: rgba(27, 30, 35, 0.9);
 }
-.op-mx-dock-btn:active { transform: translateY(-1px) scale(0.97); }
+.op-mx-dock-btn:active { transform: translateY(0); }
 .op-mx-dock-btn.is-active {
   background: var(--dock-bg);
   color: var(--dock-icon);
   border-color: transparent;
   box-shadow: 0 6px 18px var(--dock-glow);
-  transform: scale(1.08);
+  transform: translateY(-2px);
 }
-.op-mx-dock-btn.is-active:hover { transform: scale(1.08) translateY(-2px); }
+.op-mx-dock-btn.is-active:hover { transform: translateY(-3px); }
 
 .op-mx-card {
   position: relative;
@@ -2135,7 +2088,8 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 .op-mx-demos {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 12px;
+  align-items: stretch;
 }
 .op-mx-demo {
   display: flex;
@@ -2213,6 +2167,18 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   transform: translateY(-1px);
 }
 .op-mx-go:active { transform: translateY(0); }
+
+/* R80：深色展示卡消除「黑膏药」感——1.5px 内发光边 + 柔和投影 */
+.op-mx-card[data-platform='douyin'],
+.op-mx-card[data-platform='youtube'],
+.op-mx-card[data-platform='x'],
+.op-mx-card[data-platform='instagram'],
+.op-mx-card[data-platform='threads'] {
+  border-width: 1.5px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 28px rgba(0, 0, 0, 0.18);
+}
 
 /* ---------- 5. OP 微交互：斜切滑入 / 扫光 ---------- */
 @keyframes op-stage-skew-in {
@@ -3953,8 +3919,8 @@ select:focus-visible {
     right: clamp(170px, 11vw, 280px);
     width: 420px;
   }
-  .op-timeline { right: clamp(24px, 3vw, 56px); }
-  .op-meta-br { right: clamp(210px, 14vw, 330px); }
+  .op-timeline { right: 28px; }
+  .op-meta-br { right: 28px; }
 }
 
 /* ------------------------------------------------------------
@@ -4233,6 +4199,10 @@ select:focus-visible {
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
+  /* R80：独立合成层 + 关闭后向面绘制，墨面每帧重绘不带动整页重排 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: strict;
 }
 
 /* ---------------- 2D 天文星盘 ---------------- */
@@ -5832,9 +5802,9 @@ select:focus-visible {
   .op-canvas { overflow: hidden; }
 }
 
-/* 标题压在兽头身上（动漫 OP 构图）：桌面两者已分区不相交，手机上大字压角色 */
-/* 标题层全局提到兽头之上：桌面分区后本不相交，手机上恢复「大字压角色」的 OP 构图 */
-.op-headline-layer { z-index: 25; }
+/* R80：标题层全局压回兽头下层（大字 10 < 兽头 20 < 面板 30），
+   大字左端自然穿入兽头轮廓后方，严禁描边线穿过面部 */
+.op-headline-layer { z-index: 10; }
 
 /* ===============================================================
    R73 · 移动端全页面单屏重构（仅 ≤767px）
@@ -5886,7 +5856,7 @@ select:focus-visible {
   /* ---------------- 1. 层级反转 ---------------- */
   .op-headline-layer { z-index: 10; }   /* 大字退到兽头后面 */
   .op-canvas { z-index: 20; }           /* 兽头压在大字前面 */
-  .op-stage-layer { z-index: 25; }      /* 面板永远最前 */
+  .op-stage-layer { z-index: 30; }      /* 面板永远最前 */
 
   /* ---------------- 2. 顶部章节条 ---------------- */
   .op-mhead {
@@ -6222,8 +6192,8 @@ select:focus-visible {
   .op-store-badge { font-size: 7.5px; padding: 3px 7px; }
   .op-mx-tab { height: 40px; font-size: 8.5px; }
   /* 底部 Dock：大拇指易达，触控 ≥ 44px */
-  .op-mx-dock { gap: 16px; }
-  .op-mx-dock-btn { width: 46px; height: 46px; border-radius: 15px; }
+  .op-mx-dock { gap: 14px; }
+  .op-mx-dock-btn { width: 44px; height: 44px; border-radius: 13px; }
   .op-mx-dock-btn svg { width: 20px; height: 20px; }
   .op-mx-card {
     padding: 12px 12px;
@@ -6457,4 +6427,94 @@ select:focus-visible {
 .op-mx-card[data-platform='bilibili'] .op-mx-go:hover {
   filter: none;
   background: #00b5e5;
+}
+
+/* ===============================================================
+   R80 · 全站视觉对齐 / 配色精修 / 性能优化
+   =============================================================== */
+
+/* —— ACT05：管理员按钮比例协调 —— */
+.op-admin-entry { height: 46px; }
+
+/* —— 深色展示卡内部的示例小卡：纯色半透明替代毛玻璃（合成器减负） —— */
+.op-mx-demo { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* —— 克卜勒：中央引导语交互 / 3.5s 后自动淡出 —— */
+/* 原入场是 6.4s 的 forwards 动画，这里用另一段收尾动画接管，避免 opacity 突变 */
+.kp-intro-title.is-gone {
+  animation: kp-intro-out 0.55s ease forwards;
+  pointer-events: none;
+}
+@keyframes kp-intro-out {
+  from { opacity: 1; filter: blur(0); transform: translate(-50%, -50%); }
+  to { opacity: 0; filter: blur(4px); transform: translate(-50%, -54%); }
+}
+/* 打开投稿弹窗时：隐藏中央引导语与底部操作提示 */
+.kp-root.is-modal .kp-intro-title,
+.kp-root.is-modal .kp-tip {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* —— 星盘列表行：flex 防重叠 —— */
+.kp-list-group button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+}
+.kp-list-name {
+  min-width: 0;
+  max-width: 65%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kp-list-meta {
+  flex-shrink: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  opacity: 0.65;
+}
+
+/* —— 投稿表单必填校验：抖动 + 金色高亮 —— */
+.kp-field.is-shake input,
+.kp-field.is-shake textarea {
+  border-color: #d9a441 !important;
+  box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.22);
+  animation: kp-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes kp-shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+.kp-sub-err { color: #d9a441; }
+
+/* —— 投稿弹窗遮罩加深 —— */
+.kp-sub-backdrop {
+  background: rgba(3, 5, 10, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+/* 弹窗卡片自身不再叠毛玻璃（遮罩已带 blur，省一层合成） */
+.kp-sub-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(10, 14, 24, 0.96);
+}
+
+/* —— 合成器减负：同视线深度只留外层主卡一层毛玻璃 —— */
+.op-panel { backdrop-filter: blur(16px) saturate(120%); -webkit-backdrop-filter: blur(16px) saturate(120%); }
+.op-panel-store { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.op-store-head { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.fc-tag,
+.fc-play { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.op-hint { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.kp-compass,
+.kp-list {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(7, 10, 18, 0.88);
 }

@@ -10,7 +10,7 @@
  * 墨的进度、坍缩、缩放都在 kpFX 里逐帧跑，只有相位切换才进 React。
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import InkLayer, { runInkTo } from './InkLayer';
 import StarField from './StarField';
 import StoryCard from './StoryCard';
@@ -34,10 +34,31 @@ export default function KeplerPortal() {
   const close = useKeplerUI((s) => s.close);
   const select = useKeplerUI((s) => s.select);
   const setSubmitOpen = useKeplerUI((s) => s.setSubmitOpen);
+  const submitOpen = useKeplerUI((s) => s.submitOpen);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const upAcc = useRef(0);
   const touchY = useRef(0);
+  /** R80：中央引导语在交互或 3.5s 后淡出，避免压住星盘 */
+  const [introGone, setIntroGone] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setIntroGone(false);
+      return;
+    }
+    const t = window.setTimeout(() => setIntroGone(true), 3500);
+    const hide = () => setIntroGone(true);
+    window.addEventListener('pointerdown', hide, { passive: true });
+    window.addEventListener('wheel', hide, { passive: true });
+    window.addEventListener('touchstart', hide, { passive: true });
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('pointerdown', hide);
+      window.removeEventListener('wheel', hide);
+      window.removeEventListener('touchstart', hide);
+    };
+  }, [open]);
 
   /* 深链：#/kepler 直接入轨（分享 / 移动端快捷方式用） */
   useEffect(() => {
@@ -182,7 +203,7 @@ export default function KeplerPortal() {
   if (!open) return null;
 
   return (
-    <div className={`kp-root is-${phase}`} ref={rootRef}>
+    <div className={`kp-root is-${phase}${submitOpen ? ' is-modal' : ''}`} ref={rootRef}>
       <StarField />
       <InkLayer />
 
@@ -210,7 +231,7 @@ export default function KeplerPortal() {
         </div>
       </header>
 
-      <div className="kp-intro-title" aria-hidden>
+      <div className={`kp-intro-title${introGone ? ' is-gone' : ''}`} aria-hidden>
         <span>AND THE STARS REMEMBER</span>
         <h2>每一颗星，都是一句没说完的话</h2>
       </div>

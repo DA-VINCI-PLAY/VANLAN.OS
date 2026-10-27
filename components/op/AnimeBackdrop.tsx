@@ -130,27 +130,7 @@ export default function AnimeBackdrop() {
               <span className="op-sub">{copy.sub}</span>
             </div>
 
-            {/* 章节专属装饰 */}
-            {act.id === 'SOUND' && (
-              <div className="op-equalizer">
-                {Array.from({ length: 28 }).map((_, i) => (
-                  <i key={i} style={{ ['--i' as string]: i }} />
-                ))}
-              </div>
-            )}
-            {act.id === 'COMMISSION' && (
-              <ul className="op-checklist">
-                {['COMPOSITION', 'MIXING & MASTER', '3D CHARACTER', 'CUSTOM WORK'].map(
-                  (row, i) => (
-                    <li key={row}>
-                      <span>{String(i + 1).padStart(2, '0')}</span>
-                      {row}
-                      <b>OPEN</b>
-                    </li>
-                  ),
-                )}
-              </ul>
-            )}
+            {/* R80：右下角幽灵装饰（频谱柱 / 工业清单）已移除，保持 OP 背景干净 */}
             {act.id === 'CREDITS' && (
               <ul className="op-staff">
                 <li>

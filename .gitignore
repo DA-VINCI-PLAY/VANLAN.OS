@@ -71,6 +71,4 @@ CLEANUP_REPORT.md
 # local build artifacts
 .next-bak/
 .nextbuild/
-.next-r73/
-.next-r76/
-.next-r77/
+.next-*/
