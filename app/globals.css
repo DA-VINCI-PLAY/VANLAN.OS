@@ -1931,10 +1931,36 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 @media (min-width: 901px) {
   .op-panel-media {
     left: clamp(20px, 4vw, 64px);
-    top: 12vh;
-    bottom: 9vh;
-    width: min(460px, 42vw);
+    top: 50%;
+    bottom: auto;
+    translate: 0 -50%;
+    width: clamp(460px, 42vw, 620px);
+    min-height: 520px;
+    max-height: 88vh;
+    padding: 28px;
+    justify-content: space-between;
   }
+  /* 上-中-下三段：切换器 / 展示大卡 / 底部 Dock，层间距 18px
+     （用 .op-panel-media 前缀提优先级，避免被后置的基础 .op-mx-card 覆盖） */
+  .op-panel-media .op-store-body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .op-panel-media .op-mx-card {
+    flex: 1;
+    min-height: 290px;
+    border-radius: 18px;
+    padding: 24px;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .op-panel-media .op-mx-demos { gap: 14px; }
+  .op-panel-media .op-mx-demo { padding: 14px 16px; }
+  .op-panel-media .op-mx-demo b { font-size: 11.5px; }
+  .op-panel-media .op-mx-demo em { font-size: 7.5px; }
+  .op-panel-media .op-mx-demo span { font-size: 8.5px; }
+  .op-panel-media .op-mx-bio { font-size: 11px; }
 }
 @media (min-width: 768px) {
   .op-headline-media {
@@ -1947,68 +1973,73 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-headline-media .op-line-outline { font-size: clamp(44px, 8vw, 116px); }
 }
 
-/* ---------- R78 · MEDIA_MATRIX 双板块 + 动态换肤展示卡 ----------
-   色板全部由 content/platformMatrix.ts 注入 CSS 变量（--mx-*），
-   换平台 = 换一组变量，卡片本体只维护一套结构样式。 */
+/* ---------- R79 · 第一层：双板块通栏切换器 ---------- */
 .op-mx-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  padding: 4px;
+  gap: 6px;
+  padding: 5px;
   border: 1px solid rgba(22, 24, 28, 0.1);
   background: rgba(255, 253, 249, 0.6);
-  border-radius: 11px;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 .op-mx-tab {
-  height: 30px;
+  height: 44px;
   border: none;
-  border-radius: 8px;
-  background: transparent;
+  border-radius: 9px;
+  background: rgba(22, 24, 28, 0.05);
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.08em;
-  color: rgba(27, 30, 35, 0.5);
+  color: rgba(27, 30, 35, 0.55);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.op-mx-tab:hover { color: rgba(27, 30, 35, 0.85); }
+.op-mx-tab:hover { color: rgba(27, 30, 35, 0.9); }
 .op-mx-tab.is-active {
-  background: #16181d;
+  background: #141619;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(22, 24, 28, 0.25);
+  box-shadow: 0 5px 14px rgba(20, 22, 25, 0.3);
 }
 
-.op-mx-pills {
+/* ---------- R79 · 第三层：底部 Dock 平台切换钮 ---------- */
+.op-mx-dock {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-.op-mx-pill {
-  display: inline-flex;
+  justify-content: center;
   align-items: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(22, 24, 28, 0.14);
-  background: rgba(255, 253, 249, 0.6);
-  color: rgba(27, 30, 35, 0.55);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9px;
-  letter-spacing: 0.06em;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.op-mx-dock-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 17px; /* 超椭圆 */
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  color: rgba(27, 30, 35, 0.6);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.op-mx-pill:hover {
-  border-color: rgba(243, 90, 23, 0.4);
-  color: #16181d;
+.op-mx-dock-btn svg { width: 22px; height: 22px; }
+.op-mx-dock-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--dock-bg);
+  color: rgba(27, 30, 35, 0.9);
 }
-.op-mx-pill.is-active { font-weight: 700; }
-.op-mx-pill.is-active:hover { color: inherit; }
+.op-mx-dock-btn:active { transform: translateY(-1px) scale(0.97); }
+.op-mx-dock-btn.is-active {
+  background: var(--dock-bg);
+  color: var(--dock-icon);
+  border-color: transparent;
+  box-shadow: 0 6px 18px var(--dock-glow);
+  transform: scale(1.08);
+}
+.op-mx-dock-btn.is-active:hover { transform: scale(1.08) translateY(-2px); }
 
 .op-mx-card {
-  margin-top: 10px;
   position: relative;
   overflow: hidden;
   border-radius: 14px;
@@ -2019,6 +2050,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   animation: op-mx-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -2231,7 +2263,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 }
 
 @media (max-width: 900px) {
-  .op-panel-media { max-height: 44vh; }
+  .op-panel-media { max-height: 56vh; }
 }
 
 /* ============================================================
@@ -6173,22 +6205,27 @@ select:focus-visible {
   .op-track-no,
   .op-track-dur { font-size: 8px; }
 
-  /* ---------------- 10. 矩阵页：双板块 + 动态展示卡（R78） ---------------- */
+  /* ---------------- 10. 矩阵页：上-中-下三段（R79） ---------------- */
   .op-panel-media {
     top: auto;
     bottom: calc(14px + env(safe-area-inset-bottom));
-    max-height: 66dvh;
+    max-height: 70dvh;
     overflow: hidden;
+  }
+  .op-panel-media .op-store-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   .op-store-head { padding: 0 0 8px; }
   .op-store-title { font-size: 17px; }
   .op-store-badge { font-size: 7.5px; padding: 3px 7px; }
-  .op-mx-tab { height: 34px; font-size: 8.5px; }
-  /* 平台小按钮：触控高度 ≥ 38px，自动换行 */
-  .op-mx-pill { height: 38px; padding: 0 12px; font-size: 9px; }
-  .op-mx-pill svg { width: 13px; height: 13px; }
+  .op-mx-tab { height: 40px; font-size: 8.5px; }
+  /* 底部 Dock：大拇指易达，触控 ≥ 44px */
+  .op-mx-dock { gap: 16px; }
+  .op-mx-dock-btn { width: 46px; height: 46px; border-radius: 15px; }
+  .op-mx-dock-btn svg { width: 20px; height: 20px; }
   .op-mx-card {
-    margin-top: 8px;
     padding: 12px 12px;
     border-radius: 12px;
     gap: 8px;

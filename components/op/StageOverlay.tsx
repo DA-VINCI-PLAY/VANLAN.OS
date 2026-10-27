@@ -498,7 +498,7 @@ function MediaStage() {
       </div>
 
       <div className="op-store-body os-scroll" data-scroll>
-        {/* 双板块分段控制器 */}
+        {/* 第一层：双板块通栏切换器 */}
         <div className="op-mx-tabs" role="tablist" aria-label="内容板块切换">
           {MATRIX_REGIONS.map((r) => (
             <button
@@ -514,36 +514,7 @@ function MediaStage() {
           ))}
         </div>
 
-        {/* 平台选择小按钮栏 */}
-        <div className="op-mx-pills" role="tablist" aria-label="平台选择">
-          {entries.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              role="tab"
-              aria-selected={current.id === p.id}
-              className={`op-mx-pill ${current.id === p.id ? 'is-active' : ''}`}
-              style={
-                current.id === p.id
-                  ? ({
-                      borderColor: p.theme.primary,
-                      background: p.theme.pillBg ?? p.theme.iconBg,
-                      color: p.theme.pillColor,
-                    } as React.CSSProperties)
-                  : undefined
-              }
-              onClick={() => {
-                setPlatformId(p.id);
-                setCopied(false);
-              }}
-            >
-              <BrandIcon id={p.id} size={14} />
-              <span>{p.name}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* 动态换肤展示卡（key 触发重挂载入场动画） */}
+        {/* 第二层：大尺寸平台主题动态展示卡（key 触发重挂载入场动画） */}
         <article
           key={`${region}-${current.id}`}
           className="op-mx-card"
@@ -604,6 +575,34 @@ function MediaStage() {
             </a>
           </footer>
         </article>
+
+        {/* 第三层：底部 Dock——大号圆形平台切换钮（macOS Dock 式） */}
+        <div className="op-mx-dock" role="tablist" aria-label="平台选择">
+          {entries.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={current.id === p.id}
+              title={p.name}
+              aria-label={p.name}
+              className={`op-mx-dock-btn ${current.id === p.id ? 'is-active' : ''}`}
+              style={
+                {
+                  '--dock-bg': p.theme.dockBg,
+                  '--dock-icon': p.theme.dockIcon,
+                  '--dock-glow': p.theme.dockGlow,
+                } as React.CSSProperties
+              }
+              onClick={() => {
+                setPlatformId(p.id);
+                setCopied(false);
+              }}
+            >
+              <BrandIcon id={p.id} size={22} />
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="op-card-foot">

@@ -45,10 +45,12 @@ export interface PlatformTheme {
   demoBg: string;
   /** 示例小卡边框 */
   demoBorder: string;
-  /** pills 选中态背景（可选；默认用 iconBg。深色平台在此给深底） */
-  pillBg?: string;
-  /** pills 选中态文字色（浅色面板上必须可达 3:1，不可直接用深底平台的主色/白） */
-  pillColor: string;
+  /** 底部 Dock 选中态实心填充（支持渐变） */
+  dockBg: string;
+  /** Dock 选中态图标色 */
+  dockIcon: string;
+  /** Dock 选中态外圈发光 */
+  dockGlow: string;
 }
 
 export interface PlatformMatrixEntry {
@@ -104,7 +106,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(0, 161, 214, 0.35)',
       demoBg: 'rgba(255, 255, 255, 0.72)',
       demoBorder: 'rgba(0, 161, 214, 0.28)',
-      pillColor: '#0087ad',
+      dockBg: '#00a1d6',
+      dockIcon: '#ffffff',
+      dockGlow: 'rgba(0, 161, 214, 0.4)',
     },
   },
   {
@@ -143,8 +147,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(37, 244, 238, 0.4)',
       demoBg: 'rgba(255, 255, 255, 0.05)',
       demoBorder: 'rgba(255, 255, 255, 0.14)',
-      pillBg: '#0a0a0a',
-      pillColor: '#25f4ee',
+      dockBg: '#0a0a0a',
+      dockIcon: '#25f4ee',
+      dockGlow: 'rgba(37, 244, 238, 0.4)',
     },
   },
   {
@@ -182,7 +187,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(255, 36, 66, 0.3)',
       demoBg: 'rgba(255, 255, 255, 0.7)',
       demoBorder: 'rgba(255, 36, 66, 0.22)',
-      pillColor: '#e01e39',
+      dockBg: '#ff2442',
+      dockIcon: '#ffffff',
+      dockGlow: 'rgba(255, 36, 66, 0.4)',
     },
   },
 
@@ -221,7 +228,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(255, 0, 51, 0.35)',
       demoBg: 'rgba(255, 255, 255, 0.05)',
       demoBorder: 'rgba(255, 255, 255, 0.12)',
-      pillColor: '#d10f33',
+      dockBg: '#ff0033',
+      dockIcon: '#ffffff',
+      dockGlow: 'rgba(255, 0, 51, 0.4)',
     },
   },
   {
@@ -259,7 +268,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(29, 155, 240, 0.35)',
       demoBg: 'rgba(255, 255, 255, 0.05)',
       demoBorder: 'rgba(255, 255, 255, 0.12)',
-      pillColor: '#1668b3',
+      dockBg: '#1d9bf0',
+      dockIcon: '#ffffff',
+      dockGlow: 'rgba(29, 155, 240, 0.45)',
     },
   },
   {
@@ -296,7 +307,10 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(225, 48, 108, 0.4)',
       demoBg: 'rgba(255, 255, 255, 0.05)',
       demoBorder: 'rgba(255, 255, 255, 0.12)',
-      pillColor: '#c13584',
+      dockBg:
+        'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+      dockIcon: '#ffffff',
+      dockGlow: 'rgba(225, 48, 108, 0.45)',
     },
   },
   {
@@ -333,8 +347,9 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
       glow: 'rgba(255, 255, 255, 0.25)',
       demoBg: 'rgba(255, 255, 255, 0.05)',
       demoBorder: 'rgba(255, 255, 255, 0.12)',
-      pillBg: '#101010',
-      pillColor: '#f3f5f7',
+      dockBg: '#ffffff',
+      dockIcon: '#000000',
+      dockGlow: 'rgba(255, 255, 255, 0.35)',
     },
   },
 ];
