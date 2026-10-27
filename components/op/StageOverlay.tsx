@@ -218,7 +218,7 @@ function IntroStage() {
                 fire(s);
               }
             }}
-            className="op-chip"
+            className={`op-chip op-chip-${s.id}`}
             title={s.platform}
             aria-label={s.platform}
           >
@@ -470,7 +470,7 @@ function MediaStage() {
               href={entry.value}
               target="_blank"
               rel="noopener noreferrer"
-              className="op-media-card"
+              className={`op-media-card op-mc-${entry.id}`}
               title={`${entry.platform} · ${entry.handle}`}
             >
               <span className="op-media-ico">

@@ -6197,3 +6197,136 @@ select:focus-visible {
   .op-media-card { min-height: 58px; padding: 7px; }
   .kp-card { max-height: 56dvh; }
 }
+
+/* ===============================================================
+   R77 · MEDIA_MATRIX 平台专属主题（Bilibili / Douyin）
+   只覆盖这两个平台；其余平台卡维持默认橙调主题。
+   =============================================================== */
+
+/* ---------- Bilibili · 哔哩哔哩蓝 ----------
+   #00A1D6 在浅色面板（米白 rgba(255,253,249)）上对比度仅 ~2.98:1，
+   不达 WCAG AA (4.5:1)，因此按规范：文字一律保持钛黑 ink 不用蓝字；
+   蓝色只用于边框 / 图标 tint / 背景高亮等图形元素，悬停提亮 #00b5e5。 */
+.op-mc-bilibili {
+  --mc-bili: #00a1d6;
+  --mc-bili-hover: #00b5e5;
+}
+.op-mc-bilibili .op-media-ico {
+  border-color: rgba(0, 161, 214, 0.3);
+  background: rgba(0, 161, 214, 0.1);
+  color: #0087ad; /* 图标 tint 加深一档，浅底上 ≥3:1 */
+}
+.op-mc-bilibili:hover {
+  border-color: var(--mc-bili);
+  background: rgba(0, 161, 214, 0.06);
+}
+.op-mc-bilibili:hover .op-media-ico { color: var(--mc-bili-hover); }
+.op-mc-bilibili:active,
+.op-mc-bilibili.is-selected {
+  border-color: var(--mc-bili);
+  background: rgba(0, 161, 214, 0.2);
+}
+/* 禁用：半透明蓝底 + 整体降透明度 */
+.op-mc-bilibili[aria-disabled='true'] {
+  border-color: var(--mc-bili);
+  background: rgba(0, 161, 214, 0.3);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 首屏平台选择按钮（Bilibili） */
+.op-chip.op-chip-bilibili:hover {
+  border-color: var(--mc-bili, #00a1d6);
+  color: #0087ad;
+  background: rgba(0, 161, 214, 0.07);
+}
+.op-chip.op-chip-bilibili:active {
+  border-color: var(--mc-bili, #00a1d6);
+  background: rgba(0, 161, 214, 0.2);
+}
+
+/* ---------- Douyin · 极简终端黑 ----------
+   纯黑底 + 白字；青红只做点缀（角标呼吸灯 / 悬停霓虹流光边），
+   严禁整卡红色化。副标题统一提亮 #CCCCCC 保黑底可读性。 */
+.op-mc-douyin {
+  background: #000;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.op-mc-douyin .op-media-body b { color: #ffffff; }
+.op-mc-douyin .op-media-body i { color: #a0a0a0; }
+.op-mc-douyin .op-media-body em { color: #cccccc; }
+.op-mc-douyin .op-media-go { color: #ffffff; opacity: 0.6; }
+/* 图标：白底色 + 青红双色故障偏移微光（点缀，非大面积） */
+.op-mc-douyin .op-media-ico {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  filter: drop-shadow(0.6px 0 0 rgba(37, 244, 238, 0.75))
+    drop-shadow(-0.6px 0 0 rgba(254, 44, 85, 0.75));
+}
+/* 角标呼吸灯（青色微光点）—— ::before，扫光仍走 ::after */
+.op-mc-douyin::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #25f4ee;
+  box-shadow: 0 0 6px rgba(37, 244, 238, 0.8);
+  animation: dy-breath 2.6s ease-in-out infinite;
+}
+@keyframes dy-breath {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+/* 悬停：#121212 底 + 青红霓虹流光渐变边框 */
+.op-mc-douyin:hover {
+  border-color: transparent;
+  background:
+    linear-gradient(#121212, #121212) padding-box,
+    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
+}
+/* 按下 / 选中：全黑底 + 加粗青红双色发光边框 */
+.op-mc-douyin:active,
+.op-mc-douyin.is-selected {
+  border-color: transparent;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
+  box-shadow:
+    0 0 12px rgba(37, 244, 238, 0.4),
+    0 0 12px rgba(254, 44, 85, 0.32);
+}
+/* 禁用：#0A0A0A 底 + #555 文字 */
+.op-mc-douyin[aria-disabled='true'] {
+  background: #0a0a0a;
+  border-color: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+.op-mc-douyin[aria-disabled='true'] .op-media-body b,
+.op-mc-douyin[aria-disabled='true'] .op-media-body i,
+.op-mc-douyin[aria-disabled='true'] .op-media-body em { color: #555555; }
+.op-mc-douyin[aria-disabled='true']::before { animation: none; opacity: 0.25; }
+
+/* 首屏平台选择按钮（Douyin）：黑底白图标 + 悬停霓虹流光边 */
+.op-chip.op-chip-douyin {
+  background: #000;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+.op-chip.op-chip-douyin:hover {
+  border-color: transparent;
+  color: #ffffff;
+  background:
+    linear-gradient(#121212, #121212) padding-box,
+    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
+}
+.op-chip.op-chip-douyin:active {
+  border-color: transparent;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
+  box-shadow: 0 0 10px rgba(37, 244, 238, 0.4), 0 0 10px rgba(254, 44, 85, 0.3);
+}
