@@ -1947,61 +1947,240 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   .op-headline-media .op-line-outline { font-size: clamp(44px, 8vw, 116px); }
 }
 
-.op-media-grid {
+/* ---------- R78 · MEDIA_MATRIX 双板块 + 动态换肤展示卡 ----------
+   色板全部由 content/platformMatrix.ts 注入 CSS 变量（--mx-*），
+   换平台 = 换一组变量，卡片本体只维护一套结构样式。 */
+.op-mx-tabs {
   display: grid;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid rgba(22, 24, 28, 0.1);
+  background: rgba(255, 253, 249, 0.6);
+  border-radius: 11px;
 }
-.op-media-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
+.op-mx-tab {
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: rgba(27, 30, 35, 0.5);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.op-mx-tab:hover { color: rgba(27, 30, 35, 0.85); }
+.op-mx-tab.is-active {
+  background: #16181d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(22, 24, 28, 0.25);
+}
+
+.op-mx-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.op-mx-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(22, 24, 28, 0.09);
-  background: rgba(255, 253, 249, 0.72);
-  text-decoration: none;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 24, 28, 0.14);
+  background: rgba(255, 253, 249, 0.6);
+  color: rgba(27, 30, 35, 0.55);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.op-mx-pill:hover {
+  border-color: rgba(243, 90, 23, 0.4);
+  color: #16181d;
+}
+.op-mx-pill.is-active { font-weight: 700; }
+.op-mx-pill.is-active:hover { color: inherit; }
+
+.op-mx-card {
+  margin-top: 10px;
+  position: relative;
   overflow: hidden;
-  transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+  border-radius: 14px;
+  border: 1px solid var(--mx-border);
+  background: var(--mx-bg);
+  color: var(--mx-text);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: op-mx-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.op-media-card:hover {
-  border-color: rgba(243, 90, 23, 0.5);
-  background: #ffffff;
-  transform: translateY(-1px);
+@keyframes op-mx-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: none; }
 }
-.op-media-ico {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+.op-mx-head { display: flex; align-items: center; gap: 10px; }
+.op-mx-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(243, 90, 23, 0.18);
-  background: rgba(243, 90, 23, 0.07);
-  color: #f35a17;
+  border: 1px solid var(--mx-ico-border);
+  background: var(--mx-ico-bg);
+  color: var(--mx-ico-color);
+  box-shadow: 0 0 18px var(--mx-glow);
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.op-media-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.op-media-body b {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  color: rgba(27, 30, 35, 0.85);
+.op-mx-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.op-mx-name b {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--mx-text);
 }
-.op-media-body i {
+.op-mx-name b i {
   font-style: normal;
   font-size: 9px;
-  color: rgba(27, 30, 35, 0.5);
+  letter-spacing: 0.12em;
+  color: var(--mx-sub);
+}
+.op-mx-name > span {
+  font-size: 9.5px;
+  color: var(--mx-sub);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.op-media-body em {
-  font-style: normal;
-  font-size: 8.5px;
-  letter-spacing: 0.04em;
-  color: rgba(27, 30, 35, 0.35);
+.op-mx-badges {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
-.op-media-go { color: #f35a17; font-size: 11px; opacity: 0.75; }
+.op-mx-badges em {
+  font-style: normal;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 7.5px;
+  letter-spacing: 0.12em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  color: var(--mx-sub);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.op-mx-live i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: op-mx-breath 2.2s ease-in-out infinite;
+}
+@keyframes op-mx-breath {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.op-mx-bio {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--mx-sub);
+}
+.op-mx-demos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.op-mx-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--mx-demo-border);
+  background: var(--mx-demo-bg);
+  color: var(--mx-text);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.op-mx-demo:hover {
+  transform: translateY(-2px);
+  border-color: var(--mx-primary);
+}
+.op-mx-demo em {
+  font-style: normal;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  color: var(--mx-ico-color);
+}
+.op-mx-demo b {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mx-text);
+}
+.op-mx-demo span {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: var(--mx-sub);
+}
+.op-mx-demo span u {
+  text-decoration: none;
+  color: var(--mx-ico-color);
+}
+.op-mx-foot { display: flex; align-items: stretch; gap: 8px; }
+.op-mx-copy {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--mx-border);
+  background: transparent;
+  color: var(--mx-text);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.op-mx-copy:hover { background: var(--mx-demo-bg); }
+.op-mx-go {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: var(--mx-btn);
+  color: var(--mx-btn-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.op-mx-go:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+.op-mx-go:active { transform: translateY(0); }
 
 /* ---------- 5. OP 微交互：斜切滑入 / 扫光 ---------- */
 @keyframes op-stage-skew-in {
@@ -2021,13 +2200,13 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   transform-origin: left top;
 }
 
-.op-media-card,
+.op-mx-card,
 .os-card,
 .os-btn-accent {
   position: relative;
   overflow: hidden;
 }
-.op-media-card::after,
+.op-mx-card::after,
 .os-card::after,
 .os-btn-accent::after {
   content: '';
@@ -2044,7 +2223,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   opacity: 0;
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
 }
-.op-media-card:hover::after,
+.op-mx-card:hover::after,
 .os-card:hover::after,
 .os-btn-accent:hover::after {
   transform: translateX(130%) skewX(-8deg);
@@ -2053,8 +2232,6 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 
 @media (max-width: 900px) {
   .op-panel-media { max-height: 44vh; }
-  .op-media-card { padding: 8px 10px; }
-  .op-media-body em { font-size: 8px; }
 }
 
 /* ============================================================
@@ -2526,7 +2703,7 @@ select:focus-visible {
 
 /* —— 合成层底座：只给真正会动的元素，避免 will-change 滥用 —— */
 .fc-card,
-.op-media-card,
+.op-mx-card,
 .op-chip,
 .op-albums button,
 .op-lang button,
@@ -2561,41 +2738,7 @@ select:focus-visible {
   transition-duration: 0.14s;
 }
 
-.op-media-card {
-  transform: translate3d(0, 0, 0);
-  transition:
-    transform var(--dur-drop) var(--ease-rebound),
-    border-color 0.3s var(--ease-soft),
-    background-color 0.3s var(--ease-soft),
-    box-shadow var(--dur-drop) var(--ease-soft);
-  will-change: transform;
-}
-.op-media-card:hover {
-  transform: translate3d(0, var(--lift-card), 0) scale(1.012);
-  box-shadow: 0 16px 34px rgba(46, 36, 24, 0.14);
-  transition:
-    transform var(--dur-lift) var(--ease-soft),
-    border-color 0.3s var(--ease-soft),
-    background-color 0.3s var(--ease-soft),
-    box-shadow var(--dur-lift) var(--ease-soft);
-}
-.op-media-card:active {
-  transform: translate3d(0, -2px, 0) scale(0.996);
-  transition-duration: 0.14s;
-}
-
 /* 悬停时图标与箭头轻抬，制造层次 */
-.op-media-ico,
-.op-media-go {
-  transition: transform 0.42s var(--ease-soft);
-  will-change: transform;
-}
-.op-media-card:hover .op-media-ico {
-  transform: translate3d(0, -2px, 0) scale(1.06);
-}
-.op-media-card:hover .op-media-go {
-  transform: translate3d(3px, -3px, 0);
-}
 
 /* —— 小元素：抬一点点就够，别抢戏 —— */
 .op-chip {
@@ -2717,7 +2860,7 @@ select:focus-visible {
 /* —— 尊重系统「减少动态效果」—— */
 @media (prefers-reduced-motion: reduce) {
   .fc-card,
-  .op-media-card,
+  .op-mx-card,
   .op-chip,
   .os-card,
   .os-btn-accent,
@@ -2727,7 +2870,7 @@ select:focus-visible {
     will-change: auto;
   }
   .fc-card:hover,
-  .op-media-card:hover,
+  .op-mx-card:hover,
   .op-chip:hover,
   .os-card:hover,
   .os-btn-accent:hover,
@@ -6030,33 +6173,40 @@ select:focus-visible {
   .op-track-no,
   .op-track-dur { font-size: 8px; }
 
-  /* ---------------- 10. 矩阵页：2 列紧凑网格 ---------------- */
+  /* ---------------- 10. 矩阵页：双板块 + 动态展示卡（R78） ---------------- */
   .op-panel-media {
     top: auto;
     bottom: calc(14px + env(safe-area-inset-bottom));
-    max-height: 62dvh;
+    max-height: 66dvh;
     overflow: hidden;
   }
   .op-store-head { padding: 0 0 8px; }
   .op-store-title { font-size: 17px; }
   .op-store-badge { font-size: 7.5px; padding: 3px 7px; }
-  .op-media-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .op-mx-tab { height: 34px; font-size: 8.5px; }
+  /* 平台小按钮：触控高度 ≥ 38px，自动换行 */
+  .op-mx-pill { height: 38px; padding: 0 12px; font-size: 9px; }
+  .op-mx-pill svg { width: 13px; height: 13px; }
+  .op-mx-card {
+    margin-top: 8px;
+    padding: 12px 12px;
+    border-radius: 12px;
     gap: 8px;
   }
-  .op-media-card {
-    grid-template-columns: 30px minmax(0, 1fr) auto;
-    gap: 7px;
-    min-height: 64px;
-    padding: 8px;
-    border-radius: 10px;
-  }
-  .op-media-card:first-child { grid-column: span 2; }
-  .op-media-ico { width: 30px; height: 30px; border-radius: 8px; }
-  .op-media-body b { font-size: 10.5px; }
-  .op-media-body i { font-size: 8px; }
-  .op-media-body em { font-size: 7px; line-height: 1.3; }
-  .op-media-go { font-size: 9px; }
+  .op-mx-ico { width: 38px; height: 38px; border-radius: 10px; }
+  .op-mx-ico svg { width: 20px; height: 20px; }
+  .op-mx-name b { font-size: 12.5px; }
+  .op-mx-name b i { font-size: 8px; }
+  .op-mx-name > span { font-size: 8.5px; }
+  .op-mx-badges em { font-size: 7px; padding: 2px 6px; }
+  .op-mx-bio { font-size: 9.5px; }
+  /* 示例槽：手机端单列紧凑 */
+  .op-mx-demos { grid-template-columns: 1fr; gap: 6px; }
+  .op-mx-demo { padding: 8px 10px; }
+  .op-mx-demo b { font-size: 9.5px; }
+  .op-mx-demo span { font-size: 7.5px; }
+  .op-mx-copy { height: 36px; padding: 0 10px; font-size: 8.5px; flex-shrink: 0; }
+  .op-mx-go { height: 36px; padding: 0 12px; font-size: 9.5px; }
 
   /* ---------------- 11. 工坊：86dvh 上限 + 提交吸底 ---------------- */
   .op-panel-store {
@@ -6193,124 +6343,32 @@ select:focus-visible {
   .op-panel-sound { top: 33%; }
   .op-wave { display: none; }
   .op-tracks button { padding: 4px 7px; }
-  .op-panel-media { max-height: 66dvh; }
-  .op-media-card { min-height: 58px; padding: 7px; }
+  .op-panel-media { max-height: 68dvh; }
+  .op-mx-card { padding: 10px 11px; gap: 7px; }
+  .op-mx-demo { padding: 7px 9px; }
   .kp-card { max-height: 56dvh; }
 }
 
 /* ===============================================================
-   R77 · MEDIA_MATRIX 平台专属主题（Bilibili / Douyin）
-   只覆盖这两个平台；其余平台卡维持默认橙调主题。
+   R77→R78 · 首屏社交图标主题（Bilibili / Douyin chips）
+   旧 .op-mc-* 矩阵卡主题已由 R78 展示卡 CSS 变量体系（--mx-*）取代，
+   此处只保留首屏平台选择按钮（.op-chip-*）的平台主题。
    =============================================================== */
 
 /* ---------- Bilibili · 哔哩哔哩蓝 ----------
-   #00A1D6 在浅色面板（米白 rgba(255,253,249)）上对比度仅 ~2.98:1，
-   不达 WCAG AA (4.5:1)，因此按规范：文字一律保持钛黑 ink 不用蓝字；
-   蓝色只用于边框 / 图标 tint / 背景高亮等图形元素，悬停提亮 #00b5e5。 */
-.op-mc-bilibili {
-  --mc-bili: #00a1d6;
-  --mc-bili-hover: #00b5e5;
-}
-.op-mc-bilibili .op-media-ico {
-  border-color: rgba(0, 161, 214, 0.3);
-  background: rgba(0, 161, 214, 0.1);
-  color: #0087ad; /* 图标 tint 加深一档，浅底上 ≥3:1 */
-}
-.op-mc-bilibili:hover {
-  border-color: var(--mc-bili);
-  background: rgba(0, 161, 214, 0.06);
-}
-.op-mc-bilibili:hover .op-media-ico { color: var(--mc-bili-hover); }
-.op-mc-bilibili:active,
-.op-mc-bilibili.is-selected {
-  border-color: var(--mc-bili);
-  background: rgba(0, 161, 214, 0.2);
-}
-/* 禁用：半透明蓝底 + 整体降透明度 */
-.op-mc-bilibili[aria-disabled='true'] {
-  border-color: var(--mc-bili);
-  background: rgba(0, 161, 214, 0.3);
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-/* 首屏平台选择按钮（Bilibili） */
+   #00A1D6 在浅色面板上对比度不达 AA：chips 图标 tint 用加深档 #0087AD。 */
 .op-chip.op-chip-bilibili:hover {
-  border-color: var(--mc-bili, #00a1d6);
+  border-color: #00a1d6;
   color: #0087ad;
   background: rgba(0, 161, 214, 0.07);
 }
 .op-chip.op-chip-bilibili:active {
-  border-color: var(--mc-bili, #00a1d6);
+  border-color: #00a1d6;
   background: rgba(0, 161, 214, 0.2);
 }
 
 /* ---------- Douyin · 极简终端黑 ----------
-   纯黑底 + 白字；青红只做点缀（角标呼吸灯 / 悬停霓虹流光边），
-   严禁整卡红色化。副标题统一提亮 #CCCCCC 保黑底可读性。 */
-.op-mc-douyin {
-  background: #000;
-  border-color: rgba(255, 255, 255, 0.14);
-}
-.op-mc-douyin .op-media-body b { color: #ffffff; }
-.op-mc-douyin .op-media-body i { color: #a0a0a0; }
-.op-mc-douyin .op-media-body em { color: #cccccc; }
-.op-mc-douyin .op-media-go { color: #ffffff; opacity: 0.6; }
-/* 图标：白底色 + 青红双色故障偏移微光（点缀，非大面积） */
-.op-mc-douyin .op-media-ico {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-  filter: drop-shadow(0.6px 0 0 rgba(37, 244, 238, 0.75))
-    drop-shadow(-0.6px 0 0 rgba(254, 44, 85, 0.75));
-}
-/* 角标呼吸灯（青色微光点）—— ::before，扫光仍走 ::after */
-.op-mc-douyin::before {
-  content: '';
-  position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #25f4ee;
-  box-shadow: 0 0 6px rgba(37, 244, 238, 0.8);
-  animation: dy-breath 2.6s ease-in-out infinite;
-}
-@keyframes dy-breath {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-/* 悬停：#121212 底 + 青红霓虹流光渐变边框 */
-.op-mc-douyin:hover {
-  border-color: transparent;
-  background:
-    linear-gradient(#121212, #121212) padding-box,
-    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
-}
-/* 按下 / 选中：全黑底 + 加粗青红双色发光边框 */
-.op-mc-douyin:active,
-.op-mc-douyin.is-selected {
-  border-color: transparent;
-  background:
-    linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
-  box-shadow:
-    0 0 12px rgba(37, 244, 238, 0.4),
-    0 0 12px rgba(254, 44, 85, 0.32);
-}
-/* 禁用：#0A0A0A 底 + #555 文字 */
-.op-mc-douyin[aria-disabled='true'] {
-  background: #0a0a0a;
-  border-color: rgba(255, 255, 255, 0.08);
-  pointer-events: none;
-}
-.op-mc-douyin[aria-disabled='true'] .op-media-body b,
-.op-mc-douyin[aria-disabled='true'] .op-media-body i,
-.op-mc-douyin[aria-disabled='true'] .op-media-body em { color: #555555; }
-.op-mc-douyin[aria-disabled='true']::before { animation: none; opacity: 0.25; }
-
-/* 首屏平台选择按钮（Douyin）：黑底白图标 + 悬停霓虹流光边 */
+   黑底白图标 + 悬停霓虹流光边（青 #25F4EE / 红 #FE2C55 只做点缀）。 */
 .op-chip.op-chip-douyin {
   background: #000;
   border-color: rgba(255, 255, 255, 0.16);
@@ -6329,4 +6387,37 @@ select:focus-visible {
     linear-gradient(#000, #000) padding-box,
     linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
   box-shadow: 0 0 10px rgba(37, 244, 238, 0.4), 0 0 10px rgba(254, 44, 85, 0.3);
+}
+
+/* ===============================================================
+   R78 · 展示卡平台特殊效果（CSS 变量覆盖不到的部分）
+   =============================================================== */
+
+/* 抖音：图标青红故障偏移 + 主按钮霓虹流光边框 */
+.op-mx-card[data-platform='douyin'] .op-mx-ico {
+  filter: drop-shadow(0.6px 0 0 rgba(37, 244, 238, 0.75))
+    drop-shadow(-0.6px 0 0 rgba(254, 44, 85, 0.75));
+}
+.op-mx-card[data-platform='douyin'] .op-mx-go {
+  border-color: transparent;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #25f4ee, #fe2c55) border-box;
+}
+.op-mx-card[data-platform='douyin'] .op-mx-go:hover {
+  box-shadow:
+    0 0 10px rgba(37, 244, 238, 0.35),
+    0 0 10px rgba(254, 44, 85, 0.28);
+  filter: none;
+}
+
+/* Instagram：主按钮走官方渐变时禁用亮度滤镜（避免渐变发灰） */
+.op-mx-card[data-platform='instagram'] .op-mx-go:hover {
+  filter: saturate(1.15);
+}
+
+/* Bilibili 主按钮悬停提亮 #00B5E5（R77 规范保留） */
+.op-mx-card[data-platform='bilibili'] .op-mx-go:hover {
+  filter: none;
+  background: #00b5e5;
 }

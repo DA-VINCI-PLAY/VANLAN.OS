@@ -29,6 +29,11 @@ import BrandIcon from '@/components/op/BrandIcon';
 import CommissionPanel from '@/components/ui/CommissionPanel';
 import { WorksPill } from '@/components/op/MobileWorksDrawer';
 import { openKepler } from '@/lib/kepler';
+import {
+  MATRIX_REGIONS,
+  PLATFORM_MATRIX_CONFIG,
+  type MatrixRegion,
+} from '@/content/platformMatrix';
 
 /** 跳到指定幕的起始位置 */
 const gotoAct = (id: ActId) =>
@@ -41,17 +46,6 @@ const fmt = (sec: number): string => {
   const ss = Math.floor(sec % 60);
   return `${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 };
-
-/* 自媒体矩阵：平台 + 内容定位标签（顺序即卡片顺序） */
-const MEDIA_CHANNELS: { id: string; tags: string }[] = [
-  { id: 'douyin', tags: '高燃片段 / 电子音乐' },
-  { id: 'bilibili', tags: '编曲工程 / MV / 混音幕后' },
-  { id: 'xiaohongshu', tags: '3D 建模 / 视觉设定' },
-  { id: 'youtube', tags: '完整作品 / LIVE SET' },
-  { id: 'x', tags: '日常 / 即兴' },
-  { id: 'instagram', tags: '视觉碎片 / 幕后' },
-  { id: 'threads', tags: '随想 / 更新' },
-];
 
 /* 首屏社交矩阵：固定 7 项，与内容源解耦 */
 const CHIP_IDS = [
@@ -443,14 +437,55 @@ function CommissionStage() {
   );
 }
 
-/* ============ ACT 04 · 自媒体矩阵 ============ */
+/* ============ ACT 04 · 自媒体矩阵（R78 海内外双板块 + 动态换肤展示卡） ============ */
 function MediaStage() {
   const lang = useOS((s) => s.lang);
+  const [region, setRegion] = useState<MatrixRegion>('cn');
+  const [platformId, setPlatformId] = useState('bilibili');
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
 
-  const channels = MEDIA_CHANNELS.flatMap(({ id, tags }) => {
-    const s = SOCIALS.find((x) => x.id === id);
-    return s ? [{ entry: s, tags }] : [];
-  });
+  const entries = PLATFORM_MATRIX_CONFIG.filter((p) => p.region === region);
+  const current = entries.find((p) => p.id === platformId) ?? entries[0];
+
+  const switchRegion = (r: MatrixRegion) => {
+    if (r === region) return;
+    const def = MATRIX_REGIONS.find((x) => x.id === r);
+    setRegion(r);
+    setPlatformId(def?.defaultPlatform ?? PLATFORM_MATRIX_CONFIG.find((p) => p.region === r)!.id);
+    setCopied(false);
+  };
+
+  const copyId = () => {
+    navigator.clipboard?.writeText(current.copyId).catch(() => {});
+    setCopied(true);
+    if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  useEffect(
+    () => () => {
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    },
+    [],
+  );
+
+  const t = current.theme;
+  const vars = {
+    '--mx-primary': t.primary,
+    '--mx-bg': t.bg,
+    '--mx-text': t.text,
+    '--mx-sub': t.sub,
+    '--mx-border': t.border,
+    '--mx-btn': t.btnBg,
+    '--mx-btn-text': t.btnText,
+    '--mx-ico-bg': t.iconBg,
+    '--mx-ico-border': t.iconBorder,
+    '--mx-ico-color': t.iconColor,
+    '--mx-glow': t.glow,
+    '--mx-demo-bg': t.demoBg,
+    '--mx-demo-border': t.demoBorder,
+  } as React.CSSProperties;
 
   return (
     <section className="op-panel op-panel-media" aria-label="自媒体矩阵">
@@ -459,34 +494,116 @@ function MediaStage() {
           <div className="op-kicker">MEDIA MATRIX // INFO CARD</div>
           <h2 className="op-store-title">{lang === 'zh' ? '自媒体矩阵' : 'Channels'}</h2>
         </div>
-        <span className="op-store-badge">{channels.length} CH</span>
+        <span className="op-store-badge">{PLATFORM_MATRIX_CONFIG.length} CH</span>
       </div>
 
       <div className="op-store-body os-scroll" data-scroll>
-        <div className="op-media-grid">
-          {channels.map(({ entry, tags }) => (
-            <a
-              key={entry.id}
-              href={entry.value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`op-media-card op-mc-${entry.id}`}
-              title={`${entry.platform} · ${entry.handle}`}
+        {/* 双板块分段控制器 */}
+        <div className="op-mx-tabs" role="tablist" aria-label="内容板块切换">
+          {MATRIX_REGIONS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              role="tab"
+              aria-selected={region === r.id}
+              className={`op-mx-tab ${region === r.id ? 'is-active' : ''}`}
+              onClick={() => switchRegion(r.id)}
             >
-              <span className="op-media-ico">
-                <BrandIcon id={entry.id} size={20} />
-              </span>
-              <span className="op-media-body">
-                <b>{entry.platform}</b>
-                <i>{entry.handle}</i>
-                <em>{tags}</em>
-              </span>
-              <span className="op-media-go" aria-hidden>
-                ↗
-              </span>
-            </a>
+              {r.label}
+            </button>
           ))}
         </div>
+
+        {/* 平台选择小按钮栏 */}
+        <div className="op-mx-pills" role="tablist" aria-label="平台选择">
+          {entries.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={current.id === p.id}
+              className={`op-mx-pill ${current.id === p.id ? 'is-active' : ''}`}
+              style={
+                current.id === p.id
+                  ? ({
+                      borderColor: p.theme.primary,
+                      background: p.theme.pillBg ?? p.theme.iconBg,
+                      color: p.theme.pillColor,
+                    } as React.CSSProperties)
+                  : undefined
+              }
+              onClick={() => {
+                setPlatformId(p.id);
+                setCopied(false);
+              }}
+            >
+              <BrandIcon id={p.id} size={14} />
+              <span>{p.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* 动态换肤展示卡（key 触发重挂载入场动画） */}
+        <article
+          key={`${region}-${current.id}`}
+          className="op-mx-card"
+          data-platform={current.id}
+          data-region={region}
+          style={vars}
+        >
+          <header className="op-mx-head">
+            <span className="op-mx-ico" aria-hidden>
+              <BrandIcon id={current.id} size={24} />
+            </span>
+            <div className="op-mx-name">
+              <b>
+                {current.name}
+                {current.zhName ? <i>{current.zhName}</i> : null}
+              </b>
+              <span>{current.handle}</span>
+            </div>
+            <div className="op-mx-badges">
+              <em className="op-mx-live">
+                <i aria-hidden /> ON AIR
+              </em>
+              <em className="op-mx-region">{region === 'cn' ? 'CN' : 'GLOBAL'}</em>
+            </div>
+          </header>
+
+          <p className="op-mx-bio">{current.bio}</p>
+
+          <div className="op-mx-demos">
+            {current.demos.map((d) => (
+              <a
+                key={d.title}
+                href={current.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="op-mx-demo"
+              >
+                <em>{d.badge}</em>
+                <b>{d.title}</b>
+                <span>
+                  {d.meta} · <u>PLAY ↗</u>
+                </span>
+              </a>
+            ))}
+          </div>
+
+          <footer className="op-mx-foot">
+            <button type="button" className="op-mx-copy" onClick={copyId}>
+              {copied ? '✓ 已复制账号 ID' : '复制账号 ID'}
+            </button>
+            <a
+              className="op-mx-go"
+              href={current.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              前往 {current.name} 主页 ↗
+            </a>
+          </footer>
+        </article>
       </div>
 
       <div className="op-card-foot">
