@@ -94,7 +94,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81 Clean Ambient：清透冰川蓝微光底，主色只上徽章与主按钮
       primary: '#00a1d6',
-      bg: 'rgba(0, 161, 214, 0.06)',
+      bg: 'rgba(228, 246, 253, 0.82)',
       text: '#0f1e26',
       sub: '#54707f',
       border: 'rgba(0, 161, 214, 0.18)',
@@ -135,7 +135,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81.1 Clean Ambient 浅色系：清透青雾微光底，品牌青只做点缀，主按钮用深青保证 AA
       primary: '#0f766e',
-      bg: 'rgba(37, 244, 238, 0.05)',
+      bg: 'rgba(224, 250, 249, 0.82)',
       text: '#0f1c1e',
       sub: '#4f6a6c',
       border: 'rgba(15, 118, 110, 0.16)',
@@ -176,7 +176,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81 Clean Ambient：暖瓷绯白底，炭黑文字
       primary: '#ff2442',
-      bg: 'rgba(255, 36, 66, 0.05)',
+      bg: 'rgba(255, 238, 241, 0.82)',
       text: '#1a1a1a',
       sub: '#8a6a70',
       border: 'rgba(255, 36, 66, 0.16)',
@@ -218,7 +218,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81.1 Clean Ambient 浅色系：暖瓷绯红微光底，经典绯红压深一档保对比
       primary: '#e00028',
-      bg: 'rgba(255, 0, 51, 0.05)',
+      bg: 'rgba(255, 236, 239, 0.82)',
       text: '#201216',
       sub: '#8a5f68',
       border: 'rgba(255, 0, 51, 0.14)',
@@ -259,7 +259,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81 Clean Ambient：极客冷银灰底，纯黑高对比徽章与主按钮
       primary: '#0f1419',
-      bg: 'rgba(15, 20, 25, 0.05)',
+      bg: 'rgba(240, 243, 246, 0.82)',
       text: '#0f1419',
       sub: '#66757f',
       border: 'rgba(15, 20, 25, 0.14)',
@@ -299,7 +299,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81 Clean Ambient：柔雾紫金微光底 + 流光徽章与主按钮，深色高对比文字
       primary: '#bc1888',
-      bg: 'linear-gradient(135deg, rgba(240, 148, 51, 0.06) 0%, rgba(188, 24, 136, 0.08) 100%)',
+      bg: 'linear-gradient(135deg, rgba(253, 244, 235, 0.85) 0%, rgba(250, 234, 246, 0.85) 100%)',
       text: '#1c1624',
       sub: '#7d6b86',
       border: 'rgba(188, 24, 136, 0.16)',
@@ -339,7 +339,7 @@ export const PLATFORM_MATRIX_CONFIG: PlatformMatrixEntry[] = [
     theme: {
       // R81 Clean Ambient：纯粹极简黑白调
       primary: '#101010',
-      bg: 'rgba(0, 0, 0, 0.04)',
+      bg: 'rgba(242, 242, 242, 0.82)',
       text: '#111111',
       sub: '#6d6d6d',
       border: 'rgba(0, 0, 0, 0.12)',
