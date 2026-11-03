@@ -1,25 +1,23 @@
 'use client';
 
 /**
- * SubmissionModal —— 星空投稿舱（R67）
+ * SubmissionModal —— 星空投稿舱（R67 / R82）
  *
- * 提交后两件事同时发生：
- *   1. 本地落库（vanlan_submissions），后台可审核「点亮成星星」
- *   2. FormSubmit 推到 VANLAN0127@gmail.com，标题带【克卜勒星空新投稿】
+ * 提交后纯本地落库（vanlan_submissions），零外发：
+ *   数据直达 VANLAN.OS 管理员终端后台，由管理员「点亮成星星」
  * 视觉上表单会化作一颗流星划出画面，再给出回执。
  */
 
 import { useState } from 'react';
 import {
   SUBMISSION_KIND_LABEL,
-  pushSubmission,
   useSubmissions,
   useKeplerUI,
   type SubmissionKind,
 } from '@/lib/kepler';
 import { chime, unlockAudio } from '@/lib/keplerAudio';
 
-type Status = 'idle' | 'sending' | 'done' | 'error';
+type Status = 'idle' | 'sending' | 'done';
 
 const KINDS: SubmissionKind[] = ['music', 'lyric', 'story'];
 
@@ -89,11 +87,8 @@ export default function SubmissionModal() {
     setTicket(sub.id.replace(/^sub-/, '').toUpperCase().slice(0, 6));
 
     setMeteor(true);
-    const [res] = await Promise.all([
-      pushSubmission(sub),
-      new Promise((r) => window.setTimeout(r, 1250)),
-    ]);
-    setStatus(res === 'ok' ? 'done' : 'error');
+    await new Promise((r) => window.setTimeout(r, 1250));
+    setStatus('done');
   };
 
   return (
@@ -110,20 +105,14 @@ export default function SubmissionModal() {
           </button>
         </header>
 
-        {status === 'done' || status === 'error' ? (
+        {status === 'done' ? (
           <div className="kp-sub-done">
-            <div className={`kp-sub-receipt${status === 'error' ? ' is-warn' : ''}`}>
-              {status === 'done' ? '✦' : '◌'}
-            </div>
+            <div className="kp-sub-receipt">✦</div>
             <p className="kp-sub-done-title">
-              {status === 'done'
-                ? '你的故事已化作孤星入轨，我已经在星空中找到你了。'
-                : '星星已经挂在本地星图上，邮件通道这次没接通。'}
+              ✦ 成功发射！你的故事已直达 VANLAN.OS 管理员终端后台。
             </p>
             <p className="kp-sub-done-sub">
-              {status === 'done'
-                ? `投稿编号 ${ticket} · 我读完会把它点亮成公开的星星；在星图列表的「我的投稿」里可以看到进度。`
-                : '不用担心，投稿已经保存；你也可以直接写信给 VANLAN0127@gmail.com。'}
+              {`投稿编号 ${ticket} · 我在后台读完会把它点亮成公开的星星；在星图列表的「我的投稿」里可以看到进度。`}
             </p>
             <div className="kp-sub-done-actions">
               <button type="button" onClick={reset}>再种一颗</button>
@@ -209,7 +198,7 @@ export default function SubmissionModal() {
             {err && <p className="kp-sub-err">{err}</p>}
 
             <footer className="kp-sub-foot">
-              <span>投稿会先进入我的后台，审核通过后正式点亮。</span>
+              <span>投稿零外发 · 直达管理员终端后台</span>
               <button
                 type="button"
                 className="kp-sub-submit"

@@ -9,7 +9,7 @@
  *   done  : 提交回执（订单号 + 状态 + 下一步）
  *
  * 数据：products 来自 useCommerce（localStorage 持久化，管理员可上下架）；
- * 订单写入 vanlan_orders，管理员在控制台查看与流转状态。
+ * 订单纯本地写入 vanlan_orders（R82 零外发），直达管理员终端后台看板。
  */
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
@@ -20,7 +20,6 @@ import {
   useCommerce,
   type Order,
 } from '@/lib/commerce';
-import { notifyOrder } from '@/lib/notify';
 import {
   CATEGORY_CARDS,
   CATEGORY_EN,
@@ -169,8 +168,7 @@ export default function CommissionPanel() {
   /** 品类卡筛选：null = 全部 */
   const [focusCat, setFocusCat] = useState<ServiceCategory | null>(null);
   const [error, setError] = useState('');
-  const [pushing, setPushing] = useState<'idle' | 'sending' | 'done'>('idle');
-  const [pushNote, setPushNote] = useState('');
+  const [pushing, setPushing] = useState<'idle' | 'done'>('idle');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -254,35 +252,9 @@ export default function CommissionPanel() {
     // 留一点「正在发送需求…」的可感知反馈，再切回执
     window.setTimeout(() => {
       setSending(false);
+      setPushing('done');
       setView('done');
     }, 320);
-
-    // 实时推送（不阻断 UI；失败也不影响订单落库）
-    setPushing('sending');
-    setPushNote('');
-    notifyOrder({
-      orderId: created.id,
-      serviceName: created.serviceName,
-      serviceItem: picked.name,
-      clientName: created.clientName,
-      contactType: created.contactType,
-      contact: created.contact,
-      budget: created.budget,
-      brief: created.brief,
-      demo: created.demo,
-      consent: true,
-      createdAt: created.createdAt,
-    })
-      .then((r) => {
-        setPushing('done');
-        if (r.mail === 'ok') setPushNote('通知已推送至邮箱');
-        else if (r.mail === 'fail')
-          setPushNote('邮件通道未激活（订单已保存，可先通过微信/QQ 联系）');
-        else if (r.push === 'ok') setPushNote('已通过微信推送');
-      })
-      .catch(() => {
-        setPushing('done');
-      });
   };
 
   const resetAll = () => {
@@ -415,12 +387,8 @@ export default function CommissionPanel() {
 
         {pushing !== 'idle' && (
           <p className="flex items-center gap-1.5 font-mono text-[8px] tracking-[0.14em] text-ink/35">
-            <i
-              className={`h-1.5 w-1.5 rounded-full ${
-                pushing === 'sending' ? 'animate-pulse bg-[#E08E00]' : 'bg-[#18A057]'
-              }`}
-            />
-            {pushing === 'sending' ? 'PUSHING NOTIFICATION…' : pushNote || 'NOTIFICATION SENT'}
+            <i className="h-1.5 w-1.5 rounded-full bg-[#18A057]" />
+            ✦ 成功发射！订单已直达 VANLAN.OS 管理员终端后台。
           </p>
         )}
 

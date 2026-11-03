@@ -11,7 +11,6 @@
  */
 
 import { create } from 'zustand';
-import { FORM_TOKEN, readNotifySettings } from './notify';
 
 export const KEPLER_KEY = 'vanlan_kepler_stars';
 export const SUBMISSION_KEY = 'vanlan_submissions';
@@ -580,35 +579,6 @@ export function submissionToStarDraft(sub: Submission): StarDraft {
     year: new Date(sub.createdAt).getFullYear().toString(),
     roles: SUBMISSION_KIND_LABEL[sub.kind] ?? '投稿',
   };
-}
-
-/** 投稿推送：FormSubmit 直发邮箱，失败不阻断（本地已经存了一份） */
-export async function pushSubmission(sub: Submission): Promise<'ok' | 'fail'> {
-  const settings = readNotifySettings();
-  if (!settings.enabled) return 'fail';
-  const endpoint = FORM_TOKEN
-    ? `https://formsubmit.co/ajax/${FORM_TOKEN}`
-    : `https://formsubmit.co/ajax/${encodeURIComponent(settings.primaryEmail)}`;
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        _subject: `【克卜勒星空新投稿】来自 ${sub.name || '匿名旅人'}`,
-        _template: 'table',
-        _captcha: 'false',
-        署名: sub.name || '匿名旅人',
-        类型: SUBMISSION_KIND_LABEL[sub.kind],
-        金句: sub.lyric,
-        故事或链接: sub.story,
-        联系方式: sub.contact,
-        时间: new Date(sub.createdAt).toLocaleString('zh-CN', { hour12: false }),
-      }),
-    });
-    return res.ok ? 'ok' : 'fail';
-  } catch {
-    return 'fail';
-  }
 }
 
 /* ---------------- UI 相位（不进 localStorage，纯运行时） ---------------- */
