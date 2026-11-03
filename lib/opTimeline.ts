@@ -2,19 +2,18 @@
  * opTimeline —— 动漫 OP 分镜时间轴（R52）
  *
  * 设计要点：
- *  - 单一数据源 `scrub.progress`（0~1，对应 00:00 → 01:30 的 90 秒）。
+ *  - 单一数据源 `scrub.progress`（0~1，对应 00:00 → 01:00 的 60 秒）。
  *  - 拖动时不触发 React 渲染：3D 层在 useFrame 里直接读，2D 背景在 rAF 里
  *    直接读，只有「进入新章节」这一件事会广播给 React（StageOverlay 换屏）。
  *  - 关键帧用 smoothstep 插值，兽头的旋转 / 推拉 / FOV / 边缘光强度都吃同一套。
  */
 
-export const TOTAL_SEC = 90;
+export const TOTAL_SEC = 60;
 /** 时间码使用 24fps 帧计数（动漫 OP 语感） */
 export const FPS = 24;
 
 export type ActId =
   | 'INTRO'
-  | 'SOUND'
   | 'COMMISSION'
   | 'MEDIA'
   | 'CREDITS';
@@ -39,6 +38,10 @@ export interface Act {
 
 const S = (sec: number) => sec / TOTAL_SEC;
 
+/**
+ * 黄金 4 幕（R81）：专辑播放页撤出主线（后续独立分站），
+ * 60 秒四等分呼吸：15 / 17 / 15 / 13。
+ */
 export const ACTS: Act[] = [
   {
     id: 'INTRO',
@@ -46,9 +49,9 @@ export const ACTS: Act[] = [
     en: 'OP_INTRO',
     zh: '主视觉 · 名片',
     start: 0,
-    end: 18,
+    end: 15,
     startP: S(0),
-    endP: S(18),
+    endP: S(15),
     accent: '#F35A17',
   },
   {
@@ -56,43 +59,32 @@ export const ACTS: Act[] = [
     code: 'ACT 02',
     en: 'COMMISSION_STORE',
     zh: '接单 · 工坊',
-    start: 18,
-    end: 40,
-    startP: S(18),
-    endP: S(40),
+    start: 15,
+    end: 32,
+    startP: S(15),
+    endP: S(32),
     accent: '#F35A17',
   },
   {
-    id: 'SOUND',
-    code: 'ACT 03',
-    en: 'SOUND_TRACK',
-    zh: '原声 · 专辑',
-    start: 40,
-    end: 60,
-    startP: S(40),
-    endP: S(60),
-    accent: '#FF8A3D',
-  },
-  {
     id: 'MEDIA',
-    code: 'ACT 04',
+    code: 'ACT 03',
     en: 'MEDIA_MATRIX',
     zh: '自媒体 · 矩阵',
-    start: 60,
-    end: 75,
-    startP: S(60),
-    endP: S(75),
+    start: 32,
+    end: 47,
+    startP: S(32),
+    endP: S(47),
     accent: '#FF8A3D',
   },
   {
     id: 'CREDITS',
-    code: 'ACT 05',
+    code: 'ACT 04',
     en: 'CREDITS_SYS',
     zh: '职员表 · 终端',
-    start: 75,
-    end: 90,
-    startP: S(75),
-    endP: S(90),
+    start: 47,
+    end: 60,
+    startP: S(47),
+    endP: S(60),
     accent: '#8A8F98',
   },
 ];
@@ -155,14 +147,14 @@ export interface HeadKey {
 /**
  * 四个章节各一个机位，章节内缓慢推进 —— 让每一次拖动都有连续反馈，
  * 而不是「跳四张图」。数值按 16:9 桌面构图调，窄屏由相机层再补偿。
- * R55：幕序改为 名片 → 工坊 → 专辑 → 片尾，机位跟随各幕重排。
+ * R81：幕序改为 名片 → 工坊 → 矩阵 → 片尾（60s），机位锚到新幕边界。
  */
 export const HEAD_KEYS: HeadKey[] = [
   { p: 0.0, yaw: 0.34, pitch: -0.02, x: -0.04, y: 0.0, camZ: 3.25, fov: 38, rim: 0.55, key: 1.0 },
-  { p: 0.2, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
-  { p: 0.4444, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
-  { p: 0.6667, yaw: 0.92, pitch: -0.03, x: 0.44, y: -0.01, camZ: 3.7, fov: 44, rim: 0.95, key: 1.05 },
-  { p: 0.8333, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },
+  { p: 0.24, yaw: -0.95, pitch: 0.05, x: 0.55, y: -0.03, camZ: 3.55, fov: 42, rim: 1.05, key: 1.15 },
+  { p: 0.52, yaw: -0.16, pitch: 0.03, x: 0.28, y: -0.02, camZ: 3.0, fov: 40, rim: 0.8, key: 1.1 },
+  { p: 0.76, yaw: 0.92, pitch: -0.03, x: 0.44, y: -0.01, camZ: 3.7, fov: 44, rim: 0.95, key: 1.05 },
+  { p: 0.9, yaw: 1.1, pitch: -0.04, x: 0.18, y: 0.0, camZ: 3.65, fov: 44, rim: 0.7, key: 0.9 },
   { p: 1.0, yaw: 1.5, pitch: 0.0, x: 0.0, y: 0.0, camZ: 4.1, fov: 46, rim: 0.45, key: 0.75 },
 ];
 
@@ -375,12 +367,6 @@ export const ACT_COPY: Record<ActId, ActCopy> = {
     line2: 'COMPOSER & CREATOR',
     sub: '交互式个人终端 · INTERACTIVE PORTFOLIO',
     tag: 'OP // MAIN VISUAL',
-  },
-  SOUND: {
-    line1: 'SOUND',
-    line2: 'TRACK / 03',
-    sub: '原创编曲 · 混音 · 音色设计',
-    tag: 'OP // THEME SONG',
   },
   MEDIA: {
     line1: 'MEDIA',

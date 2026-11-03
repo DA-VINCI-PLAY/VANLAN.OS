@@ -32,9 +32,8 @@ import { openKepler } from '@/lib/kepler';
 const ACT_LABEL: Record<ActId, string> = {
   INTRO: '名片',
   COMMISSION: '工坊',
-  SOUND: '试听',
   MEDIA: '矩阵',
-  CREDITS: '片尾',
+  CREDITS: '终章',
 };
 
 /** 跳到某幕起点（+1e-3 保证 actAt 落在这幕而不是上一幕边界） */

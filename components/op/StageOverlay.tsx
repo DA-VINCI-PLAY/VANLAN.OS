@@ -1,13 +1,13 @@
 'use client';
 
 /**
- * StageOverlay —— 前景分镜层（R52 / R55）
+ * StageOverlay —— 前景分镜层（R52 / R81）
  *
- * 时间轴进入哪个 ACT，就渲染哪一块前景（R55 幕序：名片 → 工坊 → 专辑 → 片尾）：
+ * 时间轴进入哪个 ACT，就渲染哪一块前景（R81 黄金四幕：名片 → 工坊 → 矩阵 → 片尾）：
  *   INTRO      名片 + 社交图标矩阵
  *   COMMISSION 接单工坊（复用 CommissionPanel，含下单表单）
- *   SOUND      内嵌试听器（波形 / 曲目 / 时间码）
- *   CREDITS    系统状态 + 语言切换 + 管理员终端入口
+ *   MEDIA      自媒体矩阵（集中式平台配置 + 极简展示卡）
+ *   CREDITS    系统状态 + 语言切换 + 管理员终端入口 + 星空分站入口
  *
  * 只在 act 变化时重渲染（subscribeAct → useState），拖动过程中不触发任何 React 更新。
  */
@@ -21,7 +21,6 @@ import {
   scrub,
 } from '@/lib/opTimeline';
 import { useOS } from '@/lib/store';
-import { ALBUMS } from '@/content/albums';
 import { IDENTITY } from '@/content/about';
 import { SOCIALS } from '@/content/social';
 import { qqAdd } from '@/lib/qq';
@@ -38,14 +37,6 @@ import {
 /** 跳到指定幕的起始位置 */
 const gotoAct = (id: ActId) =>
   setProgress((ACTS.find((a) => a.id === id) ?? ACTS[0]).startP + 0.001);
-
-/** 曲目用的 mm:ss（时间轴那套 00:00:00 是 90 秒总长的归一化时间码） */
-const fmt = (sec: number): string => {
-  if (!isFinite(sec) || sec < 0) return '--:--';
-  const m = Math.floor(sec / 60);
-  const ss = Math.floor(sec % 60);
-  return `${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-};
 
 /* 首屏社交矩阵：固定 7 项，与内容源解耦 */
 const CHIP_IDS = [
@@ -72,7 +63,6 @@ export default function StageOverlay() {
     <div className="op-stage-layer">
       <div key={act} className="op-stage-shell" data-act={act}>
         {act === 'INTRO' && <IntroStage />}
-        {act === 'SOUND' && <SoundStage />}
         {act === 'COMMISSION' && <CommissionStage />}
         {act === 'MEDIA' && <MediaStage />}
         {act === 'CREDITS' && <CreditsStage />}
@@ -239,179 +229,6 @@ function IntroStage() {
   );
 }
 
-/* ============ ACT 03 · 专辑试听 ============ */
-function SoundStage() {
-  const [albumIdx, setAlbumIdx] = useState(0);
-  const [trackIdx, setTrackIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  const album = ALBUMS[albumIdx];
-  const track = album.tracks[trackIdx] ?? album.tracks[0];
-  const src = track?.src || album.preview || '';
-  const hasAudio = Boolean(src);
-  const pct = duration > 0 ? Math.min(100, (time / duration) * 100) : 0;
-
-  // 换曲复位
-  useEffect(() => {
-    const a = audioRef.current;
-    setPlaying(false);
-    setTime(0);
-    setDuration(0);
-    if (a) {
-      a.pause();
-      a.currentTime = 0;
-    }
-  }, [albumIdx, trackIdx]);
-
-  const toggle = () => {
-    const a = audioRef.current;
-    if (!a || !hasAudio) return;
-    if (a.paused) {
-      a.play()
-        .then(() => setPlaying(true))
-        .catch(() => setPlaying(false));
-    } else {
-      a.pause();
-      setPlaying(false);
-    }
-  };
-
-  const selectAlbum = (i: number) => {
-    setAlbumIdx(i);
-    setTrackIdx(0);
-  };
-
-  return (
-    <section className="op-panel op-panel-sound" data-scroll aria-label="作品试听">
-      <header className="op-snd-head">
-        <div>
-          <div className="op-kicker">NOW PLAYING</div>
-          <h2 className="op-snd-title">{track?.title ?? '—'}</h2>
-          <div className="op-snd-album">
-            {album.vanlan}
-            {album.zhName ? ` · ${album.zhName}` : ''} · {album.year}
-          </div>
-        </div>
-        <div className="op-snd-time">
-          {hasAudio ? `${fmt(time)} / ${fmt(duration)}` : 'ASSET PENDING'}
-        </div>
-      </header>
-
-      {/* 波形（进度填充） */}
-      <div className="op-wave" aria-hidden>
-        {Array.from({ length: 56 }).map((_, i) => {
-          const h = 18 + ((i * 37) % 71);
-          const on = (i / 56) * 100 <= pct;
-          return (
-            <i
-              key={i}
-              className={on ? 'is-on' : ''}
-              style={{ height: `${h}%`, ['--i' as string]: i }}
-            />
-          );
-        })}
-      </div>
-
-      <div className="op-snd-controls">
-        <button
-          type="button"
-          className="op-play"
-          onClick={toggle}
-          disabled={!hasAudio}
-          aria-label={playing ? '暂停' : '播放'}
-        >
-          {playing ? '❚❚' : '▶'}
-        </button>
-        <div className="op-snd-track-line">
-          <div className="op-snd-bar">
-            <i style={{ width: `${pct}%` }} />
-          </div>
-          <div className="op-snd-nums">
-            <span>{fmt(time)}</span>
-            <span>{fmt(duration)}</span>
-          </div>
-          <input
-            type="range"
-            className="os-range os-range-bare op-snd-seek"
-            min={0}
-            max={duration || 100}
-            step={0.1}
-            value={time}
-            disabled={!hasAudio}
-            aria-label="进度"
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              if (audioRef.current) audioRef.current.currentTime = v;
-              setTime(v);
-            }}
-          />
-        </div>
-      </div>
-
-      {/* 专辑 / 曲目 */}
-      <div className="op-snd-body">
-        <div className="op-albums">
-          {ALBUMS.map((a, i) => (
-            <button
-              key={a.vanlan}
-              type="button"
-              onClick={() => selectAlbum(i)}
-              className={i === albumIdx ? 'is-active' : ''}
-              aria-pressed={i === albumIdx}
-            >
-              <span>{String(i + 1).padStart(2, '0')}</span>
-              {a.vanlan}
-            </button>
-          ))}
-        </div>
-
-        <ol className="op-tracks">
-          {album.tracks.map((t, i) => (
-            <li key={t.title}>
-              <button
-                type="button"
-                onClick={() => setTrackIdx(i)}
-                className={i === trackIdx ? 'is-active' : ''}
-                aria-current={i === trackIdx}
-              >
-                <span className="op-track-no">{String(i + 1).padStart(2, '0')}</span>
-                <span className="op-track-name">{t.title}</span>
-                <span className="op-track-dur">{t.duration}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <div className="op-card-foot">
-        <span>{album.description.slice(0, 34)}…</span>
-        <button type="button" onClick={() => gotoAct('MEDIA')}>
-          矩阵 →
-        </button>
-      </div>
-
-      {hasAudio && (
-        <audio
-          ref={audioRef}
-          key={src}
-          src={src}
-          preload="metadata"
-          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-          onEnded={() => {
-            setPlaying(false);
-            setTime(0);
-          }}
-          onError={() => setPlaying(false)}
-        />
-      )}
-    </section>
-  );
-}
-
 /* ============ ACT 02 · 接单工坊 ============ */
 function CommissionStage() {
   return (
@@ -429,30 +246,38 @@ function CommissionStage() {
       </div>
       <div className="op-card-foot">
         <span className="op-foot-note">COMPOSITION · MIXING · 3D · CUSTOM</span>
-        <button type="button" onClick={() => gotoAct('SOUND')}>
-          专辑 →
+        <button type="button" onClick={() => gotoAct('MEDIA')}>
+          矩阵 →
         </button>
       </div>
     </section>
   );
 }
 
-/* ============ ACT 04 · 自媒体矩阵（R78 海内外双板块 + 动态换肤展示卡） ============ */
+/* ============ ACT 03 · 自媒体矩阵（R81 极简重构：无界毛玻璃 + 垂直索引栏） ============ */
 function MediaStage() {
-  const lang = useOS((s) => s.lang);
   const [region, setRegion] = useState<MatrixRegion>('cn');
   const [platformId, setPlatformId] = useState('bilibili');
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
 
-  const entries = PLATFORM_MATRIX_CONFIG.filter((p) => p.region === region);
-  const current = entries.find((p) => p.id === platformId) ?? entries[0];
+  /* 索引栏固定展示全部 7 平台（顺序即 R81 规范），点击跨板块平台时联动切换 */
+  const rail = PLATFORM_MATRIX_CONFIG;
+  const current = PLATFORM_MATRIX_CONFIG.find((p) => p.id === platformId) ?? rail[0];
+  const railIdx = Math.max(0, rail.findIndex((p) => p.id === current.id));
 
   const switchRegion = (r: MatrixRegion) => {
     if (r === region) return;
     const def = MATRIX_REGIONS.find((x) => x.id === r);
     setRegion(r);
-    setPlatformId(def?.defaultPlatform ?? PLATFORM_MATRIX_CONFIG.find((p) => p.region === r)!.id);
+    setPlatformId(def?.defaultPlatform ?? rail.find((p) => p.region === r)!.id);
+    setCopied(false);
+  };
+
+  const selectPlatform = (p: (typeof rail)[number]) => {
+    if (p.id === platformId) return;
+    setRegion(p.region);
+    setPlatformId(p.id);
     setCopied(false);
   };
 
@@ -470,6 +295,15 @@ function MediaStage() {
     [],
   );
 
+  /* 平台域名（左下角极小标识） */
+  const domain = (() => {
+    try {
+      return new URL(current.link).hostname.replace(/^www\./, '');
+    } catch {
+      return current.name.toLowerCase();
+    }
+  })();
+
   const t = current.theme;
   const vars = {
     '--mx-primary': t.primary,
@@ -485,64 +319,74 @@ function MediaStage() {
     '--mx-glow': t.glow,
     '--mx-demo-bg': t.demoBg,
     '--mx-demo-border': t.demoBorder,
+    '--mx-rail-tint': t.dockBg,
+    '--mx-rail-ico': t.dockIcon,
+    '--rail-i': railIdx,
   } as React.CSSProperties;
 
   return (
     <section className="op-panel op-panel-media" aria-label="自媒体矩阵">
-      <div className="op-store-head">
-        <div>
-          <div className="op-kicker">MEDIA MATRIX // INFO CARD</div>
-          <h2 className="op-store-title">{lang === 'zh' ? '自媒体矩阵' : 'Channels'}</h2>
-        </div>
-        <span className="op-store-badge">{PLATFORM_MATRIX_CONFIG.length} CH</span>
+      {/* ① 外部顶栏：平铺文字切换（圆点 + 字重，不画框） */}
+      <div className="op-mx-tabs" role="tablist" aria-label="内容板块切换">
+        {MATRIX_REGIONS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            aria-selected={region === r.id}
+            className={`op-mx-tab ${region === r.id ? 'is-active' : ''}`}
+            onClick={() => switchRegion(r.id)}
+          >
+            <i className="op-mx-tab-dot" aria-hidden />
+            {r.label}
+          </button>
+        ))}
       </div>
 
-      <div className="op-store-body os-scroll" data-scroll>
-        {/* 第一层：双板块通栏切换器 */}
-        <div className="op-mx-tabs" role="tablist" aria-label="内容板块切换">
-          {MATRIX_REGIONS.map((r) => (
+      {/* ② 主卡：左右一体式，右侧垂直 7 平台索引栏 + 4px 灵动胶囊 */}
+      <article
+        key={`${region}-${current.id}`}
+        className="op-mx-card"
+        data-platform={current.id}
+        data-region={region}
+        style={vars}
+      >
+        <div className="op-mx-rail" role="tablist" aria-label="平台索引">
+          {rail.map((p) => (
             <button
-              key={r.id}
+              key={p.id}
               type="button"
               role="tab"
-              aria-selected={region === r.id}
-              className={`op-mx-tab ${region === r.id ? 'is-active' : ''}`}
-              onClick={() => switchRegion(r.id)}
+              aria-selected={current.id === p.id}
+              title={p.name}
+              aria-label={p.name}
+              className={`op-mx-rail-btn ${current.id === p.id ? 'is-active' : ''}`}
+              onClick={() => selectPlatform(p)}
             >
-              {r.label}
+              <BrandIcon id={p.id} size={16} />
             </button>
           ))}
+          <span className="op-mx-rail-pill" aria-hidden />
         </div>
 
-        {/* 第二层：大尺寸平台主题动态展示卡（key 触发重挂载入场动画） */}
-        <article
-          key={`${region}-${current.id}`}
-          className="op-mx-card"
-          data-platform={current.id}
-          data-region={region}
-          style={vars}
-        >
-          <header className="op-mx-head">
-            <span className="op-mx-ico" aria-hidden>
-              <BrandIcon id={current.id} size={24} />
+        <div className="op-mx-main">
+          {/* ③ 左上角：大气品牌视觉锚点 */}
+          <header className="op-mx-hero">
+            <span className="op-mx-badge" aria-hidden>
+              <BrandIcon id={current.id} size={28} />
             </span>
-            <div className="op-mx-name">
+            <div className="op-mx-id">
               <b>
                 {current.name}
                 {current.zhName ? <i>{current.zhName}</i> : null}
               </b>
               <span>{current.handle}</span>
             </div>
-            <div className="op-mx-badges">
-              <em className="op-mx-live">
-                <i aria-hidden /> ON AIR
-              </em>
-              <em className="op-mx-region">{region === 'cn' ? 'CN' : 'GLOBAL'}</em>
-            </div>
           </header>
 
           <p className="op-mx-bio">{current.bio}</p>
 
+          {/* ④ 中部：通透双列精选内容卡 */}
           <div className="op-mx-demos">
             {current.demos.map((d) => (
               <a
@@ -554,16 +398,19 @@ function MediaStage() {
               >
                 <em>{d.badge}</em>
                 <b>{d.title}</b>
-                <span>
-                  {d.meta} · <u>PLAY ↗</u>
-                </span>
+                <span>{d.meta}</span>
+                <u className="op-mx-demo-go" aria-hidden>
+                  ↗
+                </u>
               </a>
             ))}
           </div>
 
+          {/* ⑤ 右下角：唯一胶囊主按钮；左下角域名 + 复制 ID */}
           <footer className="op-mx-foot">
+            <span className="op-mx-domain">{domain}</span>
             <button type="button" className="op-mx-copy" onClick={copyId}>
-              {copied ? '✓ 已复制账号 ID' : '复制账号 ID'}
+              {copied ? 'ID ✓' : 'COPY ID'}
             </button>
             <a
               className="op-mx-go"
@@ -574,36 +421,8 @@ function MediaStage() {
               前往 {current.name} 主页 ↗
             </a>
           </footer>
-        </article>
-
-        {/* 第三层：底部 Dock——大号圆形平台切换钮（macOS Dock 式） */}
-        <div className="op-mx-dock" role="tablist" aria-label="平台选择">
-          {entries.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              role="tab"
-              aria-selected={current.id === p.id}
-              title={p.name}
-              aria-label={p.name}
-              className={`op-mx-dock-btn ${current.id === p.id ? 'is-active' : ''}`}
-              style={
-                {
-                  '--dock-bg': p.theme.dockBg,
-                  '--dock-icon': p.theme.dockIcon,
-                  '--dock-glow': p.theme.dockGlow,
-                } as React.CSSProperties
-              }
-              onClick={() => {
-                setPlatformId(p.id);
-                setCopied(false);
-              }}
-            >
-              <BrandIcon id={p.id} size={22} />
-            </button>
-          ))}
         </div>
-      </div>
+      </article>
 
       <div className="op-card-foot">
         <span className="op-foot-note">DOUYIN · BILIBILI · RED · YT · X · IG · THREADS</span>
@@ -615,7 +434,7 @@ function MediaStage() {
   );
 }
 
-/* ============ ACT 05 · 职员表 / 系统 ============ */
+/* ============ ACT 04 · 职员表 / 系统 ============ */
 function CreditsStage() {
   const lang = useOS((s) => s.lang);
   const setLang = useOS((s) => s.setLang);
@@ -643,7 +462,7 @@ function CreditsStage() {
         </li>
         <li>
           <span>BUILD</span>
-          <b>R55 · 2D OP STAGE</b>
+          <b>R81 · 2D OP STAGE</b>
         </li>
       </ul>
 
@@ -678,13 +497,14 @@ function CreditsStage() {
         </button>
       </div>
 
+      {/* R81：专辑播放页撤出主线，这里是它的独立分站入口 */}
       <button
         type="button"
         className="op-kepler-entry"
         onClick={() => openKepler()}
       >
-        <b>✦</b> 潜入克卜勒星图
-        <i>CHAPTER 06 / KEPLER STARFIELD ↓</i>
+        <b>✦</b> 前往专辑 / 星空独立分站 ↗
+        <i>SUBSITE // KEPLER STARFIELD</i>
       </button>
 
       <ul className="op-credits-list">
