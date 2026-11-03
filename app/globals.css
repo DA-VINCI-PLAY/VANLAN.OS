@@ -1779,21 +1779,38 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   box-shadow: 0 0 8px rgba(20, 24, 28, 0.3);
 }
 
-/* ---------- 主卡：温润微透哑光，无生硬内格线 ---------- */
+/* ---------- 主卡：扶正为核心容器 · 单色空气感微光 + 1px 内发光细边 ---------- */
 .op-mx-card {
   --rail-row: 38px;
   position: relative;
   overflow: hidden;
   border-radius: 24px;
-  border: 1px solid var(--mx-border);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   background: var(--mx-bg);
   color: var(--mx-text);
+  box-shadow:
+    0 18px 48px var(--mx-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   padding: 28px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: background 0.45s ease, border-color 0.45s ease, color 0.45s ease;
+  transition:
+    background 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    box-shadow 0.45s ease;
   animation: op-mx-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* 左上角单色空气感微光：随平台主题变量换色（IG 柔雾紫金 / B站冰川蓝 / 抖音青…） */
+.op-mx-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 150% at 16% 0%, var(--mx-glow) 0%, transparent 58%);
+  opacity: 0.3;
+  transition: opacity 0.45s ease;
 }
 @keyframes op-mx-in {
   from { opacity: 0; transform: translate3d(0, 10px, 0); }
@@ -1804,7 +1821,7 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
 .op-mx-rail {
   position: absolute;
   top: 22px;
-  right: 14px;
+  right: 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1845,8 +1862,10 @@ input[type='range'].os-range.os-range-bare::-moz-range-track {
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease;
 }
 
-/* ---------- 左侧主内容列（让出右侧索引栏走廊） ---------- */
+/* ---------- 左侧主内容列（让出右侧索引栏走廊；压过 ::before 微光层） ---------- */
 .op-mx-main {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -6413,8 +6432,8 @@ select:focus-visible {
   inset: -6% -12%;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  padding: 9vh 0;
+  justify-content: flex-start; /* 无序：垂直节奏交给每行的随机 margin */
+  padding: 4vh 0;
   will-change: transform;
 }
 .pf-marquee {
@@ -6438,6 +6457,27 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .pf-marquee { animation: none; }
   .pf-textlayer { transform: none !important; }
+}
+
+/* —— 散落碎片层 —— */
+.pf-fraglayer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.pf-frag {
+  position: absolute;
+  font-family: 'Smiley Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  letter-spacing: 0.4em;
+  white-space: nowrap;
+  color: #d9c48d;
+  animation: pf-drift ease-in-out infinite alternate;
+  transform: rotate(var(--rot, 0deg));
+  opacity: 0.75;
+}
+@keyframes pf-drift {
+  from { translate: 0 -10px; }
+  to { translate: 12px 12px; }
 }
 
 /* —— Hero 雕塑 —— */
@@ -6555,20 +6595,10 @@ button.pf-show:hover { border-color: rgba(212, 175, 55, 0.45); background: rgba(
 .pf-show-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .pf-show-title { font-size: 14px; color: #efe7d4; letter-spacing: 0.04em; }
 .pf-show-venue { font-size: 11px; color: rgba(233, 226, 210, 0.45); }
-.pf-tag {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-}
-.pf-tag--gold { color: #14100a; background: #d4af37; }
-.pf-tag--red { color: #f2c9c9; background: rgba(139, 0, 0, 0.55); border: 1px solid rgba(139, 0, 0, 0.8); }
-.pf-tag--dim { color: rgba(233, 226, 210, 0.5); border: 1px solid rgba(233, 226, 210, 0.2); }
 .pf-dur { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(233, 226, 210, 0.55); }
 
 /* 回放电平条 */
+.pf-replay--on { border-color: rgba(212, 175, 55, 0.6) !important; background: rgba(212, 175, 55, 0.06) !important; }
 .pf-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; flex-shrink: 0; }
 .pf-eq i { width: 3px; height: 30%; background: rgba(233, 226, 210, 0.3); }
 .pf-eq--on i { background: #d4af37; animation: pf-eq-bounce 0.9s linear infinite; }
@@ -6583,63 +6613,6 @@ button.pf-show:hover { border-color: rgba(212, 175, 55, 0.45); background: rgba(
   .pf-eq--on i { animation: none; height: 60%; }
 }
 
-/* —— 互动条 —— */
-.pf-interact {
-  position: sticky;
-  bottom: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 6vw 16px;
-  background: linear-gradient(180deg, transparent 0%, rgba(8, 4, 5, 0.9) 42%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.pf-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  color: #efe7d4;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  cursor: pointer;
-  transition: transform 0.12s linear, background 0.25s linear, border-color 0.25s linear;
-}
-.pf-btn:active { transform: scale(0.96); }
-.pf-btn--clap { border-color: rgba(212, 175, 55, 0.55); }
-.pf-btn--stick-on {
-  color: #14100a;
-  background: linear-gradient(180deg, #e6c766, #d4af37);
-  border-color: #d4af37;
-  box-shadow: 0 0 24px rgba(212, 175, 55, 0.4);
-}
-.pf-count {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  opacity: 0.85;
-}
-.pf-hint { margin-left: auto; font-size: 11px; color: rgba(233, 226, 210, 0.4); }
-@media (max-width: 640px) { .pf-hint { display: none; } }
-
-/* —— 掌声粒子 —— */
-.pf-particles { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
-.pf-particle {
-  position: absolute;
-  bottom: 88px;
-  font-size: 22px;
-  animation: pf-rise 1.3s ease-out forwards;
-  will-change: transform, opacity;
-}
-@keyframes pf-rise {
-  from { transform: translateY(0) scale(0.7); opacity: 1; }
-  60% { opacity: 1; }
-  to { transform: translateY(-190px) translateX(14px) scale(1.25) rotate(10deg); opacity: 0; }
-}
 
 /* ===============================================================
    /creation —— DAW 暗夜宿主工作站
@@ -6669,7 +6642,8 @@ button.pf-show:hover { border-color: rgba(212, 175, 55, 0.45); background: rgba(
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px 18px;
-  padding: 12px 5vw;
+  /* 左右让位给固定的导航胶囊（返回主站 / 表演-创作切换） */
+  padding: 12px calc(5vw + 170px) 12px calc(3vw + 110px);
   background: rgba(14, 16, 19, 0.86);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(14px);
@@ -6979,4 +6953,23 @@ button.pf-show:hover { border-color: rgba(212, 175, 55, 0.45); background: rgba(
   font-size: 10px;
   letter-spacing: 0.3em;
   color: #d4af37;
+}
+
+/* ===============================================================
+   R83 · MEDIA 面板无框化：彻底去掉外层白色大底框
+   内容 / 索引栏 / 底部条全部直接悬浮融入 3D 舞台背景；
+   视觉主体交给 .op-mx-card（空气感微光 + 1px 内发光细边）
+   （双类选择器压过前文所有 media query 内的单类 .op-panel 覆盖）
+   =============================================================== */
+.op-panel.op-panel-media {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.op-panel.op-panel-media { padding: 0; }
+@media (max-width: 900px) {
+  /* 手机抽屉：保留左右留白，卡片不贴屏幕边缘 */
+  .op-panel.op-panel-media { padding: 0 12px; }
 }
